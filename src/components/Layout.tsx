@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useMediaQuery } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile"; // Changed from useMediaQuery to useIsMobile
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,7 +42,7 @@ interface LayoutProps {
 export const Layout = ({ children }: LayoutProps) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const isMobile = useMediaQuery("(max-width: 1024px)");
+  const isMobile = useIsMobile(); // Using useIsMobile directly
   
   // Close sidebar when route changes on mobile
   useEffect(() => {

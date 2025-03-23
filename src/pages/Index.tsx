@@ -1,220 +1,176 @@
 
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
+import { useEffect, useState } from "react";
+import { Building2, Users, Film, Monitor } from "lucide-react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
-import { DataTable, Column } from "@/components/ui/data-table";
-import { 
-  Building2,
-  Film,
-  Monitor,
-  Building,
-  Users,
-  BarChart3,
-  ThumbsUp,
-  Clock,
-} from "lucide-react";
-import { Theatre } from "@/types";
-import { mockDashboardStats, theatres } from "@/data/mockData";
-import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import { DashboardStats } from "@/types";
 
-// Color constants
-const COLORS = ["#4f46e5", "#0891b2", "#7c3aed", "#059669", "#c026d3", "#d97706"];
-const STATUS_COLORS = {
-  Active: "#16a34a",
-  Inactive: "#ca8a04",
-  Deleted: "#dc2626"
-};
+export default function Index() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [loading, setLoading] = useState(true);
 
-const Index = () => {
-  const [dashboardStats] = useState(mockDashboardStats);
-  
-  const pieChartData = dashboardStats.theatresByType.map(item => ({
-    name: item.type,
-    value: item.count
-  }));
-  
-  const barChartData = dashboardStats.theatresByStatus.map(item => ({
-    name: item.status,
-    value: item.count,
-    color: STATUS_COLORS[item.status as keyof typeof STATUS_COLORS] || "#94a3b8"
-  }));
-  
-  const recentTheatreColumns: Column<Theatre>[] = [
-    {
-      header: "Theatre Name",
-      accessor: "name" as keyof Theatre
-    },
-    {
-      header: "Chain",
-      accessor: "chainName" as keyof Theatre
-    },
-    {
-      header: "Location",
-      accessor: "address" as keyof Theatre,
-      cell: (row: Theatre) => (
-        <span className="truncate max-w-[200px] block">
-          {row.address}
-        </span>
-      )
-    },
-    {
-      header: "Added On",
-      accessor: "createdAt" as keyof Theatre,
-      cell: (row: Theatre) => new Date(row.createdAt).toLocaleDateString()
-    }
-  ];
-  
-  const updatedTheatreColumns: Column<Theatre>[] = [
-    {
-      header: "Theatre Name",
-      accessor: "name" as keyof Theatre
-    },
-    {
-      header: "Chain",
-      accessor: "chainName" as keyof Theatre
-    },
-    {
-      header: "Location",
-      accessor: "address" as keyof Theatre,
-      cell: (row: Theatre) => (
-        <span className="truncate max-w-[200px] block">
-          {row.address}
-        </span>
-      )
-    },
-    {
-      header: "Updated On",
-      accessor: "updatedAt" as keyof Theatre,
-      cell: (row: Theatre) => new Date(row.updatedAt).toLocaleDateString()
-    }
-  ];
-  
+  useEffect(() => {
+    // Simulate API call
+    setTimeout(() => {
+      setStats({
+        totalTheatres: 1245,
+        activeTheatres: 1156,
+        totalScreens: 5678,
+        totalDevices: 9876,
+        totalCompanies: 245,
+        totalChains: 89,
+        recentlyAddedTheatres: [],
+        recentlyUpdatedTheatres: [],
+        theatresByStatus: [
+          { status: "Active", count: 1156 },
+          { status: "Inactive", count: 76 },
+          { status: "Deleted", count: 13 },
+        ],
+        theatresByType: [
+          { type: "Multiplex", count: 856 },
+          { type: "Single Screen", count: 234 },
+          { type: "Drive-in", count: 34 },
+          { type: "IMAX", count: 121 },
+        ],
+      });
+      setLoading(false);
+    }, 1000);
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="h-32 bg-card rounded-lg border border-border animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[...Array(2)].map((_, i) => (
+            <div
+              key={i}
+              className="h-80 bg-card rounded-lg border border-border animate-pulse"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-4">
+          {[...Array(2)].map((_, i) => (
+            <div
+              key={i}
+              className="h-80 bg-card rounded-lg border border-border animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
+
   return (
-    <Layout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">
-            Overview of your cinema database
-          </p>
-        </div>
+    <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard
+          title="Theatres"
+          value={stats.totalTheatres}
+          icon={<Building2 className="h-4 w-4" />}
+          // Removing trend and trendText props
+        />
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard 
-            title="Theatres"
-            value={dashboardStats.totalTheatres}
-            icon={<Building2 />}
-            trend={+5}
-            trendText="from last month"
-          />
-          <StatCard 
-            title="Screens"
-            value={dashboardStats.totalScreens}
-            icon={<Film />}
-            trend={+12}
-            trendText="from last month"
-          />
-          <StatCard 
-            title="Devices"
-            value={dashboardStats.totalDevices}
-            icon={<Monitor />}
-            trend={+24}
-            trendText="from last month"
-          />
-          <StatCard 
-            title="Companies"
-            value={dashboardStats.totalCompanies}
-            icon={<Building />}
-            trend={+2}
-            trendText="from last month"
-          />
-        </div>
+        <StatCard
+          title="Screens"
+          value={stats.totalScreens}
+          icon={<Film className="h-4 w-4" />}
+          // Removing trend and trendText props
+        />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <DashboardCard
-            title="Theatre Types"
-            description="Distribution of theatres by type"
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={pieChartData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {pieChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value} Theatres`, 'Count']} />
-              </PieChart>
-            </ResponsiveContainer>
-          </DashboardCard>
-          
-          <DashboardCard
-            title="Theatre Status"
-            description="Count of theatres by status"
-          >
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart
-                data={barChartData}
-                margin={{
-                  top: 20,
-                  right: 30,
-                  left: 20,
-                  bottom: 5,
-                }}
-              >
-                <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`${value} Theatres`, 'Count']} />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {barChartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </DashboardCard>
-        </div>
+        <StatCard
+          title="Devices"
+          value={stats.totalDevices}
+          icon={<Monitor className="h-4 w-4" />}
+          // Removing trend and trendText props
+        />
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-          <DashboardCard
-            title="Recently Added Theatres"
-            description="Theatres added in the past 30 days"
-          >
-            <DataTable
-              data={dashboardStats.recentlyAddedTheatres}
-              columns={recentTheatreColumns}
-              searchable={false}
-            />
-          </DashboardCard>
-          
-          <DashboardCard
-            title="Recently Updated Theatres"
-            description="Theatres updated in the past 30 days"
-          >
-            <DataTable
-              data={dashboardStats.recentlyUpdatedTheatres}
-              columns={updatedTheatreColumns}
-              searchable={false}
-            />
-          </DashboardCard>
+        <StatCard
+          title="Companies"
+          value={stats.totalCompanies}
+          icon={<Users className="h-4 w-4" />}
+          // Removing trend and trendText props
+        />
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <DashboardCard title="Theatres by Status">
+          <div className="space-y-8">
+            {stats.theatresByStatus.map((item) => (
+              <div key={item.status} className="flex items-center">
+                <div className="space-y-1 flex-1">
+                  <p className="text-sm font-medium leading-none">
+                    {item.status}
+                  </p>
+                  <div className="overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-2 rounded-full bg-primary"
+                      style={{
+                        width: `${Math.round(
+                          (item.count / stats.totalTheatres) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium">{item.count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+        
+        <DashboardCard title="Theatres by Type">
+          <div className="space-y-8">
+            {stats.theatresByType.map((item) => (
+              <div key={item.type} className="flex items-center">
+                <div className="space-y-1 flex-1">
+                  <p className="text-sm font-medium leading-none">
+                    {item.type}
+                  </p>
+                  <div className="overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className="h-2 rounded-full bg-primary"
+                      style={{
+                        width: `${Math.round(
+                          (item.count / stats.totalTheatres) * 100
+                        )}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium">{item.count}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
+      </div>
+      
+      <DashboardCard title="Recently Added Theatres">
+        <div className="text-sm text-muted-foreground">
+          No theatres added recently.
         </div>
-      </motion.div>
-    </Layout>
+      </DashboardCard>
+      
+      <DashboardCard title="Recently Updated Theatres">
+        <div className="text-sm text-muted-foreground">
+          No theatres updated recently.
+        </div>
+      </DashboardCard>
+    </div>
   );
-};
-
-export default Index;
+}
