@@ -6,7 +6,7 @@ import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import { theatres as mockTheatres } from "@/data/mockData";
-import { Theatre } from "@/types";
+import { Screen, Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
 import { toast } from "sonner";
 
@@ -30,13 +30,13 @@ const Theatres = () => {
       // Update existing theatre
       setTheatres(
         theatres.map((t) => 
-          t.id === editingTheatre.id ? { ...t, ...theatreData, updatedAt: new Date().toISOString() } : t
+          t.id === editingTheatre.id ? { ...t, ...theatreData, updatedAt: new Date().toISOString() } as Theatre : t
         )
       );
     } else {
       // Create new theatre
       const newTheatre: Theatre = {
-        id: `${theatres.length + 1}`,
+        id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         ...theatreData,
@@ -47,9 +47,13 @@ const Theatres = () => {
   };
   
   const handleDeleteTheatre = (theatre: Theatre) => {
-    // In a real app, you might want to show a confirmation dialog
     setTheatres(theatres.filter((t) => t.id !== theatre.id));
     toast.success(`Theatre "${theatre.name}" deleted successfully`);
+  };
+  
+  const handleViewDetails = (theatre: Theatre) => {
+    toast.info(`Viewing details for: ${theatre.name}`);
+    // In the future, this could navigate to a detailed view
   };
   
   const columns: Column<Theatre>[] = [
@@ -99,7 +103,7 @@ const Theatres = () => {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: (theatre: Theatre) => console.log("View theatre:", theatre)
+      onClick: handleViewDetails
     },
     {
       label: "Edit",
@@ -138,7 +142,7 @@ const Theatres = () => {
           columns={columns}
           searchPlaceholder="Search theatres..."
           actions={actions}
-          onRowClick={(theatre) => console.log("Row clicked:", theatre)}
+          onRowClick={handleViewDetails}
         />
       </motion.div>
       

@@ -21,6 +21,7 @@ export interface Theatre {
   status: 'Active' | 'Inactive' | 'Deleted';
   closureDetails?: string;
   screenCount: number;
+  screens?: Screen[];
   createdAt: string;
   updatedAt: string;
 }
