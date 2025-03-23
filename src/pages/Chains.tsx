@@ -2,31 +2,45 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Building } from "lucide-react";
+import { Plus, Edit, Trash2 } from "lucide-react";
 import { chains as mockChains } from "@/data/mockData";
 import { Chain } from "@/types";
+import { toast } from "sonner";
 
 const Chains = () => {
   const [chains, setChains] = useState<Chain[]>(mockChains);
   
-  const columns = [
+  const handleCreateChain = () => {
+    toast.info("Chain creation will be implemented in a future update");
+  };
+  
+  const handleEditChain = (chain: Chain) => {
+    toast.info(`Editing chain: ${chain.name}`);
+  };
+  
+  const handleDeleteChain = (chain: Chain) => {
+    setChains(chains.filter((c) => c.id !== chain.id));
+    toast.success(`Chain "${chain.name}" deleted successfully`);
+  };
+  
+  const columns: Column<Chain>[] = [
     {
       header: "Chain Name",
-      accessor: "name"
+      accessor: "name" as keyof Chain
     },
     {
       header: "Company",
-      accessor: "companyName"
+      accessor: "companyName" as keyof Chain
     },
     {
-      header: "Theatres Count",
-      accessor: "theatreCount"
+      header: "Theatre Count",
+      accessor: "theatreCount" as keyof Chain
     },
     {
       header: "Status",
-      accessor: "status",
+      accessor: "status" as keyof Chain,
       cell: (row: Chain) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
           row.status === "Active" 
@@ -38,9 +52,22 @@ const Chains = () => {
       )
     },
     {
-      header: "Created Date",
-      accessor: "createdAt",
-      cell: (row: Chain) => new Date(row.createdAt).toLocaleDateString()
+      header: "Last Updated",
+      accessor: "updatedAt" as keyof Chain,
+      cell: (row: Chain) => new Date(row.updatedAt).toLocaleDateString()
+    }
+  ];
+  
+  const actions = [
+    {
+      label: "Edit",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEditChain
+    },
+    {
+      label: "Delete",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDeleteChain
     }
   ];
   
@@ -56,42 +83,19 @@ const Chains = () => {
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Theatre Chains</h1>
             <p className="text-muted-foreground mt-1">
-              Manage all theatre chains in the CinemasDB system
+              Manage theatre chains and their associated theatres
             </p>
           </div>
-          <Button>
+          <Button onClick={handleCreateChain}>
             <Plus className="h-4 w-4 mr-2" /> Add Chain
           </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            { title: "Total Chains", count: chains.length, icon: <Building className="h-5 w-5" /> },
-            { title: "Active Chains", count: chains.filter(c => c.status === "Active").length, icon: <Building className="h-5 w-5" /> },
-            { title: "Total Theatres", count: chains.reduce((acc, chain) => acc + chain.theatreCount, 0), icon: <Building className="h-5 w-5" /> }
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              className="stat-card"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <div className="bg-primary/10 rounded-full p-2 text-primary">
-                  {stat.icon}
-                </div>
-              </div>
-              <h3 className="text-3xl font-bold mt-2">{stat.count.toLocaleString()}</h3>
-            </motion.div>
-          ))}
         </div>
         
         <DataTable
           data={chains}
           columns={columns}
           searchPlaceholder="Search chains..."
+          actions={actions}
         />
       </motion.div>
     </Layout>

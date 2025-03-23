@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import { theatres as mockTheatres } from "@/data/mockData";
@@ -52,22 +52,22 @@ const Theatres = () => {
     toast.success(`Theatre "${theatre.name}" deleted successfully`);
   };
   
-  const columns = [
+  const columns: Column<Theatre>[] = [
     {
       header: "Theatre Name",
-      accessor: "name"
+      accessor: "name" as keyof Theatre
     },
     {
       header: "Chain Name",
-      accessor: "chainName"
+      accessor: "chainName" as keyof Theatre
     },
     {
       header: "Company",
-      accessor: "companyName"
+      accessor: "companyName" as keyof Theatre
     },
     {
       header: "Location",
-      accessor: "address",
+      accessor: "address" as keyof Theatre,
       cell: (row: Theatre) => (
         <span className="truncate max-w-[200px] block">
           {row.address}
@@ -76,7 +76,7 @@ const Theatres = () => {
     },
     {
       header: "Status",
-      accessor: "status",
+      accessor: "status" as keyof Theatre,
       cell: (row: Theatre) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
           row.status === "Active" 
@@ -91,7 +91,7 @@ const Theatres = () => {
     },
     {
       header: "Screens",
-      accessor: "screenCount"
+      accessor: "screenCount" as keyof Theatre
     }
   ];
   

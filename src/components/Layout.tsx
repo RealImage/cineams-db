@@ -1,194 +1,265 @@
 
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { 
-  Sidebar, 
-  SidebarContent, 
-  SidebarGroup, 
-  SidebarGroupContent, 
-  SidebarGroupLabel, 
-  SidebarHeader, 
-  SidebarMenu, 
-  SidebarMenuButton, 
-  SidebarMenuItem, 
-  SidebarProvider, 
-  SidebarTrigger 
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "@/components/ui/dropdown-menu";
-import { 
-  BarChart3, 
-  Building2, 
-  ChevronRight, 
-  Film, 
-  HardDrive, 
-  LayoutDashboard, 
-  List, 
-  LogOut, 
-  Mail, 
-  Monitor, 
-  Radio, 
-  Settings, 
-  User, 
-  Users, 
-  Home, 
-  Bell
-} from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { useMediaQuery } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Building2,
+  LinkIcon,
+  Film,
+  Monitor,
+  Building,
+  FileText,
+  LayoutDashboard,
+  List,
+  Users,
+  Bell,
+  Settings,
+  Map,
+  MenuIcon,
+  XIcon,
+  ChevronDown,
+  LogOut,
+  User,
+  HelpCircle,
+  Home
+} from "lucide-react";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export const Layout = ({ children }: LayoutProps) => {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
-  const [mounted, setMounted] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 1024px)");
   
+  // Close sidebar when route changes on mobile
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [location.pathname, isMobile]);
   
-  if (!mounted) return null;
-  
-  return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        <AppSidebar />
-        <div className="flex-1">
-          <header className="h-14 border-b px-4 flex items-center justify-between">
-            <div className="flex items-center">
-              <SidebarTrigger />
-              <nav className="hidden md:flex items-center ml-4">
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Link to="/" className="hover:text-foreground">Home</Link>
-                  {location.pathname !== "/" && (
-                    <>
-                      <ChevronRight className="h-4 w-4 mx-1" />
-                      <span className="font-medium text-foreground capitalize">
-                        {location.pathname.split("/")[1]}
-                      </span>
-                    </>
-                  )}
-                </div>
-              </nav>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="/avatar.png" alt="User" />
-                      <AvatarFallback>U</AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">Admin User</p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        admin@cinemasdb.com
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          </header>
-          <main className="p-6">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={location.pathname}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.3 }}
-                className="page-transition"
-              >
-                {children}
-              </motion.div>
-            </AnimatePresence>
-          </main>
-        </div>
-      </div>
-    </SidebarProvider>
-  );
-};
-
-const AppSidebar = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  // Navigation items
   const navItems = [
-    { title: "Dashboard", path: "/", icon: LayoutDashboard },
-    { title: "Theatres", path: "/theatres", icon: Building2 },
-    { title: "Chains", path: "/chains", icon: Link },
-    { title: "TDL Devices Master", path: "/tdl-devices", icon: HardDrive },
-    { title: "WireTAP Devices", path: "/wiretap-devices", icon: Radio },
-    { title: "Companies", path: "/companies", icon: Building2 },
-    { title: "Reports", path: "/reports", icon: BarChart3 },
-    { title: "Master Lists", path: "/master-lists", icon: List },
-    { title: "User Management", path: "/user-management", icon: Users },
-    { title: "Notification Settings", path: "/notification-settings", icon: Mail },
-    { title: "Role Management", path: "/role-management", icon: Settings },
+    { 
+      icon: <LayoutDashboard size={20} />, 
+      label: "Dashboard", 
+      path: "/" 
+    },
+    { 
+      icon: <Building2 size={20} />, 
+      label: "Theatres", 
+      path: "/theatres" 
+    },
+    { 
+      icon: <LinkIcon size={20} />, 
+      label: "Chains", 
+      path: "/chains" 
+    },
+    { 
+      icon: <Monitor size={20} />, 
+      label: "TDL Devices", 
+      path: "/tdl-devices" 
+    },
+    { 
+      icon: <List size={20} />, 
+      label: "WireTAP Devices", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <Building size={20} />, 
+      label: "Companies", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <FileText size={20} />, 
+      label: "Reports", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <Map size={20} />, 
+      label: "Location Management", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <Users size={20} />, 
+      label: "User Management", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <Bell size={20} />, 
+      label: "Notification Settings", 
+      path: "#",
+      disabled: true 
+    },
+    { 
+      icon: <Settings size={20} />, 
+      label: "Role Management", 
+      path: "#",
+      disabled: true 
+    },
   ];
   
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+  
   return (
-    <Sidebar>
-      <SidebarHeader className="h-14 flex items-center px-4">
-        <div className="flex items-center gap-2 font-bold text-lg text-primary">
-          <Film className="h-5 w-5" />
-          <span>CinemasDB</span>
+    <div className="min-h-screen bg-background flex">
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {sidebarOpen && isMobile && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.5 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+      
+      {/* Sidebar */}
+      <motion.aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border px-3 py-4 flex flex-col",
+          isMobile && "transition-transform duration-300",
+          isMobile && (sidebarOpen ? "translate-x-0" : "-translate-x-full")
+        )}
+        initial={isMobile ? { x: "-100%" } : false}
+        animate={isMobile && sidebarOpen ? { x: 0 } : false}
+      >
+        <div className="flex items-center justify-between mb-6">
+          <Link to="/" className="flex items-center space-x-2">
+            <Home className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl">CinemasDB</span>
+          </Link>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
+              <XIcon size={20} />
+            </Button>
+          )}
         </div>
-      </SidebarHeader>
-      <SidebarContent className="pt-2">
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {navItems.map((item) => (
-                <SidebarMenuItem key={item.path}>
-                  <SidebarMenuButton asChild>
-                    <button
-                      onClick={() => navigate(item.path)}
-                      className={`nav-item ${location.pathname === item.path ? "active" : ""}`}
-                    >
-                      <item.icon className="h-5 w-5" />
-                      <span>{item.title}</span>
-                    </button>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
+        
+        <nav className="space-y-1 flex-1 overflow-auto">
+          {navItems.map((item, i) => (
+            <Link
+              key={i}
+              to={item.path}
+              className={cn(
+                "flex items-center py-2 px-3 rounded-md text-sm transition-colors",
+                isActive(item.path)
+                  ? "bg-primary/10 text-primary font-medium"
+                  : "text-muted-foreground hover:bg-muted",
+                item.disabled && "opacity-50 pointer-events-none"
+              )}
+            >
+              <span className="mr-3">{item.icon}</span>
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+        
+        <div className="mt-auto">
+          <div className="border-t border-border pt-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="w-full justify-start">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mr-2">
+                      <User size={16} className="text-primary" />
+                    </div>
+                    <div className="text-left mr-2">
+                      <p className="text-sm font-medium">John Smith</p>
+                      <p className="text-xs text-muted-foreground">Admin</p>
+                    </div>
+                    <ChevronDown size={16} className="ml-auto" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Profile</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <span>Help</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </motion.aside>
+      
+      {/* Main content */}
+      <div className={cn(
+        "flex-1 transition-all duration-300",
+        !isMobile && "ml-64"
+      )}>
+        {/* Header */}
+        <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+          <div className="flex items-center justify-between h-16 px-6">
+            {isMobile && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setSidebarOpen(true)}
+              >
+                <MenuIcon size={20} />
+              </Button>
+            )}
+            <div className={cn(
+              "text-lg font-semibold",
+              isMobile ? "ml-4" : "ml-0"
+            )}>
+              {navItems.find(item => isActive(item.path))?.label || "Dashboard"}
+            </div>
+            <div className="flex items-center space-x-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="text-xs h-8"
+              >
+                <HelpCircle className="mr-1 h-4 w-4" />
+                Help
+              </Button>
+            </div>
+          </div>
+        </header>
+        
+        {/* Page content */}
+        <main className="p-6">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };

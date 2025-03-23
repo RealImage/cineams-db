@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, ReactNode } from "react";
 import { 
   Table, 
   TableBody, 
@@ -29,10 +28,10 @@ import {
   Search
 } from "lucide-react";
 
-interface Column<T> {
+export interface Column<T> {
   header: string;
-  accessor: keyof T | ((row: T) => React.ReactNode);
-  cell?: (row: T) => React.ReactNode;
+  accessor: keyof T | ((row: T) => ReactNode);
+  cell?: (row: T) => ReactNode;
   sortable?: boolean;
 }
 
@@ -61,7 +60,6 @@ export function DataTable<T extends { id: string }>({
   const [page, setPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   
-  // Filter data based on search term
   const filteredData = searchTerm
     ? data.filter((item) => {
         return Object.values(item).some(
@@ -72,14 +70,12 @@ export function DataTable<T extends { id: string }>({
       })
     : data;
     
-  // Pagination
   const totalPages = Math.ceil(filteredData.length / rowsPerPage);
   const paginatedData = filteredData.slice(
     (page - 1) * rowsPerPage,
     page * rowsPerPage
   );
   
-  // Handle page change
   const handlePageChange = (newPage: number) => {
     setPage(Math.max(1, Math.min(newPage, totalPages)));
   };
@@ -140,15 +136,19 @@ export function DataTable<T extends { id: string }>({
                   className={`${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}`}
                   onClick={() => onRowClick && onRowClick(row)}
                 >
-                  {columns.map((column, colIndex) => (
-                    <TableCell key={`${row.id}-${colIndex}`}>
-                      {column.cell 
-                        ? column.cell(row)
-                        : typeof column.accessor === "function"
-                          ? column.accessor(row)
-                          : String(row[column.accessor] || "")}
-                    </TableCell>
-                  ))}
+                  {columns.map((column, colIndex) => {
+                    const accessorValue = typeof column.accessor === "function"
+                      ? column.accessor(row)
+                      : row[column.accessor as keyof T];
+                      
+                    return (
+                      <TableCell key={`${row.id}-${colIndex}`}>
+                        {column.cell 
+                          ? column.cell(row)
+                          : String(accessorValue || "")}
+                      </TableCell>
+                    );
+                  })}
                   {actions && (
                     <TableCell className="p-2 text-right">
                       <DropdownMenu>

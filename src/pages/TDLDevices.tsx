@@ -2,64 +2,107 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
-import { DataTable } from "@/components/ui/data-table";
+import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, HardDrive, Check, X } from "lucide-react";
+import { Plus, Edit, Trash2, FileCheck, CheckCircle, XCircle, Clock } from "lucide-react";
 import { tdlDevices as mockDevices } from "@/data/mockData";
 import { TDLDevice } from "@/types";
+import { toast } from "sonner";
 
 const TDLDevices = () => {
   const [devices, setDevices] = useState<TDLDevice[]>(mockDevices);
   
-  const columns = [
+  const handleCreateDevice = () => {
+    toast.info("Device creation will be implemented in a future update");
+  };
+  
+  const handleEditDevice = (device: TDLDevice) => {
+    toast.info(`Editing device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
+  };
+  
+  const handleDeleteDevice = (device: TDLDevice) => {
+    setDevices(devices.filter((d) => d.id !== device.id));
+    toast.success(`Device "${device.manufacturer} ${device.model}" deleted successfully`);
+  };
+  
+  const handleVerifyDevice = (device: TDLDevice) => {
+    toast.info(`Verifying device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
+  };
+  
+  const getCertificateStatusIcon = (status: string) => {
+    switch (status) {
+      case "Valid":
+        return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case "Expired":
+        return <Clock className="h-4 w-4 text-yellow-600" />;
+      case "Revoked":
+        return <XCircle className="h-4 w-4 text-red-600" />;
+      default:
+        return null;
+    }
+  };
+  
+  const columns: Column<TDLDevice>[] = [
     {
       header: "Manufacturer",
-      accessor: "manufacturer"
+      accessor: "manufacturer" as keyof TDLDevice
     },
     {
       header: "Model",
-      accessor: "model"
+      accessor: "model" as keyof TDLDevice
     },
     {
       header: "Serial Number",
-      accessor: "serialNumber"
+      accessor: "serialNumber" as keyof TDLDevice
     },
     {
       header: "Certificate Status",
-      accessor: "certificateStatus",
+      accessor: "certificateStatus" as keyof TDLDevice,
       cell: (row: TDLDevice) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.certificateStatus === "Valid" 
-            ? "bg-green-100 text-green-800" 
-            : row.certificateStatus === "Expired" 
-              ? "bg-yellow-100 text-yellow-800" 
-              : "bg-red-100 text-red-800"
-        }`}>
-          {row.certificateStatus}
-        </span>
+        <div className="flex items-center space-x-2">
+          {getCertificateStatusIcon(row.certificateStatus)}
+          <span className={`${
+            row.certificateStatus === "Valid" 
+              ? "text-green-600" 
+              : row.certificateStatus === "Expired" 
+                ? "text-yellow-600" 
+                : "text-red-600"
+          }`}>
+            {row.certificateStatus}
+          </span>
+        </div>
       )
     },
     {
-      header: "Firmware Version",
-      accessor: "firmwareVersion"
-    },
-    {
-      header: "Auto-Update",
-      accessor: "autoUpdateCertificate",
-      cell: (row: TDLDevice) => (
-        row.autoUpdateCertificate ? 
-          <Check className="h-4 w-4 text-green-600 mx-auto" /> : 
-          <X className="h-4 w-4 text-red-600 mx-auto" />
-      )
-    },
-    {
-      header: "Updated By",
-      accessor: "updatedBy"
+      header: "Firmware",
+      accessor: "firmwareVersion" as keyof TDLDevice
     },
     {
       header: "Updated On",
-      accessor: "updatedOn",
+      accessor: "updatedOn" as keyof TDLDevice,
       cell: (row: TDLDevice) => new Date(row.updatedOn).toLocaleDateString()
+    },
+    {
+      header: "Source",
+      accessor: "source" as keyof TDLDevice
+    }
+  ];
+  
+  const actions = [
+    {
+      label: "Verify",
+      icon: <FileCheck className="h-4 w-4" />,
+      onClick: handleVerifyDevice
+    },
+    {
+      label: "Edit",
+      icon: <Edit className="h-4 w-4" />,
+      onClick: handleEditDevice
+    },
+    {
+      label: "Delete",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: handleDeleteDevice
     }
   ];
   
@@ -73,45 +116,21 @@ const TDLDevices = () => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">TDL Devices Master</h1>
+            <h1 className="text-2xl font-bold tracking-tight">TDL Devices</h1>
             <p className="text-muted-foreground mt-1">
-              Manage all Trusted Device List (TDL) devices in the system
+              Manage Trusted Device List (TDL) devices across all theatres
             </p>
           </div>
-          <Button>
+          <Button onClick={handleCreateDevice}>
             <Plus className="h-4 w-4 mr-2" /> Add Device
           </Button>
-        </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { title: "Total Devices", count: devices.length, icon: <HardDrive className="h-5 w-5" /> },
-            { title: "Valid Certificates", count: devices.filter(d => d.certificateStatus === "Valid").length, icon: <Check className="h-5 w-5" /> },
-            { title: "Expired Certificates", count: devices.filter(d => d.certificateStatus === "Expired").length, icon: <X className="h-5 w-5" /> },
-            { title: "Auto-Update Enabled", count: devices.filter(d => d.autoUpdateCertificate).length, icon: <HardDrive className="h-5 w-5" /> }
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              className="stat-card"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1, duration: 0.3 }}
-            >
-              <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                <div className="bg-primary/10 rounded-full p-2 text-primary">
-                  {stat.icon}
-                </div>
-              </div>
-              <h3 className="text-3xl font-bold mt-2">{stat.count.toLocaleString()}</h3>
-            </motion.div>
-          ))}
         </div>
         
         <DataTable
           data={devices}
           columns={columns}
           searchPlaceholder="Search devices..."
+          actions={actions}
         />
       </motion.div>
     </Layout>

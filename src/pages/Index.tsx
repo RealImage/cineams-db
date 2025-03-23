@@ -1,204 +1,220 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/Layout";
-import { StatCard } from "@/components/dashboard/StatCard";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
-import { DataTable } from "@/components/ui/data-table";
-import { Button } from "@/components/ui/button";
-import { Building2, Film, HardDrive, User2, Building, ChevronRight } from "lucide-react";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend } from "recharts";
-import { mockDashboardStats } from "@/data/mockData";
+import { StatCard } from "@/components/dashboard/StatCard";
+import { DataTable, Column } from "@/components/ui/data-table";
+import { 
+  Building2,
+  Film,
+  Monitor,
+  Building,
+  Users,
+  BarChart3,
+  ThumbsUp,
+  Clock,
+} from "lucide-react";
 import { Theatre } from "@/types";
+import { mockDashboardStats, theatres } from "@/data/mockData";
+import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 
-const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884d8", "#82ca9d"];
+// Color constants
+const COLORS = ["#4f46e5", "#0891b2", "#7c3aed", "#059669", "#c026d3", "#d97706"];
+const STATUS_COLORS = {
+  Active: "#16a34a",
+  Inactive: "#ca8a04",
+  Deleted: "#dc2626"
+};
 
-const Dashboard = () => {
-  const [stats, setStats] = useState(mockDashboardStats);
-  const [loading, setLoading] = useState(true);
+const Index = () => {
+  const [dashboardStats] = useState(mockDashboardStats);
   
-  useEffect(() => {
-    // Simulate data loading
-    const timer = setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-    
-    return () => clearTimeout(timer);
-  }, []);
+  const pieChartData = dashboardStats.theatresByType.map(item => ({
+    name: item.type,
+    value: item.count
+  }));
   
-  const recentTheatreColumns = [
+  const barChartData = dashboardStats.theatresByStatus.map(item => ({
+    name: item.status,
+    value: item.count,
+    color: STATUS_COLORS[item.status as keyof typeof STATUS_COLORS] || "#94a3b8"
+  }));
+  
+  const recentTheatreColumns: Column<Theatre>[] = [
     {
       header: "Theatre Name",
-      accessor: "name",
+      accessor: "name" as keyof Theatre
     },
     {
       header: "Chain",
-      accessor: "chainName",
+      accessor: "chainName" as keyof Theatre
     },
     {
       header: "Location",
-      accessor: "address",
+      accessor: "address" as keyof Theatre,
       cell: (row: Theatre) => (
         <span className="truncate max-w-[200px] block">
           {row.address}
         </span>
-      ),
+      )
     },
     {
-      header: "Status",
-      accessor: "status",
-      cell: (row: Theatre) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-          row.status === "Active" 
-            ? "bg-green-100 text-green-800" 
-            : row.status === "Inactive" 
-              ? "bg-yellow-100 text-yellow-800" 
-              : "bg-red-100 text-red-800"
-        }`}>
-          {row.status}
-        </span>
-      ),
-    },
-    {
-      header: "Screens",
-      accessor: "screenCount",
-    },
+      header: "Added On",
+      accessor: "createdAt" as keyof Theatre,
+      cell: (row: Theatre) => new Date(row.createdAt).toLocaleDateString()
+    }
   ];
-
+  
+  const updatedTheatreColumns: Column<Theatre>[] = [
+    {
+      header: "Theatre Name",
+      accessor: "name" as keyof Theatre
+    },
+    {
+      header: "Chain",
+      accessor: "chainName" as keyof Theatre
+    },
+    {
+      header: "Location",
+      accessor: "address" as keyof Theatre,
+      cell: (row: Theatre) => (
+        <span className="truncate max-w-[200px] block">
+          {row.address}
+        </span>
+      )
+    },
+    {
+      header: "Updated On",
+      accessor: "updatedAt" as keyof Theatre,
+      cell: (row: Theatre) => new Date(row.updatedAt).toLocaleDateString()
+    }
+  ];
+  
   return (
     <Layout>
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm">
-              Export
-            </Button>
-            <Button size="sm">Refresh Data</Button>
-          </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">
+            Overview of your cinema database
+          </p>
         </div>
         
-        <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
-          variants={{
-            hidden: { opacity: 0 },
-            show: {
-              opacity: 1,
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-          initial="hidden"
-          animate="show"
-        >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <StatCard 
-            title="Total Theatres" 
-            value={stats.totalTheatres} 
-            previousValue={stats.totalTheatres - 12}
-            icon={<Building2 className="h-12 w-12" />}
-            description="Last 30 days"
+            title="Theatres"
+            value={dashboardStats.totalTheatres}
+            icon={<Building2 />}
+            trend={+5}
+            trendText="from last month"
           />
           <StatCard 
-            title="Total Screens" 
-            value={stats.totalScreens} 
-            previousValue={stats.totalScreens - 48}
-            icon={<Film className="h-12 w-12" />}
-            description="Last 30 days"
+            title="Screens"
+            value={dashboardStats.totalScreens}
+            icon={<Film />}
+            trend={+12}
+            trendText="from last month"
           />
           <StatCard 
-            title="Total Companies" 
-            value={stats.totalCompanies} 
-            previousValue={stats.totalCompanies - 3}
-            icon={<Building className="h-12 w-12" />}
-            description="Last 30 days"
+            title="Devices"
+            value={dashboardStats.totalDevices}
+            icon={<Monitor />}
+            trend={+24}
+            trendText="from last month"
           />
           <StatCard 
-            title="Total Devices" 
-            value={stats.totalDevices} 
-            previousValue={stats.totalDevices - 137}
-            icon={<HardDrive className="h-12 w-12" />}
-            description="Last 30 days"
+            title="Companies"
+            value={dashboardStats.totalCompanies}
+            icon={<Building />}
+            trend={+2}
+            trendText="from last month"
           />
-        </motion.div>
+        </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DashboardCard title="Theatres by Status">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <DashboardCard
+            title="Theatre Types"
+            description="Distribution of theatres by type"
+          >
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
                 <Pie
-                  data={stats.theatresByStatus}
+                  data={pieChartData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
+                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                   outerRadius={100}
                   fill="#8884d8"
-                  dataKey="count"
-                  nameKey="status"
-                  label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(1)}%`}
+                  dataKey="value"
                 >
-                  {stats.theatresByStatus.map((entry, index) => (
+                  {pieChartData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => [`${value} Theatres`, 'Count']} />
-                <Legend />
               </PieChart>
             </ResponsiveContainer>
           </DashboardCard>
           
-          <DashboardCard title="Theatres by Type">
+          <DashboardCard
+            title="Theatre Status"
+            description="Count of theatres by status"
+          >
             <ResponsiveContainer width="100%" height={300}>
               <BarChart
-                data={stats.theatresByType}
+                data={barChartData}
                 margin={{
-                  top: 5,
+                  top: 20,
                   right: 30,
                   left: 20,
                   bottom: 5,
                 }}
               >
-                <XAxis dataKey="type" />
+                <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip formatter={(value) => [`${value} Theatres`, 'Count']} />
-                <Bar dataKey="count" fill="#0088FE" name="Count" />
+                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                  {barChartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </DashboardCard>
         </div>
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <DashboardCard title="Recently Added Theatres">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+          <DashboardCard
+            title="Recently Added Theatres"
+            description="Theatres added in the past 30 days"
+          >
             <DataTable
-              data={stats.recentlyAddedTheatres}
+              data={dashboardStats.recentlyAddedTheatres}
               columns={recentTheatreColumns}
               searchable={false}
-              onRowClick={(row) => console.log("Clicked row:", row)}
             />
-            <div className="mt-4 flex justify-end">
-              <Button size="sm" variant="outline" className="flex items-center gap-1">
-                View All <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </DashboardCard>
           
-          <DashboardCard title="Recently Updated Theatres">
+          <DashboardCard
+            title="Recently Updated Theatres"
+            description="Theatres updated in the past 30 days"
+          >
             <DataTable
-              data={stats.recentlyUpdatedTheatres}
-              columns={recentTheatreColumns}
+              data={dashboardStats.recentlyUpdatedTheatres}
+              columns={updatedTheatreColumns}
               searchable={false}
-              onRowClick={(row) => console.log("Clicked row:", row)}
             />
-            <div className="mt-4 flex justify-end">
-              <Button size="sm" variant="outline" className="flex items-center gap-1">
-                View All <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
           </DashboardCard>
         </div>
-      </div>
+      </motion.div>
     </Layout>
   );
 };
 
-export default Dashboard;
+export default Index;
