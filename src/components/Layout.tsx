@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, Outlet } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { useIsMobile } from "@/hooks/use-mobile"; // Changed from useMediaQuery to useIsMobile
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,16 +34,11 @@ import {
   Home
 } from "lucide-react";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
-
-export const Layout = ({ children }: LayoutProps) => {
+export const Layout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
-  const isMobile = useIsMobile(); // Using useIsMobile directly
+  const isMobile = useIsMobile();
   
-  // Close sidebar when route changes on mobile
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
@@ -122,7 +116,6 @@ export const Layout = ({ children }: LayoutProps) => {
   
   return (
     <div className="min-h-screen bg-background flex">
-      {/* Mobile Overlay */}
       <AnimatePresence>
         {sidebarOpen && isMobile && (
           <motion.div
@@ -135,7 +128,6 @@ export const Layout = ({ children }: LayoutProps) => {
         )}
       </AnimatePresence>
       
-      {/* Sidebar */}
       <motion.aside
         className={cn(
           "fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border px-3 py-4 flex flex-col",
@@ -219,12 +211,10 @@ export const Layout = ({ children }: LayoutProps) => {
         </div>
       </motion.aside>
       
-      {/* Main content */}
       <div className={cn(
         "flex-1 transition-all duration-300",
         !isMobile && "ml-64"
       )}>
-        {/* Header */}
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
           <div className="flex items-center justify-between h-16 px-6">
             {isMobile && (
@@ -255,9 +245,8 @@ export const Layout = ({ children }: LayoutProps) => {
           </div>
         </header>
         
-        {/* Page content */}
         <main className="p-6">
-          {children}
+          <Outlet />
         </main>
       </div>
     </div>
