@@ -1,5 +1,78 @@
 import { Theatre, Chain, TDLDevice, Company, DashboardStats, Screen, ScreenDevice } from "../types";
 
+const generateScreens = (theatreId: string, count: number): Screen[] => {
+  const screens: Screen[] = [];
+  
+  for (let i = 1; i <= count; i++) {
+    screens.push({
+      id: `${theatreId}-screen-${i}`,
+      theatreId: theatreId,
+      number: `${i}`,
+      name: `Audi ${i}`,
+      uuid: `screen-${theatreId}-${i}`,
+      thirdPartyId: `TP-${theatreId}-${i}`,
+      operators: [
+        {
+          name: "John Operator",
+          email: "john@cinema.com",
+          phone: "+1 555-123-4567"
+        }
+      ],
+      autoScreenUpdateLock: false,
+      flmManagementLock: false,
+      multiThumbprintKdmScreen: false,
+      status: "Active",
+      seatingCapacity: 100 + (i * 10),
+      coolingType: i % 2 === 0 ? "Central" : "Split Unit",
+      wheelchairAccessibility: true,
+      motionSeats: i % 3 === 0,
+      dimensions: {
+        auditoriumWidth: 15 + i,
+        auditoriumHeight: 8 + (i * 0.5),
+        auditoriumDepth: 20 + i,
+        screenWidth: 12 + i,
+        screenHeight: 6 + (i * 0.5),
+        throwDistance: 18 + i,
+        gain: 1.8
+      },
+      projection: {
+        type: i % 2 === 0 ? "Digital 2D/3D" : "Laser",
+        manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
+        masking: i % 2 === 0
+      },
+      sound: {
+        processor: i % 2 === 0 ? "Dolby CP750" : "QSC Q-SYS",
+        speakers: i % 3 === 0 ? "JBL" : i % 3 === 1 ? "Klipsch" : "Meyer Sound",
+        soundMixes: ["5.1 Surround", "7.1 Surround"],
+        iabSupported: i % 2 === 0
+      },
+      ipAddress: `192.168.1.${10 + i}`,
+      subnet: "255.255.255.0",
+      gateway: "192.168.1.1",
+      devices: [
+        {
+          id: `${theatreId}-projector-${i}`,
+          manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
+          model: i % 3 === 0 ? "CP4325-RGB" : i % 3 === 1 ? "DP4K-60L" : "SRX-R815P",
+          serialNumber: `PROJ-${100 + i}`,
+          softwareVersion: "2.5.1"
+        },
+        {
+          id: `${theatreId}-server-${i}`,
+          manufacturer: i % 2 === 0 ? "Dolby" : "GDC",
+          model: i % 2 === 0 ? "IMS3000" : "SR-1000",
+          serialNumber: `SERVER-${200 + i}`,
+          softwareVersion: "7.3.2"
+        }
+      ],
+      createdAt: new Date(Date.now() - (i * 1000000)).toISOString(),
+      updatedAt: new Date(Date.now() - (i * 500000)).toISOString()
+    });
+  }
+  
+  return screens;
+};
+
 export const theatres: Theatre[] = [
   {
     id: "1",
@@ -352,77 +425,4 @@ export const mockDashboardStats: DashboardStats = {
     { type: "Drive-in", count: 89 },
     { type: "Other", count: 86 }
   ]
-};
-
-const generateScreens = (theatreId: string, count: number): Screen[] => {
-  const screens: Screen[] = [];
-  
-  for (let i = 1; i <= count; i++) {
-    screens.push({
-      id: `${theatreId}-screen-${i}`,
-      theatreId: theatreId,
-      number: `${i}`,
-      name: `Audi ${i}`,
-      uuid: `screen-${theatreId}-${i}`,
-      thirdPartyId: `TP-${theatreId}-${i}`,
-      operators: [
-        {
-          name: "John Operator",
-          email: "john@cinema.com",
-          phone: "+1 555-123-4567"
-        }
-      ],
-      autoScreenUpdateLock: false,
-      flmManagementLock: false,
-      multiThumbprintKdmScreen: false,
-      status: "Active",
-      seatingCapacity: 100 + (i * 10),
-      coolingType: i % 2 === 0 ? "Central" : "Split Unit",
-      wheelchairAccessibility: true,
-      motionSeats: i % 3 === 0,
-      dimensions: {
-        auditoriumWidth: 15 + i,
-        auditoriumHeight: 8 + (i * 0.5),
-        auditoriumDepth: 20 + i,
-        screenWidth: 12 + i,
-        screenHeight: 6 + (i * 0.5),
-        throwDistance: 18 + i,
-        gain: 1.8
-      },
-      projection: {
-        type: i % 2 === 0 ? "Digital 2D/3D" : "Laser",
-        manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
-        masking: i % 2 === 0
-      },
-      sound: {
-        processor: i % 2 === 0 ? "Dolby CP750" : "QSC Q-SYS",
-        speakers: i % 3 === 0 ? "JBL" : i % 3 === 1 ? "Klipsch" : "Meyer Sound",
-        soundMixes: ["5.1 Surround", "7.1 Surround"],
-        iabSupported: i % 2 === 0
-      },
-      ipAddress: `192.168.1.${10 + i}`,
-      subnet: "255.255.255.0",
-      gateway: "192.168.1.1",
-      devices: [
-        {
-          id: `${theatreId}-projector-${i}`,
-          manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
-          model: i % 3 === 0 ? "CP4325-RGB" : i % 3 === 1 ? "DP4K-60L" : "SRX-R815P",
-          serialNumber: `PROJ-${100 + i}`,
-          softwareVersion: "2.5.1"
-        },
-        {
-          id: `${theatreId}-server-${i}`,
-          manufacturer: i % 2 === 0 ? "Dolby" : "GDC",
-          model: i % 2 === 0 ? "IMS3000" : "SR-1000",
-          serialNumber: `SERVER-${200 + i}`,
-          softwareVersion: "7.3.2"
-        }
-      ],
-      createdAt: new Date(Date.now() - (i * 1000000)).toISOString(),
-      updatedAt: new Date(Date.now() - (i * 500000)).toISOString()
-    });
-  }
-  
-  return screens;
 };
