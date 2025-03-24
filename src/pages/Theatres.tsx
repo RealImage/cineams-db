@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
@@ -6,22 +7,32 @@ import { Plus, Edit, Trash2, Eye, Calendar, User, Tag, Film } from "lucide-react
 import { theatres as mockTheatres } from "@/data/mockData";
 import { Screen, Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
+import { AddTheatreDialog } from "@/components/AddTheatreDialog";
+import { ViewTheatreDialog } from "@/components/ViewTheatreDialog";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
 const Theatres = () => {
   const [theatres, setTheatres] = useState<Theatre[]>(mockTheatres);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTheatre, setEditingTheatre] = useState<Theatre | undefined>(undefined);
+  const [viewingTheatre, setViewingTheatre] = useState<Theatre | undefined>(undefined);
   
   const handleCreateTheatre = () => {
     setEditingTheatre(undefined);
-    setDialogOpen(true);
+    setAddDialogOpen(true);
   };
   
   const handleEditTheatre = (theatre: Theatre) => {
     setEditingTheatre(theatre);
     setDialogOpen(true);
+  };
+  
+  const handleViewTheatre = (theatre: Theatre) => {
+    setViewingTheatre(theatre);
+    setViewDialogOpen(true);
   };
   
   const handleSaveTheatre = (theatreData: Partial<Theatre>) => {
@@ -186,7 +197,7 @@ const Theatres = () => {
     {
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
-      onClick: handleViewDetails
+      onClick: handleViewTheatre
     },
     {
       label: "Edit",
@@ -224,7 +235,20 @@ const Theatres = () => {
         columns={columns}
         searchPlaceholder="Search theatres..."
         actions={actions}
-        onRowClick={handleViewDetails}
+        onRowClick={handleViewTheatre}
+      />
+      
+      {/* Replace the old TheatreDialog with our new dialogs */}
+      <AddTheatreDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        onSave={handleSaveTheatre}
+      />
+      
+      <ViewTheatreDialog
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+        theatre={viewingTheatre}
       />
       
       <TheatreDialog

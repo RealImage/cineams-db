@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import Theatres from "./pages/Theatres";
+import EditTheatre from "./pages/EditTheatre";
 import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
 import NotFound from "./pages/NotFound";
@@ -23,6 +24,7 @@ const App = () => (
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
             <Route path="/theatres" element={<Theatres />} />
+            <Route path="/theatre/:id/edit" element={<EditTheatre />} />
             <Route path="/chains" element={<Chains />} />
             <Route path="/tdl-devices" element={<TDLDevices />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

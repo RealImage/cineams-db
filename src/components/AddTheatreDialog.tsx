@@ -1,0 +1,133 @@
+
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Theatre } from "@/types";
+import { toast } from "sonner";
+
+interface AddTheatreDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (theatre: Partial<Theatre>) => void;
+}
+
+export const AddTheatreDialog = ({
+  open,
+  onOpenChange,
+  onSave,
+}: AddTheatreDialogProps) => {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState<Partial<Theatre>>({
+    name: "",
+    displayName: "",
+    address: "",
+    uuid: crypto.randomUUID(),
+    status: "Active",
+  });
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+  
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!formData.name || !formData.displayName || !formData.address) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+    
+    // Create theatre with minimal info
+    const newTheatre: Theatre = {
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      name: formData.name!,
+      displayName: formData.displayName!,
+      address: formData.address!,
+      uuid: formData.uuid!,
+      chainId: "",
+      chainName: "",
+      companyId: "",
+      companyName: "",
+      listing: "Listed",
+      type: "Multiplex",
+      status: "Active",
+      screenCount: 0,
+    } as Theatre;
+    
+    // Save the theatre
+    onSave(newTheatre);
+    
+    // Close dialog
+    onOpenChange(false);
+    
+    // Navigate to edit page
+    navigate(`/theatre/${newTheatre.id}/edit`);
+  };
+  
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add New Theatre</DialogTitle>
+          <DialogDescription>
+            Enter basic theatre information to get started. You'll be able to add more details afterward.
+          </DialogDescription>
+        </DialogHeader>
+        
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Theatre Name *</Label>
+              <Input
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="displayName">Display Name *</Label>
+              <Input
+                id="displayName"
+                name="displayName"
+                value={formData.displayName}
+                onChange={handleChange}
+                required
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="address">Theatre Address *</Label>
+              <Input
+                id="address"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                required
+                placeholder="123 Main St, City, State, Country"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              Create Theatre
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
