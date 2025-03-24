@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
@@ -118,33 +117,31 @@ const Theatres = () => {
   ];
   
   return (
-    <Layout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Theatres</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage all theatres in the CinemasDB system
-            </p>
-          </div>
-          <Button onClick={handleCreateTheatre}>
-            <Plus className="h-4 w-4 mr-2" /> Add Theatre
-          </Button>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Theatres</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage all theatres in the CinemasDB system
+          </p>
         </div>
-        
-        <DataTable
-          data={theatres}
-          columns={columns}
-          searchPlaceholder="Search theatres..."
-          actions={actions}
-          onRowClick={handleViewDetails}
-        />
-      </motion.div>
+        <Button onClick={handleCreateTheatre}>
+          <Plus className="h-4 w-4 mr-2" /> Add Theatre
+        </Button>
+      </div>
+      
+      <DataTable
+        data={theatres}
+        columns={columns}
+        searchPlaceholder="Search theatres..."
+        actions={actions}
+        onRowClick={handleViewDetails}
+      />
       
       <TheatreDialog
         open={dialogOpen}
@@ -152,7 +149,7 @@ const Theatres = () => {
         theatre={editingTheatre}
         onSave={handleSaveTheatre}
       />
-    </Layout>
+    </motion.div>
   );
 };
 

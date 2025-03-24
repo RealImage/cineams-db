@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2, FileCheck, CheckCircle, XCircle, Clock } from "lucide-react";
@@ -107,33 +106,31 @@ const TDLDevices = () => {
   ];
   
   return (
-    <Layout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">TDL Devices</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage Trusted Device List (TDL) devices across all theatres
-            </p>
-          </div>
-          <Button onClick={handleCreateDevice}>
-            <Plus className="h-4 w-4 mr-2" /> Add Device
-          </Button>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">TDL Devices</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage Trusted Device List (TDL) devices across all theatres
+          </p>
         </div>
-        
-        <DataTable
-          data={devices}
-          columns={columns}
-          searchPlaceholder="Search devices..."
-          actions={actions}
-        />
-      </motion.div>
-    </Layout>
+        <Button onClick={handleCreateDevice}>
+          <Plus className="h-4 w-4 mr-2" /> Add Device
+        </Button>
+      </div>
+      
+      <DataTable
+        data={devices}
+        columns={columns}
+        searchPlaceholder="Search devices..."
+        actions={actions}
+      />
+    </motion.div>
   );
 };
 

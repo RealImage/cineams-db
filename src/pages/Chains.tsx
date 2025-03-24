@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Layout } from "@/components/Layout";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
@@ -72,33 +71,31 @@ const Chains = () => {
   ];
   
   return (
-    <Layout>
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Theatre Chains</h1>
-            <p className="text-muted-foreground mt-1">
-              Manage theatre chains and their associated theatres
-            </p>
-          </div>
-          <Button onClick={handleCreateChain}>
-            <Plus className="h-4 w-4 mr-2" /> Add Chain
-          </Button>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Theatre Chains</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage theatre chains and their associated theatres
+          </p>
         </div>
-        
-        <DataTable
-          data={chains}
-          columns={columns}
-          searchPlaceholder="Search chains..."
-          actions={actions}
-        />
-      </motion.div>
-    </Layout>
+        <Button onClick={handleCreateChain}>
+          <Plus className="h-4 w-4 mr-2" /> Add Chain
+        </Button>
+      </div>
+      
+      <DataTable
+        data={chains}
+        columns={columns}
+        searchPlaceholder="Search chains..."
+        actions={actions}
+      />
+    </motion.div>
   );
 };
 
