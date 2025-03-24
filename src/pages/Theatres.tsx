@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
@@ -8,7 +7,6 @@ import { theatres as mockTheatres } from "@/data/mockData";
 import { Screen, Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
 import { toast } from "sonner";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Badge } from "@/components/ui/badge";
 
 const Theatres = () => {
@@ -28,14 +26,12 @@ const Theatres = () => {
   
   const handleSaveTheatre = (theatreData: Partial<Theatre>) => {
     if (editingTheatre) {
-      // Update existing theatre
       setTheatres(
         theatres.map((t) => 
           t.id === editingTheatre.id ? { ...t, ...theatreData, updatedAt: new Date().toISOString() } as Theatre : t
         )
       );
     } else {
-      // Create new theatre
       const newTheatre: Theatre = {
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),
@@ -54,7 +50,6 @@ const Theatres = () => {
   
   const handleViewDetails = (theatre: Theatre) => {
     toast.info(`Viewing details for: ${theatre.name}`);
-    // In the future, this could navigate to a detailed view
   };
   
   const columns: Column<Theatre>[] = [
@@ -78,7 +73,6 @@ const Theatres = () => {
       header: "Location",
       accessor: "address" as keyof Theatre,
       cell: (row: Theatre) => {
-        // Extract city, state, country from address
         const addressParts = row.address.split(',').map(part => part.trim());
         const location = addressParts.length >= 3 
           ? `${addressParts[addressParts.length - 3]}, ${addressParts[addressParts.length - 2]}, ${addressParts[addressParts.length - 1]}`
@@ -110,32 +104,22 @@ const Theatres = () => {
       header: "Ad Integrators",
       accessor: "adIntegrators" as keyof Theatre,
       cell: (row: Theatre) => {
-        // Mock data for advertising integrators
         const adIntegrators = ["Screenvision", "NCM", "Spotlight Cinema"];
         
-        return adIntegrators.length > 0 ? (
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <div className="flex items-center cursor-help">
-                <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{adIntegrators.length}</span>
+        return (
+          <div className="space-y-1">
+            {adIntegrators.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {adIntegrators.map((integrator, i) => (
+                  <Badge key={i} variant="outline" className="text-xs">
+                    {integrator}
+                  </Badge>
+                ))}
               </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-64">
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold">Advertising Integrators</h4>
-                <div className="flex flex-wrap gap-1">
-                  {adIntegrators.map((integrator, i) => (
-                    <Badge key={i} variant="outline" className="text-xs">
-                      {integrator}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        ) : (
-          <span className="text-muted-foreground text-xs">None</span>
+            ) : (
+              <span className="text-muted-foreground text-xs">None</span>
+            )}
+          </div>
         );
       }
     },
@@ -143,32 +127,22 @@ const Theatres = () => {
       header: "WireTAP",
       accessor: "wireTap" as keyof Theatre,
       cell: (row: Theatre) => {
-        // Mock data for WireTAP serial numbers
         const wireTapSerials = ["WT8273891", "WT9264719"];
         
-        return wireTapSerials.length > 0 ? (
-          <HoverCard>
-            <HoverCardTrigger asChild>
-              <div className="flex items-center cursor-help">
-                <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{wireTapSerials.length}</span>
+        return (
+          <div className="space-y-1">
+            {wireTapSerials.length > 0 ? (
+              <div className="flex flex-col gap-1">
+                {wireTapSerials.map((serial, i) => (
+                  <span key={i} className="text-xs font-mono">
+                    {serial}
+                  </span>
+                ))}
               </div>
-            </HoverCardTrigger>
-            <HoverCardContent className="w-64">
-              <div className="space-y-1">
-                <h4 className="text-sm font-semibold">WireTAP Serial Numbers</h4>
-                <div className="flex flex-col gap-1">
-                  {wireTapSerials.map((serial, i) => (
-                    <span key={i} className="text-xs font-mono">
-                      {serial}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            </HoverCardContent>
-          </HoverCard>
-        ) : (
-          <span className="text-muted-foreground text-xs">None</span>
+            ) : (
+              <span className="text-muted-foreground text-xs">None</span>
+            )}
+          </div>
         );
       }
     },
@@ -201,7 +175,6 @@ const Theatres = () => {
         <div className="flex items-center">
           <User className="h-4 w-4 mr-1 text-muted-foreground" />
           <span className="text-sm">
-            {/* Mock data for updatedBy since it's not in the type */}
             {row.id ? "John Doe" : "Unknown"}
           </span>
         </div>
