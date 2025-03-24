@@ -1,4 +1,3 @@
-
 export interface Theatre {
   id: string;
   name: string;
@@ -22,6 +21,14 @@ export interface Theatre {
   closureDetails?: string;
   screenCount: number;
   screens?: Screen[];
+  locationType?: string;
+  bikeParkingAvailable?: boolean;
+  bikeParkingCapacity?: number;
+  carParkingAvailable?: boolean;
+  carParkingCapacity?: number;
+  theatreManagementSystem?: string;
+  ticketingSystem?: string;
+  wireTAPDevices?: WireTAPDevice[];
   createdAt: string;
   updatedAt: string;
 }

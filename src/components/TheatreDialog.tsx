@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Screen, Theatre } from "@/types";
+import { Screen, Theatre, WireTAPDevice } from "@/types";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { ScreenDialog } from "./ScreenDialog";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, MapPin, Building, Bike, Car, Monitor, Server, Ticket, Cable, Network } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TheatreDialogProps {
   open: boolean;
@@ -42,11 +44,21 @@ export const TheatreDialog = ({
       address: "",
       status: "Active",
       screenCount: 0,
+      locationType: "Information Not Available",
+      bikeParkingAvailable: false,
+      carParkingAvailable: false,
+      theatreManagementSystem: "Information Not Available",
+      ticketingSystem: "Information Not Available",
+      wireTAPDevices: [],
     }
   );
   
   const [screens, setScreens] = useState<Screen[]>(
     theatre?.screens || []
+  );
+
+  const [wireDevices, setWireDevices] = useState<WireTAPDevice[]>(
+    theatre?.wireTAPDevices || []
   );
   
   const [screenDialogOpen, setScreenDialogOpen] = useState(false);
@@ -59,6 +71,15 @@ export const TheatreDialog = ({
   
   const handleSelectChange = (name: string, value: string) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSwitchChange = (name: string, checked: boolean) => {
+    setFormData((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const handleNumberChange = (name: string, value: string) => {
+    const numberValue = value === '' ? undefined : parseInt(value, 10);
+    setFormData((prev) => ({ ...prev, [name]: numberValue }));
   };
   
   // Screen management
@@ -156,6 +177,34 @@ export const TheatreDialog = ({
     }
   ];
   
+  const handleAddWireTAPDevice = () => {
+    const newDevice: WireTAPDevice = {
+      id: crypto.randomUUID(),
+      serialNumber: "",
+      mappingStatus: "Unmapped",
+      theatreId: formData.id,
+      theatreName: formData.name,
+      status: "Active",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    
+    setWireDevices([...wireDevices, newDevice]);
+  };
+  
+  const handleDeleteWireTAPDevice = (deviceId: string) => {
+    setWireDevices(wireDevices.filter(device => device.id !== deviceId));
+    toast.success("Device removed successfully");
+  };
+  
+  const handleWireTAPDeviceChange = (deviceId: string, field: keyof WireTAPDevice, value: any) => {
+    setWireDevices(wireDevices.map(device => 
+      device.id === deviceId 
+        ? { ...device, [field]: value, updatedAt: new Date().toISOString() } 
+        : device
+    ));
+  };
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -165,10 +214,11 @@ export const TheatreDialog = ({
       return;
     }
     
-    // Include screens in the theatre data
+    // Include screens and WireTAP devices in the theatre data
     const theatreData = {
       ...formData,
       screens: screens,
+      wireTAPDevices: wireDevices,
     };
     
     onSave(theatreData);
@@ -344,6 +394,37 @@ export const TheatreDialog = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="latitude">Latitude</Label>
+                  <Input
+                    id="latitude"
+                    name="latitude"
+                    type="number"
+                    step="0.000001"
+                    value={formData.latitude || ""}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      latitude: e.target.value ? parseFloat(e.target.value) : undefined
+                    }))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="longitude">Longitude</Label>
+                  <Input
+                    id="longitude"
+                    name="longitude"
+                    type="number"
+                    step="0.000001"
+                    value={formData.longitude || ""}
+                    onChange={(e) => setFormData(prev => ({
+                      ...prev,
+                      longitude: e.target.value ? parseFloat(e.target.value) : undefined
+                    }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
                   <Label htmlFor="website">Website</Label>
                   <Input
                     id="website"
@@ -396,40 +477,224 @@ export const TheatreDialog = ({
             </TabsContent>
             
             <TabsContent value="location" className="mt-4">
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="latitude">Latitude</Label>
-                    <Input
-                      id="latitude"
-                      name="latitude"
-                      type="number"
-                      step="0.000001"
-                      value={formData.latitude || ""}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        latitude: e.target.value ? parseFloat(e.target.value) : undefined
-                      }))}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="longitude">Longitude</Label>
-                    <Input
-                      id="longitude"
-                      name="longitude"
-                      type="number"
-                      step="0.000001"
-                      value={formData.longitude || ""}
-                      onChange={(e) => setFormData(prev => ({
-                        ...prev,
-                        longitude: e.target.value ? parseFloat(e.target.value) : undefined
-                      }))}
-                    />
+              <div className="space-y-6">
+                <div className="flex items-center space-x-2">
+                  <Building className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Location Information</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="locationType">Location Type</Label>
+                      <Select
+                        value={formData.locationType}
+                        onValueChange={(value) => handleSelectChange("locationType", value)}
+                      >
+                        <SelectTrigger id="locationType">
+                          <SelectValue placeholder="Select location type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Information Not Available">Information Not Available</SelectItem>
+                          <SelectItem value="Mall">Mall</SelectItem>
+                          <SelectItem value="Standalone">Standalone</SelectItem>
+                          <SelectItem value="Office">Office</SelectItem>
+                          <SelectItem value="Home">Home</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
                 
-                <div className="text-center py-6 text-muted-foreground">
-                  Additional Location & Systems details will be available in a future update
+                <div className="flex items-center space-x-2">
+                  <Car className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Parking Information</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Bike className="h-5 w-5 text-muted-foreground" />
+                      <Label htmlFor="bikeParkingAvailable">Bike Parking Available</Label>
+                    </div>
+                    <Switch 
+                      id="bikeParkingAvailable"
+                      checked={formData.bikeParkingAvailable || false}
+                      onCheckedChange={(checked) => handleSwitchChange("bikeParkingAvailable", checked)}
+                    />
+                  </div>
+                  
+                  {formData.bikeParkingAvailable && (
+                    <div className="space-y-2">
+                      <Label htmlFor="bikeParkingCapacity">Bike Parking Capacity</Label>
+                      <Input
+                        id="bikeParkingCapacity"
+                        type="number"
+                        value={formData.bikeParkingCapacity || ""}
+                        onChange={(e) => handleNumberChange("bikeParkingCapacity", e.target.value)}
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <Car className="h-5 w-5 text-muted-foreground" />
+                      <Label htmlFor="carParkingAvailable">Car Parking Available</Label>
+                    </div>
+                    <Switch 
+                      id="carParkingAvailable"
+                      checked={formData.carParkingAvailable || false}
+                      onCheckedChange={(checked) => handleSwitchChange("carParkingAvailable", checked)}
+                    />
+                  </div>
+                  
+                  {formData.carParkingAvailable && (
+                    <div className="space-y-2">
+                      <Label htmlFor="carParkingCapacity">Car Parking Capacity</Label>
+                      <Input
+                        id="carParkingCapacity"
+                        type="number"
+                        value={formData.carParkingCapacity || ""}
+                        onChange={(e) => handleNumberChange("carParkingCapacity", e.target.value)}
+                      />
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Server className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Theatre Systems</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="theatreManagementSystem">Theatre Management System (TMS)</Label>
+                      <Select
+                        value={formData.theatreManagementSystem}
+                        onValueChange={(value) => handleSelectChange("theatreManagementSystem", value)}
+                      >
+                        <SelectTrigger id="theatreManagementSystem">
+                          <SelectValue placeholder="Select TMS" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Information Not Available">Information Not Available</SelectItem>
+                          <SelectItem value="Arts Alliance Media">Arts Alliance Media</SelectItem>
+                          <SelectItem value="CinemaNext">CinemaNext</SelectItem>
+                          <SelectItem value="GDC TMS">GDC TMS</SelectItem>
+                          <SelectItem value="Qube TMS">Qube TMS</SelectItem>
+                          <SelectItem value="Dolby TMS">Dolby TMS</SelectItem>
+                          <SelectItem value="Sony TMS">Sony TMS</SelectItem>
+                          <SelectItem value="Others">Others</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label htmlFor="ticketingSystem">Ticketing System</Label>
+                      <Select
+                        value={formData.ticketingSystem}
+                        onValueChange={(value) => handleSelectChange("ticketingSystem", value)}
+                      >
+                        <SelectTrigger id="ticketingSystem">
+                          <SelectValue placeholder="Select ticketing system" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Information Not Available">Information Not Available</SelectItem>
+                          <SelectItem value="Vista">Vista</SelectItem>
+                          <SelectItem value="TicketNew">TicketNew</SelectItem>
+                          <SelectItem value="QuickTickets">QuickTickets</SelectItem>
+                          <SelectItem value="iCirena">iCirena</SelectItem>
+                          <SelectItem value="CineSync">CineSync</SelectItem>
+                          <SelectItem value="Not Applicable">Not Applicable</SelectItem>
+                          <SelectItem value="Others">Others</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <Cable className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">WireTAP Devices</h3>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      Manage the WireTAP devices installed in this theatre
+                    </p>
+                    <Button type="button" onClick={handleAddWireTAPDevice} size="sm">
+                      <Plus className="h-4 w-4 mr-1" /> Add Device
+                    </Button>
+                  </div>
+                  
+                  {wireDevices.length > 0 ? (
+                    <div className="border rounded-md overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Serial Number</TableHead>
+                            <TableHead>Mapping Status</TableHead>
+                            <TableHead>Created</TableHead>
+                            <TableHead>Last Updated</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {wireDevices.map((device) => (
+                            <TableRow key={device.id}>
+                              <TableCell>
+                                <Input 
+                                  value={device.serialNumber} 
+                                  onChange={(e) => handleWireTAPDeviceChange(device.id, "serialNumber", e.target.value)} 
+                                  className="h-8"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Select
+                                  value={device.status}
+                                  onValueChange={(value) => handleWireTAPDeviceChange(device.id, "status", value)}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Active">Active</SelectItem>
+                                    <SelectItem value="Inactive">Removed</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {new Date(device.createdAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {new Date(device.updatedAt).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDeleteWireTAPDevice(device.id)}
+                                  className="h-8 w-8"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="border rounded-md p-8 text-center">
+                      <p className="text-muted-foreground mb-4">No WireTAP devices have been added yet</p>
+                      <Button type="button" onClick={handleAddWireTAPDevice} variant="outline">
+                        <Plus className="h-4 w-4 mr-2" /> Add Device
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </div>
             </TabsContent>
@@ -514,3 +779,4 @@ export const TheatreDialog = ({
     </>
   );
 };
+

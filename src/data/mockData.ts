@@ -1,5 +1,6 @@
-import { Theatre, Chain, TDLDevice, Company, DashboardStats, Screen, ScreenDevice } from "../types";
+import { Theatre, Chain, TDLDevice, Company, DashboardStats, Screen, ScreenDevice, WireTAPDevice } from "../types";
 
+// Helper function to generate screens for a theatre
 const generateScreens = (theatreId: string, count: number): Screen[] => {
   const screens: Screen[] = [];
   
@@ -73,6 +74,26 @@ const generateScreens = (theatreId: string, count: number): Screen[] => {
   return screens;
 };
 
+// Helper function to generate WireTAP devices for a theatre
+const generateWireTAPDevices = (theatreId: string, theatreName: string, count: number): WireTAPDevice[] => {
+  const devices: WireTAPDevice[] = [];
+  
+  for (let i = 1; i <= count; i++) {
+    devices.push({
+      id: `${theatreId}-wiretap-${i}`,
+      serialNumber: `WT-${theatreId}-${10000 + i}`,
+      mappingStatus: i % 3 === 0 ? "Unmapped" : "Mapped",
+      theatreId: theatreId,
+      theatreName: theatreName,
+      status: i % 4 === 0 ? "Inactive" : "Active",
+      createdAt: new Date(Date.now() - (i * 1000000)).toISOString(),
+      updatedAt: new Date(Date.now() - (i * 500000)).toISOString()
+    });
+  }
+  
+  return devices;
+};
+
 export const theatres: Theatre[] = [
   {
     id: "1",
@@ -90,12 +111,20 @@ export const theatres: Theatre[] = [
     address: "123 Main Street, New York, NY 10001, USA",
     latitude: 40.7128,
     longitude: -74.006,
+    locationType: "Mall",
+    bikeParkingAvailable: true,
+    bikeParkingCapacity: 50,
+    carParkingAvailable: true,
+    carParkingCapacity: 200,
+    theatreManagementSystem: "Arts Alliance Media",
+    ticketingSystem: "Vista",
     startDate: "2010-05-15",
     website: "https://www.cinemacity.com/metropolis",
     contact: "+1 212-555-0123",
     status: "Active",
     screenCount: 8,
     screens: generateScreens("1", 8),
+    wireTAPDevices: generateWireTAPDevices("1", "Cinema City Metropolis", 3),
     createdAt: "2021-01-15T08:30:00Z",
     updatedAt: "2023-11-10T14:45:00Z"
   },
@@ -112,9 +141,16 @@ export const theatres: Theatre[] = [
     listing: "Listed",
     type: "Multiplex",
     address: "456 Broadway, New York, NY 10013, USA",
+    locationType: "Standalone",
+    bikeParkingAvailable: false,
+    carParkingAvailable: true,
+    carParkingCapacity: 150,
+    theatreManagementSystem: "GDC TMS",
+    ticketingSystem: "Vista",
     status: "Active",
     screenCount: 12,
     screens: generateScreens("2", 12),
+    wireTAPDevices: generateWireTAPDevices("2", "Regal Cinema Downtown", 2),
     createdAt: "2020-03-20T10:15:00Z",
     updatedAt: "2023-10-05T09:30:00Z"
   },
@@ -130,9 +166,17 @@ export const theatres: Theatre[] = [
     listing: "Listed",
     type: "IMAX Multiplex",
     address: "1998 Broadway, New York, NY 10023, USA",
+    locationType: "Mall",
+    bikeParkingAvailable: true,
+    bikeParkingCapacity: 30,
+    carParkingAvailable: true,
+    carParkingCapacity: 300,
+    theatreManagementSystem: "Dolby TMS",
+    ticketingSystem: "AMC Ticketing",
     status: "Active",
     screenCount: 13,
     screens: generateScreens("3", 13),
+    wireTAPDevices: generateWireTAPDevices("3", "AMC Lincoln Square", 4),
     createdAt: "2019-11-08T15:40:00Z",
     updatedAt: "2023-09-12T11:20:00Z"
   },
