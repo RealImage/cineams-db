@@ -3,11 +3,13 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Calendar, User, Tag, Film } from "lucide-react";
 import { theatres as mockTheatres } from "@/data/mockData";
 import { Screen, Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
 import { toast } from "sonner";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Badge } from "@/components/ui/badge";
 
 const Theatres = () => {
   const [theatres, setTheatres] = useState<Theatre[]>(mockTheatres);
@@ -61,6 +63,10 @@ const Theatres = () => {
       accessor: "name" as keyof Theatre
     },
     {
+      header: "Display Name",
+      accessor: "displayName" as keyof Theatre
+    },
+    {
       header: "Chain Name",
       accessor: "chainName" as keyof Theatre
     },
@@ -71,11 +77,19 @@ const Theatres = () => {
     {
       header: "Location",
       accessor: "address" as keyof Theatre,
-      cell: (row: Theatre) => (
-        <span className="truncate max-w-[200px] block">
-          {row.address}
-        </span>
-      )
+      cell: (row: Theatre) => {
+        // Extract city, state, country from address
+        const addressParts = row.address.split(',').map(part => part.trim());
+        const location = addressParts.length >= 3 
+          ? `${addressParts[addressParts.length - 3]}, ${addressParts[addressParts.length - 2]}, ${addressParts[addressParts.length - 1]}`
+          : row.address;
+        
+        return (
+          <span className="truncate max-w-[200px] block" title={row.address}>
+            {location}
+          </span>
+        );
+      }
     },
     {
       header: "Status",
@@ -93,8 +107,105 @@ const Theatres = () => {
       )
     },
     {
+      header: "Ad Integrators",
+      accessor: "adIntegrators" as keyof Theatre,
+      cell: (row: Theatre) => {
+        // Mock data for advertising integrators
+        const adIntegrators = ["Screenvision", "NCM", "Spotlight Cinema"];
+        
+        return adIntegrators.length > 0 ? (
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center cursor-help">
+                <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span>{adIntegrators.length}</span>
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-64">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold">Advertising Integrators</h4>
+                <div className="flex flex-wrap gap-1">
+                  {adIntegrators.map((integrator, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {integrator}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <span className="text-muted-foreground text-xs">None</span>
+        );
+      }
+    },
+    {
+      header: "WireTAP",
+      accessor: "wireTap" as keyof Theatre,
+      cell: (row: Theatre) => {
+        // Mock data for WireTAP serial numbers
+        const wireTapSerials = ["WT8273891", "WT9264719"];
+        
+        return wireTapSerials.length > 0 ? (
+          <HoverCard>
+            <HoverCardTrigger asChild>
+              <div className="flex items-center cursor-help">
+                <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
+                <span>{wireTapSerials.length}</span>
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent className="w-64">
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold">WireTAP Serial Numbers</h4>
+                <div className="flex flex-col gap-1">
+                  {wireTapSerials.map((serial, i) => (
+                    <span key={i} className="text-xs font-mono">
+                      {serial}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <span className="text-muted-foreground text-xs">None</span>
+        );
+      }
+    },
+    {
       header: "Screens",
-      accessor: "screenCount" as keyof Theatre
+      accessor: "screenCount" as keyof Theatre,
+      cell: (row: Theatre) => (
+        <div className="flex items-center">
+          <Film className="h-4 w-4 mr-1 text-muted-foreground" />
+          <span>{row.screenCount}</span>
+        </div>
+      )
+    },
+    {
+      header: "Last Updated",
+      accessor: "updatedAt" as keyof Theatre,
+      cell: (row: Theatre) => (
+        <div className="flex items-center">
+          <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
+          <span className="text-sm">
+            {new Date(row.updatedAt).toLocaleDateString()}
+          </span>
+        </div>
+      )
+    },
+    {
+      header: "Updated By",
+      accessor: "updatedBy" as keyof Theatre,
+      cell: (row: Theatre) => (
+        <div className="flex items-center">
+          <User className="h-4 w-4 mr-1 text-muted-foreground" />
+          <span className="text-sm">
+            {/* Mock data for updatedBy since it's not in the type */}
+            {row.id ? "John Doe" : "Unknown"}
+          </span>
+        </div>
+      )
     }
   ];
   
