@@ -34,6 +34,9 @@ export const ViewTheatreDialog = ({
     });
   };
 
+  // Get screen count either from screenCount property or screens array length
+  const screenCount = theatre.screenCount || (theatre.screens?.length || 0);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[600px]">
@@ -84,7 +87,7 @@ export const ViewTheatreDialog = ({
               <p className="text-sm font-medium">Screens</p>
               <div className="flex items-center">
                 <Film className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{theatre.screenCount}</span>
+                <span>{screenCount}</span>
               </div>
             </div>
           </div>

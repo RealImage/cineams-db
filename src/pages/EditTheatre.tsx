@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Save } from "lucide-react";
 import { toast } from "sonner";
-import { Theatre } from "@/types";
+import { Theatre, Screen } from "@/types";
 import { theatres as mockTheatres } from "@/data/mockData";
 import { TheatreDialog } from "@/components/TheatreDialog";
 
@@ -20,7 +20,8 @@ const EditTheatre = () => {
     const foundTheatre = mockTheatres.find((t) => t.id === id);
     
     if (foundTheatre) {
-      setTheatre(foundTheatre);
+      // Make sure we're working with a deep copy to avoid modifying the mock data directly
+      setTheatre(JSON.parse(JSON.stringify(foundTheatre)));
     } else {
       toast.error("Theatre not found");
       navigate("/theatres");

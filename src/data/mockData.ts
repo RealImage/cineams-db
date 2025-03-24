@@ -1,5 +1,4 @@
-
-import { Theatre, Chain, TDLDevice, Company, DashboardStats } from "../types";
+import { Theatre, Chain, TDLDevice, Company, DashboardStats, Screen, ScreenDevice } from "../types";
 
 export const theatres: Theatre[] = [
   {
@@ -23,6 +22,7 @@ export const theatres: Theatre[] = [
     contact: "+1 212-555-0123",
     status: "Active",
     screenCount: 8,
+    screens: generateScreens("1", 8),
     createdAt: "2021-01-15T08:30:00Z",
     updatedAt: "2023-11-10T14:45:00Z"
   },
@@ -41,6 +41,7 @@ export const theatres: Theatre[] = [
     address: "456 Broadway, New York, NY 10013, USA",
     status: "Active",
     screenCount: 12,
+    screens: generateScreens("2", 12),
     createdAt: "2020-03-20T10:15:00Z",
     updatedAt: "2023-10-05T09:30:00Z"
   },
@@ -58,6 +59,7 @@ export const theatres: Theatre[] = [
     address: "1998 Broadway, New York, NY 10023, USA",
     status: "Active",
     screenCount: 13,
+    screens: generateScreens("3", 13),
     createdAt: "2019-11-08T15:40:00Z",
     updatedAt: "2023-09-12T11:20:00Z"
   },
@@ -76,6 +78,7 @@ export const theatres: Theatre[] = [
     status: "Inactive",
     closureDetails: "Closed permanently in January 2018",
     screenCount: 5,
+    screens: generateScreens("4", 5),
     createdAt: "2018-01-05T12:00:00Z",
     updatedAt: "2018-01-21T17:30:00Z"
   },
@@ -93,6 +96,7 @@ export const theatres: Theatre[] = [
     address: "445 Albee Square West, Brooklyn, NY 11201, USA",
     status: "Active",
     screenCount: 7,
+    screens: generateScreens("5", 7),
     createdAt: "2020-06-23T09:10:00Z",
     updatedAt: "2023-10-30T16:15:00Z"
   },
@@ -110,6 +114,7 @@ export const theatres: Theatre[] = [
     address: "260 W 23rd St, New York, NY 10011, USA",
     status: "Active",
     screenCount: 6,
+    screens: generateScreens("6", 6),
     createdAt: "2021-02-12T14:20:00Z",
     updatedAt: "2023-08-17T13:45:00Z"
   },
@@ -127,6 +132,7 @@ export const theatres: Theatre[] = [
     address: "11 Fulton St, New York, NY 10038, USA",
     status: "Active",
     screenCount: 8,
+    screens: generateScreens("7", 8),
     createdAt: "2020-09-18T11:30:00Z",
     updatedAt: "2023-07-28T10:10:00Z"
   },
@@ -144,6 +150,7 @@ export const theatres: Theatre[] = [
     address: "188 Prospect Park West, Brooklyn, NY 11215, USA",
     status: "Active",
     screenCount: 3,
+    screens: generateScreens("8", 3),
     createdAt: "2021-05-07T16:50:00Z",
     updatedAt: "2023-11-02T12:35:00Z"
   }
@@ -345,4 +352,77 @@ export const mockDashboardStats: DashboardStats = {
     { type: "Drive-in", count: 89 },
     { type: "Other", count: 86 }
   ]
+};
+
+const generateScreens = (theatreId: string, count: number): Screen[] => {
+  const screens: Screen[] = [];
+  
+  for (let i = 1; i <= count; i++) {
+    screens.push({
+      id: `${theatreId}-screen-${i}`,
+      theatreId: theatreId,
+      number: `${i}`,
+      name: `Audi ${i}`,
+      uuid: `screen-${theatreId}-${i}`,
+      thirdPartyId: `TP-${theatreId}-${i}`,
+      operators: [
+        {
+          name: "John Operator",
+          email: "john@cinema.com",
+          phone: "+1 555-123-4567"
+        }
+      ],
+      autoScreenUpdateLock: false,
+      flmManagementLock: false,
+      multiThumbprintKdmScreen: false,
+      status: "Active",
+      seatingCapacity: 100 + (i * 10),
+      coolingType: i % 2 === 0 ? "Central" : "Split Unit",
+      wheelchairAccessibility: true,
+      motionSeats: i % 3 === 0,
+      dimensions: {
+        auditoriumWidth: 15 + i,
+        auditoriumHeight: 8 + (i * 0.5),
+        auditoriumDepth: 20 + i,
+        screenWidth: 12 + i,
+        screenHeight: 6 + (i * 0.5),
+        throwDistance: 18 + i,
+        gain: 1.8
+      },
+      projection: {
+        type: i % 2 === 0 ? "Digital 2D/3D" : "Laser",
+        manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
+        masking: i % 2 === 0
+      },
+      sound: {
+        processor: i % 2 === 0 ? "Dolby CP750" : "QSC Q-SYS",
+        speakers: i % 3 === 0 ? "JBL" : i % 3 === 1 ? "Klipsch" : "Meyer Sound",
+        soundMixes: ["5.1 Surround", "7.1 Surround"],
+        iabSupported: i % 2 === 0
+      },
+      ipAddress: `192.168.1.${10 + i}`,
+      subnet: "255.255.255.0",
+      gateway: "192.168.1.1",
+      devices: [
+        {
+          id: `${theatreId}-projector-${i}`,
+          manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
+          model: i % 3 === 0 ? "CP4325-RGB" : i % 3 === 1 ? "DP4K-60L" : "SRX-R815P",
+          serialNumber: `PROJ-${100 + i}`,
+          softwareVersion: "2.5.1"
+        },
+        {
+          id: `${theatreId}-server-${i}`,
+          manufacturer: i % 2 === 0 ? "Dolby" : "GDC",
+          model: i % 2 === 0 ? "IMS3000" : "SR-1000",
+          serialNumber: `SERVER-${200 + i}`,
+          softwareVersion: "7.3.2"
+        }
+      ],
+      createdAt: new Date(Date.now() - (i * 1000000)).toISOString(),
+      updatedAt: new Date(Date.now() - (i * 500000)).toISOString()
+    });
+  }
+  
+  return screens;
 };
