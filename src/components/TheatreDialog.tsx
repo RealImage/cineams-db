@@ -561,6 +561,7 @@ export const TheatreDialog = ({
               <TabsTrigger value="screens">Screen Management</TabsTrigger>
             </TabsList>
             
+            {/* General Information Tab */}
             <TabsContent value="general" className="mt-4 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -793,6 +794,7 @@ export const TheatreDialog = ({
               </div>
             </TabsContent>
             
+            {/* Location & Systems Tab */}
             <TabsContent value="location" className="mt-4">
               <div className="space-y-6">
                 <div className="flex items-center space-x-2">
@@ -942,4 +944,3 @@ export const TheatreDialog = ({
                     <p className="text-sm text-muted-foreground">
                       Manage the WireTAP devices installed in this theatre
                     </p>
-                    <Button type="button" onClick={handleAddWireTAPDevice} size="sm
