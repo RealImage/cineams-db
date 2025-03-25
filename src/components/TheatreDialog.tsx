@@ -19,7 +19,7 @@ import {
   DeliveryAddress
 } from "@/types";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { ScreenDialog } from "./ScreenDialog";
+import { ScreenDialog } from "@/components/screens/ScreenDialog";
 import { 
   Plus, 
   Edit, 
