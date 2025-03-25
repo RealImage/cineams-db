@@ -1,3 +1,4 @@
+
 import { Theatre, Chain, TDLDevice, Company, DashboardStats, Screen, ScreenDevice, WireTAPDevice } from "../types";
 
 // Helper function to generate screens for a theatre
@@ -47,15 +48,14 @@ const generateScreens = (theatreId: string, count: number): Screen[] => {
         soundMixes: ["5.1 Surround", "7.1 Surround"],
         iabSupported: i % 2 === 0
       },
-      ipAddress: `192.168.1.${10 + i}`,
-      subnet: "255.255.255.0",
-      gateway: "192.168.1.1",
       devices: [
         {
           id: `${theatreId}-projector-${i}`,
           manufacturer: i % 3 === 0 ? "Christie" : i % 3 === 1 ? "Barco" : "Sony",
           model: i % 3 === 0 ? "CP4325-RGB" : i % 3 === 1 ? "DP4K-60L" : "SRX-R815P",
           serialNumber: `PROJ-${100 + i}`,
+          certificateStatus: "Valid",
+          certificateLockStatus: "Unlocked",
           softwareVersion: "2.5.1"
         },
         {
@@ -63,9 +63,19 @@ const generateScreens = (theatreId: string, count: number): Screen[] => {
           manufacturer: i % 2 === 0 ? "Dolby" : "GDC",
           model: i % 2 === 0 ? "IMS3000" : "SR-1000",
           serialNumber: `SERVER-${200 + i}`,
+          certificateStatus: "Valid",
+          certificateLockStatus: "Unlocked",
           softwareVersion: "7.3.2"
         }
       ],
+      ipAddresses: [
+        {
+          address: `192.168.1.${10 + i}`,
+          subnet: "255.255.255.0",
+          gateway: "192.168.1.1"
+        }
+      ],
+      suites: [],
       createdAt: new Date(Date.now() - (i * 1000000)).toISOString(),
       updatedAt: new Date(Date.now() - (i * 500000)).toISOString()
     });

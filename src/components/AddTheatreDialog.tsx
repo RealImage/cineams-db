@@ -24,7 +24,6 @@ export const AddTheatreDialog = ({
     name: "",
     displayName: "",
     address: "",
-    uuid: crypto.randomUUID(),
     status: "Active",
   });
   
@@ -43,14 +42,19 @@ export const AddTheatreDialog = ({
     }
     
     // Create theatre with minimal info
-    const newTheatre: Theatre = {
+    const newTheatre: Partial<Theatre> = {
       id: crypto.randomUUID(),
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      name: formData.name!,
-      displayName: formData.displayName!,
-      address: formData.address!,
-      uuid: formData.uuid!,
+      name: formData.name,
+      displayName: formData.displayName,
+      address: formData.address,
+      city: "",
+      state: "",
+      country: "",
+      postalCode: "",
+      phoneNumber: "",
+      email: "",
       chainId: "",
       chainName: "",
       companyId: "",
@@ -59,7 +63,7 @@ export const AddTheatreDialog = ({
       type: "Multiplex",
       status: "Active",
       screenCount: 0,
-    } as Theatre;
+    };
     
     // Save the theatre
     onSave(newTheatre);
