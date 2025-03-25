@@ -901,4 +901,570 @@ export const ScreenDialog = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Digital 2K">Digital 2K</SelectItem>
-                      <SelectItem value="Digital 4K">Digital
+                      <SelectItem value="Digital 4K">Digital 4K</SelectItem>
+                      <SelectItem value="IMAX Digital">IMAX Digital</SelectItem>
+                      <SelectItem value="IMAX Laser">IMAX Laser</SelectItem>
+                      <SelectItem value="Dolby Cinema">Dolby Cinema</SelectItem>
+                      <SelectItem value="RealD 3D">RealD 3D</SelectItem>
+                      <SelectItem value="35mm">35mm Film</SelectItem>
+                      <SelectItem value="70mm">70mm Film</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="projectionManufacturer">Manufacturer</Label>
+                  <Select
+                    value={formData.projection?.manufacturer || ""}
+                    onValueChange={(value) => handleProjectionChange("manufacturer", value)}
+                  >
+                    <SelectTrigger id="projectionManufacturer">
+                      <SelectValue placeholder="Select manufacturer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Christie">Christie</SelectItem>
+                      <SelectItem value="Barco">Barco</SelectItem>
+                      <SelectItem value="Sony">Sony</SelectItem>
+                      <SelectItem value="NEC">NEC</SelectItem>
+                      <SelectItem value="Dolby">Dolby</SelectItem>
+                      <SelectItem value="IMAX">IMAX</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="projectionMasking">Screen Masking</Label>
+                  <Switch 
+                    id="projectionMasking"
+                    checked={formData.projection?.masking || false}
+                    onCheckedChange={(checked) => handleProjectionChange("masking", checked)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 mt-6">
+                <Volume2 className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Sound System</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="soundProcessor">Sound Processor</Label>
+                  <Input
+                    id="soundProcessor"
+                    value={formData.sound?.processor || ""}
+                    onChange={(e) => handleSoundChange("processor", e.target.value)}
+                    placeholder="e.g., Dolby CP750"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="soundSpeakers">Speaker System</Label>
+                  <Input
+                    id="soundSpeakers"
+                    value={formData.sound?.speakers || ""}
+                    onChange={(e) => handleSoundChange("speakers", e.target.value)}
+                    placeholder="e.g., JBL 4732"
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2 mt-4">
+                <Label>Sound Formats</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  {soundMixOptions.map((option) => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <Checkbox 
+                        id={`sound-mix-${option.id}`} 
+                        checked={(formData.sound?.soundMixes || []).includes(option.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            handleSoundMixChange(option.id);
+                          } else {
+                            handleSoundMixChange(option.id);
+                          }
+                        }}
+                      />
+                      <Label htmlFor={`sound-mix-${option.id}`}>{option.label}</Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4 mt-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="iabSupported">IAB Support</Label>
+                  <Switch 
+                    id="iabSupported"
+                    checked={formData.sound?.iabSupported || false}
+                    onCheckedChange={(checked) => handleSoundChange("iabSupported", checked)}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="devices" className="mt-4 space-y-6">
+              {/* IP Address Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Network className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen IP Management</h3>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAddIPAddress}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add IP Address
+                  </Button>
+                </div>
+                
+                {formData.ipAddresses && formData.ipAddresses.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>IP Address</TableHead>
+                          <TableHead>Subnet Mask</TableHead>
+                          <TableHead>Gateway</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.ipAddresses.map((ip, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Input 
+                                value={ip.address} 
+                                onChange={(e) => handleIPAddressChange(index, "address", e.target.value)}
+                                placeholder="192.168.1.100"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={ip.subnet} 
+                                onChange={(e) => handleIPAddressChange(index, "subnet", e.target.value)}
+                                placeholder="255.255.255.0"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={ip.gateway} 
+                                onChange={(e) => handleIPAddressChange(index, "gateway", e.target.value)}
+                                placeholder="192.168.1.1"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveIPAddress(index)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No IP addresses added yet
+                  </div>
+                )}
+              </div>
+              
+              {/* Devices Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Server className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen Devices</h3>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAddDevice}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Device
+                  </Button>
+                </div>
+                
+                {formData.devices && formData.devices.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Manufacturer</TableHead>
+                          <TableHead>Model</TableHead>
+                          <TableHead>Serial Number</TableHead>
+                          <TableHead>Role</TableHead>
+                          <TableHead>Certificate</TableHead>
+                          <TableHead>Software Version</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.devices.map((device) => (
+                          <TableRow key={device.id}>
+                            <TableCell>
+                              <Select
+                                value={device.manufacturer}
+                                onValueChange={(value) => handleDeviceChange(device.id, "manufacturer", value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deviceManufacturersList.map(manufacturer => (
+                                    <SelectItem key={manufacturer} value={manufacturer}>
+                                      {manufacturer}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.model}
+                                onValueChange={(value) => handleDeviceChange(device.id, "model", value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {device.manufacturer && deviceModelsList[device.manufacturer as keyof typeof deviceModelsList]
+                                    ? deviceModelsList[device.manufacturer as keyof typeof deviceModelsList].map(model => (
+                                        <SelectItem key={model} value={model}>
+                                          {model}
+                                        </SelectItem>
+                                      ))
+                                    : <SelectItem value="">Select manufacturer first</SelectItem>
+                                  }
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={device.serialNumber} 
+                                onChange={(e) => handleDeviceChange(device.id, "serialNumber", e.target.value)}
+                                placeholder="Serial #"
+                                className="w-full"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.role || ""}
+                                onValueChange={(value) => handleDeviceChange(device.id, "role", value)}
+                              >
+                                <SelectTrigger className="w-24">
+                                  <SelectValue placeholder="Role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deviceRolesList.map(role => (
+                                    <SelectItem key={role} value={role}>
+                                      {role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col space-y-1">
+                                <Select
+                                  value={device.certificateStatus}
+                                  onValueChange={(value) => handleDeviceChange(device.id, "certificateStatus", value)}
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Valid">Valid</SelectItem>
+                                    <SelectItem value="Invalid">Invalid</SelectItem>
+                                    <SelectItem value="Expired">Expired</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <Select
+                                  value={device.certificateLockStatus}
+                                  onValueChange={(value) => handleDeviceChange(device.id, "certificateLockStatus", value)}
+                                >
+                                  <SelectTrigger className="h-8 w-24">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Locked">Locked</SelectItem>
+                                    <SelectItem value="Unlocked">Unlocked</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={device.softwareVersion} 
+                                onChange={(e) => handleDeviceChange(device.id, "softwareVersion", e.target.value)}
+                                placeholder="Version"
+                                className="w-full"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveDevice(device.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No devices added yet
+                  </div>
+                )}
+              </div>
+              
+              {/* Suites Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Layers className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen Suites</h3>
+                  </div>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={handleAddSuite}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Suite
+                  </Button>
+                </div>
+                
+                {formData.suites && formData.suites.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Suite Name</TableHead>
+                          <TableHead>Devices</TableHead>
+                          <TableHead>IP Addresses</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.suites.map((suite) => (
+                          <TableRow key={suite.id}>
+                            <TableCell>
+                              <Input 
+                                value={suite.name} 
+                                onChange={(e) => {
+                                  setFormData(prev => ({
+                                    ...prev,
+                                    suites: (prev.suites || []).map(s => 
+                                      s.id === suite.id 
+                                        ? { ...s, name: e.target.value } 
+                                        : s
+                                    )
+                                  }));
+                                }}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value=""
+                                onValueChange={(deviceId) => {
+                                  setFormData(prev => {
+                                    const suites = (prev.suites || []).map(s => 
+                                      s.id === suite.id 
+                                        ? {
+                                            ...s, 
+                                            devices: [...s.devices, deviceId],
+                                            status: getSuiteStatus({...s, devices: [...s.devices, deviceId]})
+                                          } 
+                                        : s
+                                    );
+                                    return { ...prev, suites };
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Add device" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {formData.devices?.filter(d => !(suite.devices || []).includes(d.id)).map(device => (
+                                    <SelectItem key={device.id} value={device.id}>
+                                      {device.manufacturer} {device.model} ({device.role || "No role"})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <div className="mt-2 space-y-1">
+                                {(suite.devices || []).map(deviceId => {
+                                  const device = formData.devices?.find(d => d.id === deviceId);
+                                  return device ? (
+                                    <div key={deviceId} className="flex items-center justify-between bg-secondary/20 rounded p-1 text-xs">
+                                      <span>{device.manufacturer} {device.model} ({device.role || "No role"})</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => {
+                                          setFormData(prev => {
+                                            const suites = (prev.suites || []).map(s => 
+                                              s.id === suite.id 
+                                                ? {
+                                                    ...s, 
+                                                    devices: s.devices.filter(id => id !== deviceId),
+                                                    status: getSuiteStatus({...s, devices: s.devices.filter(id => id !== deviceId)})
+                                                  } 
+                                                : s
+                                            );
+                                            return { ...prev, suites };
+                                          });
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value=""
+                                onValueChange={(index) => {
+                                  setFormData(prev => {
+                                    const ipIndex = parseInt(index, 10);
+                                    const ipAddress = prev.ipAddresses?.[ipIndex];
+                                    if (!ipAddress) return prev;
+                                    
+                                    const suites = (prev.suites || []).map(s => 
+                                      s.id === suite.id 
+                                        ? {
+                                            ...s, 
+                                            ipAddresses: [...s.ipAddresses, ipIndex]
+                                          } 
+                                        : s
+                                    );
+                                    return { ...prev, suites };
+                                  });
+                                }}
+                              >
+                                <SelectTrigger className="w-full">
+                                  <SelectValue placeholder="Add IP address" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {formData.ipAddresses?.map((ip, index) => (
+                                    <SelectItem key={index} value={index.toString()}>
+                                      {ip.address}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <div className="mt-2 space-y-1">
+                                {(suite.ipAddresses || []).map(ipIndex => {
+                                  const ip = formData.ipAddresses?.[ipIndex];
+                                  return ip ? (
+                                    <div key={ipIndex} className="flex items-center justify-between bg-secondary/20 rounded p-1 text-xs">
+                                      <span>{ip.address}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-5 w-5"
+                                        onClick={() => {
+                                          setFormData(prev => {
+                                            const suites = (prev.suites || []).map(s => 
+                                              s.id === suite.id 
+                                                ? {
+                                                    ...s, 
+                                                    ipAddresses: s.ipAddresses.filter(idx => idx !== ipIndex)
+                                                  } 
+                                                : s
+                                            );
+                                            return { ...prev, suites };
+                                          });
+                                        }}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div
+                                className={`px-2 py-1 rounded-full text-xs font-medium inline-flex items-center ${
+                                  suite.status === "Valid"
+                                    ? "bg-green-100 text-green-800"
+                                    : "bg-red-100 text-red-800"
+                                }`}
+                                title={
+                                  suite.status === "Invalid"
+                                    ? "A suite must contain at least one device with SM role to be valid"
+                                    : "This suite is valid for key generation"
+                                }
+                              >
+                                {suite.status === "Valid" ? (
+                                  <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+                                  </svg>
+                                ) : (
+                                  <AlertCircle className="w-3 h-3 mr-1" />
+                                )}
+                                {suite.status}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveSuite(suite.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No suites added yet
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditing ? "Update Screen" : "Create Screen"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
