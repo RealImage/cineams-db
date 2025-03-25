@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -246,7 +245,10 @@ export const ScreenDialog = ({
         ...prev,
         sound: {
           ...(prev.sound || {}),
-          soundMixes: updatedMixes
+          soundMixes: updatedMixes,
+          processor: prev.sound?.processor,
+          speakers: prev.sound?.speakers,
+          iabSupported: prev.sound?.iabSupported || false
         }
       };
     });
