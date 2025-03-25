@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -916,4 +917,249 @@ export const ScreenDialog = ({
                     <TableBody>
                       {formData.suites.map((suite) => (
                         <TableRow key={suite.id}>
-                          <TableCell>{suite.name}</
+                          <TableCell>{suite.name}</TableCell>
+                          <TableCell>
+                            {suite.devices.length > 0 ? (
+                              <div className="flex flex-col space-y-1">
+                                {suite.devices.map(deviceId => {
+                                  const device = formData.devices?.find(d => d.id === deviceId);
+                                  return device ? (
+                                    <div key={deviceId} className="flex items-center justify-between">
+                                      <span className="text-xs">{device.manufacturer} {device.model}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => handleRemoveDeviceFromSuite(suite.id, deviceId)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">No devices</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {suite.ipAddresses.length > 0 ? (
+                              <div className="flex flex-col space-y-1">
+                                {suite.ipAddresses.map(ipIndex => {
+                                  const ip = formData.ipAddresses?.[ipIndex];
+                                  return ip ? (
+                                    <div key={ipIndex} className="flex items-center justify-between">
+                                      <span className="text-xs">{ip.address}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-6 w-6"
+                                        onClick={() => handleRemoveIPAddressFromSuite(suite.id, ipIndex)}
+                                      >
+                                        <Trash2 className="h-3 w-3" />
+                                      </Button>
+                                    </div>
+                                  ) : null;
+                                })}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-xs">No IP addresses</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              getSuiteStatus(suite) === "Valid" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {getSuiteStatus(suite)}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveSuite(suite.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-muted-foreground">No suites have been added yet</p>
+                )}
+                <Button type="button" variant="outline" size="sm" onClick={handleAddSuite}>
+                  <Plus className="h-4 w-4 mr-2" /> Add Suite
+                </Button>
+              </div>
+            </TabsContent>
+            
+            {/* Temporary Closures Tab */}
+            <TabsContent value="closures" className="mt-4 space-y-4">
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          {tempClosureStartDate ? (
+                            format(tempClosureStartDate, "PPP")
+                          ) : (
+                            <span className="text-muted-foreground">Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={tempClosureStartDate}
+                          onSelect={setTempClosureStartDate}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>End Date (Optional)</Label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className="w-full justify-start text-left font-normal"
+                        >
+                          {tempClosureEndDate ? (
+                            format(tempClosureEndDate, "PPP")
+                          ) : (
+                            <span className="text-muted-foreground">Pick a date</span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={tempClosureEndDate}
+                          onSelect={setTempClosureEndDate}
+                          initialFocus
+                          disabled={(date) => 
+                            tempClosureStartDate ? date < tempClosureStartDate : false
+                          }
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tempClosureReason">Reason</Label>
+                  <Select
+                    value={tempClosureReason}
+                    onValueChange={setTempClosureReason}
+                  >
+                    <SelectTrigger id="tempClosureReason">
+                      <SelectValue placeholder="Select reason" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {tempClosureReasonsList.map((reason) => (
+                        <SelectItem key={reason} value={reason}>
+                          {reason}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tempClosureNotes">Notes (Optional)</Label>
+                  <Textarea
+                    id="tempClosureNotes"
+                    value={tempClosureNotes}
+                    onChange={(e) => setTempClosureNotes(e.target.value)}
+                    placeholder="Additional details about the closure"
+                  />
+                </div>
+                
+                <Button 
+                  type="button" 
+                  onClick={handleAddTempClosure}
+                  disabled={!tempClosureStartDate || !tempClosureReason}
+                >
+                  <Plus className="h-4 w-4 mr-2" /> Add Temporary Closure
+                </Button>
+                
+                {formData.temporaryClosures && formData.temporaryClosures.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Start Date</TableHead>
+                        <TableHead>End Date</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.temporaryClosures.map((closure) => (
+                        <TableRow key={closure.id}>
+                          <TableCell>
+                            {format(new Date(closure.startDate), "PPP")}
+                          </TableCell>
+                          <TableCell>
+                            {closure.endDate 
+                              ? format(new Date(closure.endDate), "PPP")
+                              : <span className="text-muted-foreground text-xs">Ongoing</span>
+                            }
+                          </TableCell>
+                          <TableCell>{closure.reason}</TableCell>
+                          <TableCell>
+                            <span className={`px-2 py-1 rounded-full text-xs ${
+                              closure.active 
+                                ? "bg-yellow-100 text-yellow-800" 
+                                : "bg-gray-100 text-gray-800"
+                            }`}>
+                              {closure.active ? "Active" : "Inactive"}
+                            </span>
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveTempClosure(closure.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <p className="text-muted-foreground">No temporary closures have been added yet</p>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditing ? "Update Screen" : "Create Screen"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+};
