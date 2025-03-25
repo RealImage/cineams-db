@@ -25,7 +25,6 @@ interface ScreenDialogProps {
   onSave: (screen: Partial<Screen>) => void;
 }
 
-// Lists for dropdowns
 const domainsList = ["FLMX", "RDC", "TMS", "AAM", "CNCL"];
 const deviceManufacturersList = ["Christie", "Dolby", "Barco", "NEC", "Sony", "GDC", "Doremi", "QSC", "USL", "Other"];
 const deviceModelsList = {
@@ -95,17 +94,14 @@ export const ScreenDialog = ({
     }
   );
   
-  // State for third party ID domain
   const [thirdPartyDomain, setThirdPartyDomain] = useState<string>(
     screen?.thirdPartyId ? screen.thirdPartyId.split(':')[0] : ""
   );
   
-  // State for third party ID value
   const [thirdPartyValue, setThirdPartyValue] = useState<string>(
     screen?.thirdPartyId ? screen.thirdPartyId.split(':')[1] || "" : ""
   );
   
-  // State for temporary closure
   const [tempClosureStartDate, setTempClosureStartDate] = useState<Date | undefined>(undefined);
   const [tempClosureEndDate, setTempClosureEndDate] = useState<Date | undefined>(undefined);
   const [tempClosureReason, setTempClosureReason] = useState<string>("");
@@ -254,7 +250,6 @@ export const ScreenDialog = ({
     });
   };
   
-  // Handle Dimension changes
   const handleDimensionChange = (field: string, value: number | undefined) => {
     setFormData((prev) => ({
       ...prev,
@@ -265,7 +260,6 @@ export const ScreenDialog = ({
     }));
   };
   
-  // Handle Projection changes
   const handleProjectionChange = (field: string, value: string | boolean | undefined) => {
     setFormData((prev) => ({
       ...prev,
@@ -276,7 +270,6 @@ export const ScreenDialog = ({
     }));
   };
   
-  // Handle Sound changes
   const handleSoundChange = (field: string, value: string | boolean | undefined) => {
     setFormData((prev) => ({
       ...prev,
@@ -287,7 +280,6 @@ export const ScreenDialog = ({
     }));
   };
   
-  // Handle Suite management
   const handleAddSuite = () => {
     setFormData((prev) => {
       const newSuite: Suite = {
@@ -373,7 +365,6 @@ export const ScreenDialog = ({
       return;
     }
     
-    // Combine third party domain and value
     const updatedFormData = {
       ...formData,
       thirdPartyId: thirdPartyDomain && thirdPartyValue 
@@ -411,7 +402,6 @@ export const ScreenDialog = ({
       temporaryClosures: [...(prev.temporaryClosures || []), newClosure]
     }));
     
-    // Reset temp closure state
     setTempClosureStartDate(undefined);
     setTempClosureEndDate(undefined);
     setTempClosureReason("");
@@ -426,7 +416,6 @@ export const ScreenDialog = ({
   };
   
   const getSuiteStatus = (suite: Suite): "Valid" | "Invalid" => {
-    // Check if there's at least one device with SM role
     const hasSMRole = (suite.devices || []).some((deviceId: string) => {
       const device = (formData.devices || []).find(d => d.id === deviceId);
       return device && device.role === "SM";
@@ -469,7 +458,6 @@ export const ScreenDialog = ({
               <TabsTrigger value="closures">Temporary Closures</TabsTrigger>
             </TabsList>
             
-            {/* General Information Tab */}
             <TabsContent value="general" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -551,7 +539,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Details Tab */}
             <TabsContent value="details" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -653,7 +640,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Dimensions Tab */}
             <TabsContent value="dimensions" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -736,7 +722,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Projection Tab */}
             <TabsContent value="projection" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -769,7 +754,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Sound Tab */}
             <TabsContent value="sound" className="mt-4 space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -820,7 +804,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Devices Tab */}
             <TabsContent value="devices" className="mt-4 space-y-4">
               <div className="space-y-2">
                 <Label>Devices</Label>
@@ -901,7 +884,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Suites Tab */}
             <TabsContent value="suites" className="mt-4 space-y-4">
               <div className="space-y-2">
                 <Label>Suites</Label>
@@ -1002,7 +984,6 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            {/* Temporary Closures Tab */}
             <TabsContent value="closures" className="mt-4 space-y-4">
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
