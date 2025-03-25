@@ -87,16 +87,22 @@ export const ScreenDialog = ({
     
     const nameParts = name.split('.');
     if (nameParts.length === 1) {
-      setFormData((prev) => ({ ...prev, [name]: numberValue }));
+      setFormData((prev) => {
+        const newData = { ...prev };
+        newData[name as keyof Screen] = numberValue as any;
+        return newData;
+      });
     } else if (nameParts.length === 2) {
       const [parent, child] = nameParts;
-      setFormData((prev) => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof Screen],
-          [child]: numberValue
+      setFormData((prev) => {
+        const newData = { ...prev };
+        if (!newData[parent as keyof Screen]) {
+          (newData as any)[parent] = {};
         }
-      }));
+        const parentObj = (newData as any)[parent];
+        parentObj[child] = numberValue;
+        return newData;
+      });
     }
   };
   
