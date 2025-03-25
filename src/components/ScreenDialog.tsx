@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,11 +7,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Screen, ScreenDevice } from "@/types";
-import { Plus, Trash2, User, Monitor, Volume2, Box, ArrowDownToLine } from "lucide-react";
+import { Plus, Trash2, User, Monitor, Volume2, Box, ArrowDownToLine, AlertCircle, NetworkIcon, Layers, ServerStack } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface ScreenDialogProps {
   open: boolean;
@@ -19,6 +24,24 @@ interface ScreenDialogProps {
   screen?: Screen;
   onSave: (screen: Partial<Screen>) => void;
 }
+
+// Lists for dropdowns
+const domainsList = ["FLMX", "RDC", "TMS", "AAM", "CNCL"];
+const deviceManufacturersList = ["Christie", "Dolby", "Barco", "NEC", "Sony", "GDC", "Doremi", "QSC", "USL", "Other"];
+const deviceModelsList = {
+  Christie: ["CP2215", "CP2220", "CP4220", "CP4230"],
+  Dolby: ["IMS1000", "IMS2000", "IMS3000", "CP750", "CP850"],
+  Barco: ["Series 2", "Series 4", "ACS-2048", "XDC", "ICMP"],
+  NEC: ["NC900C", "NC1200C", "NC2000C", "NC3200S"],
+  Sony: ["SRX-R320", "SRX-R515P", "SRX-R815P"],
+  GDC: ["SR-1000", "SX-3000", "SX-4000"],
+  Doremi: ["IMS1000", "IMS2000", "ShowVault"],
+  QSC: ["DCP-100", "DCP-300", "DCS-300"],
+  USL: ["JSD-60", "JSD-100"],
+  Other: ["Custom"],
+};
+const deviceRolesList = ["SM", "LD", "PR", "OBAE", "PLY", "PRC", "REALD", "ATMOS"];
+const tempClosureReasonsList = ["Renovation", "Maintenance", "Natural Disaster", "Fire", "Flood", "COVID-19", "Other"];
 
 export const ScreenDialog = ({
   open,
@@ -65,9 +88,27 @@ export const ScreenDialog = ({
         soundMixes: [],
         iabSupported: false
       },
-      devices: []
+      devices: [],
+      ipAddresses: [],
+      suites: []
     }
   );
+  
+  // State for third party ID domain
+  const [thirdPartyDomain, setThirdPartyDomain] = useState<string>(
+    screen?.thirdPartyId ? screen.thirdPartyId.split(':')[0] : ""
+  );
+  
+  // State for third party ID value
+  const [thirdPartyValue, setThirdPartyValue] = useState<string>(
+    screen?.thirdPartyId ? screen.thirdPartyId.split(':')[1] || "" : ""
+  );
+  
+  // State for temporary closure
+  const [tempClosureStartDate, setTempClosureStartDate] = useState<Date | undefined>(undefined);
+  const [tempClosureEndDate, setTempClosureEndDate] = useState<Date | undefined>(undefined);
+  const [tempClosureReason, setTempClosureReason] = useState<string>("");
+  const [tempClosureNotes, setTempClosureNotes] = useState<string>("");
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -127,12 +168,41 @@ export const ScreenDialog = ({
     });
   };
   
+  // Handle IP Address management
+  const handleAddIPAddress = () => {
+    setFormData((prev) => ({
+      ...prev,
+      ipAddresses: [...(prev.ipAddresses || []), { address: "", subnet: "", gateway: "" }]
+    }));
+  };
+  
+  const handleRemoveIPAddress = (index: number) => {
+    setFormData((prev) => {
+      const ipAddresses = [...(prev.ipAddresses || [])];
+      ipAddresses.splice(index, 1);
+      return { ...prev, ipAddresses };
+    });
+  };
+  
+  const handleIPAddressChange = (index: number, field: string, value: string) => {
+    setFormData((prev) => {
+      const ipAddresses = [...(prev.ipAddresses || [])];
+      ipAddresses[index] = { ...ipAddresses[index], [field]: value };
+      return { ...prev, ipAddresses };
+    });
+  };
+  
+  // Handle device management
   const handleAddDevice = () => {
-    const newDevice: ScreenDevice = {
+    const newDevice = {
       id: crypto.randomUUID(),
       manufacturer: "",
       model: "",
-      serialNumber: ""
+      serialNumber: "",
+      role: "",
+      certificateStatus: "Valid",
+      certificateLockStatus: "Unlocked",
+      softwareVersion: ""
     };
     
     setFormData((prev) => ({
@@ -148,7 +218,7 @@ export const ScreenDialog = ({
     }));
   };
   
-  const handleDeviceChange = (deviceId: string, field: keyof ScreenDevice, value: string) => {
+  const handleDeviceChange = (deviceId: string, field: string, value: string) => {
     setFormData((prev) => ({
       ...prev,
       devices: (prev.devices || []).map(device => 
@@ -156,6 +226,27 @@ export const ScreenDialog = ({
           ? { ...device, [field]: value } 
           : device
       )
+    }));
+  };
+  
+  // Handle Suite management
+  const handleAddSuite = () => {
+    setFormData((prev) => ({
+      ...prev,
+      suites: [...(prev.suites || []), {
+        id: crypto.randomUUID(),
+        name: `Suite ${(prev.suites || []).length + 1}`,
+        devices: [],
+        ipAddresses: [],
+        status: "Invalid"
+      }]
+    }));
+  };
+  
+  const handleRemoveSuite = (suiteId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      suites: (prev.suites || []).filter(suite => suite.id !== suiteId)
     }));
   };
   
@@ -218,7 +309,15 @@ export const ScreenDialog = ({
       return;
     }
     
-    onSave(formData);
+    // Combine third party domain and value
+    const updatedFormData = {
+      ...formData,
+      thirdPartyId: thirdPartyDomain && thirdPartyValue 
+        ? `${thirdPartyDomain}:${thirdPartyValue}` 
+        : undefined
+    };
+    
+    onSave(updatedFormData);
     onOpenChange(false);
     
     toast.success(
@@ -226,6 +325,54 @@ export const ScreenDialog = ({
         ? `Screen "${formData.name}" updated successfully` 
         : `Screen "${formData.name}" created successfully`
     );
+  };
+  
+  const handleAddTempClosure = () => {
+    if (!tempClosureStartDate || !tempClosureReason) {
+      toast.error("Please select at least a start date and reason for temporary closure");
+      return;
+    }
+    
+    const newTempClosure = {
+      id: crypto.randomUUID(),
+      startDate: tempClosureStartDate.toISOString(),
+      endDate: tempClosureEndDate?.toISOString(),
+      reason: tempClosureReason,
+      notes: tempClosureNotes,
+      active: true
+    };
+    
+    setFormData((prev) => ({
+      ...prev,
+      temporaryClosures: [...(prev.temporaryClosures || []), newTempClosure]
+    }));
+    
+    // Reset form
+    setTempClosureStartDate(undefined);
+    setTempClosureEndDate(undefined);
+    setTempClosureReason("");
+    setTempClosureNotes("");
+    
+    toast.success("Temporary closure added");
+  };
+  
+  const handleRemoveTempClosure = (closureId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      temporaryClosures: (prev.temporaryClosures || []).filter(closure => closure.id !== closureId)
+    }));
+    
+    toast.success("Temporary closure removed");
+  };
+  
+  const getSuiteStatus = (suite: any) => {
+    // Check if there's at least one device with SM role
+    const hasSMRole = (suite.devices || []).some((deviceId: string) => {
+      const device = (formData.devices || []).find(d => d.id === deviceId);
+      return device && device.role === "SM";
+    });
+    
+    return hasSMRole ? "Valid" : "Invalid";
   };
   
   const soundMixOptions = [
@@ -295,12 +442,29 @@ export const ScreenDialog = ({
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="thirdPartyId">Third-Party ID</Label>
-                  <Input
-                    id="thirdPartyId"
-                    name="thirdPartyId"
-                    value={formData.thirdPartyId || ""}
-                    onChange={handleChange}
-                  />
+                  <div className="flex space-x-2">
+                    <Select
+                      value={thirdPartyDomain}
+                      onValueChange={setThirdPartyDomain}
+                    >
+                      <SelectTrigger className="w-1/3">
+                        <SelectValue placeholder="Domain" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {domainsList.map(domain => (
+                          <SelectItem key={domain} value={domain}>
+                            {domain}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      className="w-2/3"
+                      value={thirdPartyValue}
+                      onChange={(e) => setThirdPartyValue(e.target.value)}
+                      placeholder="ID value"
+                    />
+                  </div>
                 </div>
               </div>
               
@@ -388,7 +552,7 @@ export const ScreenDialog = ({
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="status">Status</Label>
+                  <Label htmlFor="status">Screen Status</Label>
                   <Select
                     value={formData.status}
                     onValueChange={(value) => handleSelectChange("status", value as "Active" | "Inactive" | "Deleted")}
@@ -471,6 +635,161 @@ export const ScreenDialog = ({
                     checked={formData.motionSeats || false}
                     onCheckedChange={(checked) => handleSwitchChange("motionSeats", checked)}
                   />
+                </div>
+              </div>
+              
+              {/* Temporary Closure Details Section */}
+              <div className="mt-8 border-t pt-6">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-muted-foreground" />
+                  <h3 className="text-lg font-medium">Temporary Closure Details</h3>
+                </div>
+                
+                <div className="space-y-4 mt-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tempClosureReason">Closure Reason</Label>
+                      <Select
+                        value={tempClosureReason}
+                        onValueChange={setTempClosureReason}
+                      >
+                        <SelectTrigger id="tempClosureReason">
+                          <SelectValue placeholder="Select reason" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {tempClosureReasonsList.map(reason => (
+                            <SelectItem key={reason} value={reason}>
+                              {reason}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="tempClosureNotes">Closure Notes</Label>
+                      <Textarea
+                        id="tempClosureNotes"
+                        value={tempClosureNotes}
+                        onChange={(e) => setTempClosureNotes(e.target.value)}
+                        className="h-[80px] resize-none"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !tempClosureStartDate && "text-muted-foreground"
+                            )}
+                          >
+                            {tempClosureStartDate ? format(tempClosureStartDate, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={tempClosureStartDate}
+                            onSelect={setTempClosureStartDate}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Date</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className={cn(
+                              "w-full justify-start text-left font-normal",
+                              !tempClosureEndDate && "text-muted-foreground"
+                            )}
+                          >
+                            {tempClosureEndDate ? format(tempClosureEndDate, "PPP") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={tempClosureEndDate}
+                            onSelect={setTempClosureEndDate}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                            disabled={(date) => 
+                              tempClosureStartDate 
+                                ? date < tempClosureStartDate 
+                                : false
+                            }
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <Button 
+                      type="button" 
+                      onClick={handleAddTempClosure}
+                      disabled={!tempClosureStartDate || !tempClosureReason}
+                    >
+                      <Plus className="h-4 w-4 mr-1" /> Add Temporary Closure
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* List of active temporary closures */}
+                <div className="mt-4">
+                  <h4 className="text-sm font-medium mb-2">Active Temporary Closures</h4>
+                  {formData.temporaryClosures && formData.temporaryClosures.length > 0 ? (
+                    <div className="border rounded-md overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Reason</TableHead>
+                            <TableHead>Start Date</TableHead>
+                            <TableHead>End Date</TableHead>
+                            <TableHead>Notes</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.temporaryClosures.map((closure) => (
+                            <TableRow key={closure.id}>
+                              <TableCell>{closure.reason}</TableCell>
+                              <TableCell>{format(new Date(closure.startDate), "PP")}</TableCell>
+                              <TableCell>
+                                {closure.endDate ? format(new Date(closure.endDate), "PP") : "Not specified"}
+                              </TableCell>
+                              <TableCell className="truncate max-w-[200px]" title={closure.notes}>
+                                {closure.notes || "No notes"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRemoveTempClosure(closure.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center p-4 border rounded-md text-muted-foreground">
+                      No active temporary closures
+                    </div>
+                  )}
                 </div>
               </div>
               
@@ -703,72 +1022,465 @@ export const ScreenDialog = ({
               </div>
             </TabsContent>
             
-            <TabsContent value="devices" className="mt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Screen Devices</h3>
-                <Button type="button" onClick={handleAddDevice} size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> Add Device
-                </Button>
-              </div>
-              
-              {formData.devices && formData.devices.length > 0 ? (
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Device Manufacturer</TableHead>
-                        <TableHead>Model</TableHead>
-                        <TableHead>Serial Number</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {formData.devices.map((device) => (
-                        <TableRow key={device.id}>
-                          <TableCell>
-                            <Input 
-                              value={device.manufacturer} 
-                              onChange={(e) => handleDeviceChange(device.id, "manufacturer", e.target.value)} 
-                              className="h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              value={device.model} 
-                              onChange={(e) => handleDeviceChange(device.id, "model", e.target.value)} 
-                              className="h-8"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input 
-                              value={device.serialNumber} 
-                              onChange={(e) => handleDeviceChange(device.id, "serialNumber", e.target.value)} 
-                              className="h-8"
-                            />
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleRemoveDevice(device.id)}
-                              className="h-8 w-8"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <div className="border rounded-md p-8 text-center">
-                  <p className="text-muted-foreground mb-4">No devices have been added yet</p>
-                  <Button type="button" onClick={handleAddDevice} variant="outline">
-                    <Plus className="h-4 w-4 mr-2" /> Add Device
+            <TabsContent value="devices" className="mt-4 space-y-6">
+              {/* Screen IP Management Section */}
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <NetworkIcon className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen IP Management</h3>
+                  </div>
+                  <Button type="button" onClick={handleAddIPAddress} size="sm">
+                    <Plus className="h-4 w-4 mr-1" /> Add IP Configuration
                   </Button>
                 </div>
-              )}
+                
+                {formData.ipAddresses && formData.ipAddresses.length > 0 ? (
+                  <div className="border rounded-md overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>IP Address</TableHead>
+                          <TableHead>Subnet Mask</TableHead>
+                          <TableHead>Gateway</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.ipAddresses.map((ip, index) => (
+                          <TableRow key={index}>
+                            <TableCell>
+                              <Input 
+                                value={ip.address} 
+                                onChange={(e) => handleIPAddressChange(index, "address", e.target.value)} 
+                                className="h-8"
+                                placeholder="192.168.1.10"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={ip.subnet} 
+                                onChange={(e) => handleIPAddressChange(index, "subnet", e.target.value)} 
+                                className="h-8"
+                                placeholder="255.255.255.0"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={ip.gateway} 
+                                onChange={(e) => handleIPAddressChange(index, "gateway", e.target.value)} 
+                                className="h-8"
+                                placeholder="192.168.1.1"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveIPAddress(index)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No IP configurations have been added yet
+                  </div>
+                )}
+              </div>
+              
+              {/* Screen Devices Section */}
+              <div className="mt-8 pt-4 border-t">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <ServerStack className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen Devices</h3>
+                  </div>
+                  <Button type="button" onClick={handleAddDevice} size="sm">
+                    <Plus className="h-4 w-4 mr-1" /> Add Device
+                  </Button>
+                </div>
+                
+                {formData.devices && formData.devices.length > 0 ? (
+                  <div className="border rounded-md overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Manufacturer</TableHead>
+                          <TableHead>Model</TableHead>
+                          <TableHead>Serial Number</TableHead>
+                          <TableHead>Device Role</TableHead>
+                          <TableHead>Certificate Status</TableHead>
+                          <TableHead>Certificate Lock</TableHead>
+                          <TableHead>Software Version</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {formData.devices.map((device) => (
+                          <TableRow key={device.id}>
+                            <TableCell>
+                              <Select
+                                value={device.manufacturer}
+                                onValueChange={(value) => handleDeviceChange(device.id, "manufacturer", value)}
+                              >
+                                <SelectTrigger className="h-8 w-36">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deviceManufacturersList.map(manufacturer => (
+                                    <SelectItem key={manufacturer} value={manufacturer}>
+                                      {manufacturer}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.model}
+                                onValueChange={(value) => handleDeviceChange(device.id, "model", value)}
+                                disabled={!device.manufacturer}
+                              >
+                                <SelectTrigger className="h-8 w-36">
+                                  <SelectValue placeholder="Select" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {device.manufacturer && deviceModelsList[device.manufacturer] ? 
+                                    deviceModelsList[device.manufacturer].map(model => (
+                                      <SelectItem key={model} value={model}>
+                                        {model}
+                                      </SelectItem>
+                                    )) : 
+                                    <SelectItem value="">Select manufacturer first</SelectItem>
+                                  }
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={device.serialNumber} 
+                                onChange={(e) => handleDeviceChange(device.id, "serialNumber", e.target.value)} 
+                                className="h-8"
+                                placeholder="Serial #"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.role || ""}
+                                onValueChange={(value) => handleDeviceChange(device.id, "role", value)}
+                              >
+                                <SelectTrigger className="h-8 w-24">
+                                  <SelectValue placeholder="Role" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deviceRolesList.map(role => (
+                                    <SelectItem key={role} value={role}>
+                                      {role}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.certificateStatus || "Valid"}
+                                onValueChange={(value) => handleDeviceChange(device.id, "certificateStatus", value)}
+                              >
+                                <SelectTrigger className="h-8 w-24">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Valid">Valid</SelectItem>
+                                  <SelectItem value="Invalid">Invalid</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.certificateLockStatus || "Unlocked"}
+                                onValueChange={(value) => handleDeviceChange(device.id, "certificateLockStatus", value)}
+                              >
+                                <SelectTrigger className="h-8 w-28">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Locked">Locked</SelectItem>
+                                  <SelectItem value="Unlocked">Unlocked</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Input 
+                                value={device.softwareVersion || ""} 
+                                onChange={(e) => handleDeviceChange(device.id, "softwareVersion", e.target.value)} 
+                                className="h-8"
+                                placeholder="v1.0.0"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleRemoveDevice(device.id)}
+                                className="h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No screen devices have been added yet
+                  </div>
+                )}
+              </div>
+              
+              {/* Screen Suite Section */}
+              <div className="mt-8 pt-4 border-t">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <Layers className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen Suite</h3>
+                  </div>
+                  <Button type="button" onClick={handleAddSuite} size="sm">
+                    <Plus className="h-4 w-4 mr-1" /> Add Suite
+                  </Button>
+                </div>
+                
+                {formData.suites && formData.suites.length > 0 ? (
+                  <div className="space-y-4">
+                    {formData.suites.map((suite) => (
+                      <div key={suite.id} className="border rounded-md p-4 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <Input 
+                              value={suite.name} 
+                              onChange={(e) => {
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  suites: (prev.suites || []).map(s => 
+                                    s.id === suite.id ? { ...s, name: e.target.value } : s
+                                  )
+                                }));
+                              }} 
+                              className="w-48 h-8"
+                              placeholder="Suite Name"
+                            />
+                            
+                            <div className={`px-2 py-1 rounded text-xs font-semibold ${
+                              getSuiteStatus(suite) === "Valid" 
+                                ? "bg-green-100 text-green-800" 
+                                : "bg-red-100 text-red-800"
+                            }`}>
+                              {getSuiteStatus(suite) === "Valid" ? "Valid" : "Invalid"}
+                              {getSuiteStatus(suite) === "Invalid" && (
+                                <span className="ml-1 cursor-help" title="A valid Suite must contain at least one device with SM role">
+                                  <AlertCircle className="h-3 w-3 inline-block" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveSuite(suite.id)}
+                            className="h-8 w-8"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Associated Devices</h4>
+                            <Select
+                              onValueChange={(deviceId) => {
+                                setFormData((prev) => {
+                                  const suites = [...(prev.suites || [])];
+                                  const suiteIndex = suites.findIndex(s => s.id === suite.id);
+                                  if (suiteIndex !== -1) {
+                                    if (!suites[suiteIndex].devices) {
+                                      suites[suiteIndex].devices = [];
+                                    }
+                                    if (!suites[suiteIndex].devices.includes(deviceId)) {
+                                      suites[suiteIndex].devices.push(deviceId);
+                                    }
+                                  }
+                                  return { ...prev, suites };
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-full mb-2">
+                                <SelectValue placeholder="Add device to suite" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {formData.devices?.filter(device => 
+                                  !(suite.devices || []).includes(device.id)
+                                ).map(device => (
+                                  <SelectItem key={device.id} value={device.id}>
+                                    {device.manufacturer} {device.model} - {device.role || "No role"}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            <div className="border rounded-md">
+                              {(suite.devices || []).length > 0 ? (
+                                <Table>
+                                  <TableBody>
+                                    {(suite.devices || []).map((deviceId) => {
+                                      const device = formData.devices?.find(d => d.id === deviceId);
+                                      return device ? (
+                                        <TableRow key={deviceId}>
+                                          <TableCell className="py-2">
+                                            <div className="flex items-center justify-between">
+                                              <div>
+                                                <div className="font-medium">{device.manufacturer} {device.model}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                  {device.role ? `Role: ${device.role}` : "No role assigned"}
+                                                </div>
+                                              </div>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                  setFormData((prev) => {
+                                                    const suites = [...(prev.suites || [])];
+                                                    const suiteIndex = suites.findIndex(s => s.id === suite.id);
+                                                    if (suiteIndex !== -1) {
+                                                      suites[suiteIndex].devices = suites[suiteIndex].devices?.filter(
+                                                        id => id !== deviceId
+                                                      );
+                                                    }
+                                                    return { ...prev, suites };
+                                                  });
+                                                }}
+                                                className="h-6 w-6"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ) : null;
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              ) : (
+                                <div className="p-3 text-center text-sm text-muted-foreground">
+                                  No devices assigned
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Associated IP Addresses</h4>
+                            <Select
+                              onValueChange={(ipIndex) => {
+                                setFormData((prev) => {
+                                  const suites = [...(prev.suites || [])];
+                                  const suiteIndex = suites.findIndex(s => s.id === suite.id);
+                                  if (suiteIndex !== -1) {
+                                    if (!suites[suiteIndex].ipAddresses) {
+                                      suites[suiteIndex].ipAddresses = [];
+                                    }
+                                    const ipIndexNum = parseInt(ipIndex, 10);
+                                    if (!suites[suiteIndex].ipAddresses.includes(ipIndexNum)) {
+                                      suites[suiteIndex].ipAddresses.push(ipIndexNum);
+                                    }
+                                  }
+                                  return { ...prev, suites };
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-full mb-2">
+                                <SelectValue placeholder="Add IP address to suite" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {formData.ipAddresses?.map((ip, index) => (
+                                  <SelectItem 
+                                    key={index} 
+                                    value={index.toString()}
+                                    disabled={(suite.ipAddresses || []).includes(index)}
+                                  >
+                                    {ip.address}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            
+                            <div className="border rounded-md">
+                              {(suite.ipAddresses || []).length > 0 ? (
+                                <Table>
+                                  <TableBody>
+                                    {(suite.ipAddresses || []).map((ipIndex) => {
+                                      const ip = formData.ipAddresses?.[ipIndex];
+                                      return ip ? (
+                                        <TableRow key={ipIndex}>
+                                          <TableCell className="py-2">
+                                            <div className="flex items-center justify-between">
+                                              <div>
+                                                <div className="font-medium">{ip.address}</div>
+                                                <div className="text-xs text-muted-foreground">
+                                                  {ip.subnet && `Subnet: ${ip.subnet}`}
+                                                </div>
+                                              </div>
+                                              <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                  setFormData((prev) => {
+                                                    const suites = [...(prev.suites || [])];
+                                                    const suiteIndex = suites.findIndex(s => s.id === suite.id);
+                                                    if (suiteIndex !== -1) {
+                                                      suites[suiteIndex].ipAddresses = suites[suiteIndex].ipAddresses?.filter(
+                                                        idx => idx !== ipIndex
+                                                      );
+                                                    }
+                                                    return { ...prev, suites };
+                                                  });
+                                                }}
+                                                className="h-6 w-6"
+                                              >
+                                                <Trash2 className="h-3 w-3" />
+                                              </Button>
+                                            </div>
+                                          </TableCell>
+                                        </TableRow>
+                                      ) : null;
+                                    })}
+                                  </TableBody>
+                                </Table>
+                              ) : (
+                                <div className="p-3 text-center text-sm text-muted-foreground">
+                                  No IP addresses assigned
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center p-4 border rounded-md text-muted-foreground">
+                    No screen suites have been configured
+                  </div>
+                )}
+              </div>
             </TabsContent>
           </Tabs>
           

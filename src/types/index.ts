@@ -1,4 +1,3 @@
-
 export interface Theatre {
   id: string;
   name: string;
@@ -145,12 +144,12 @@ export interface Screen {
   dimensions?: ScreenDimensions;
   projection?: ScreenProjection;
   sound?: ScreenSound;
-  ipAddress?: string;
-  subnet?: string;
-  gateway?: string;
+  ipAddresses?: ScreenIPAddress[];
   devices: ScreenDevice[];
-  createdAt: string;
-  updatedAt: string;
+  suites?: ScreenSuite[];
+  temporaryClosures?: TemporaryClosure[];
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ScreenOperator {
@@ -182,13 +181,39 @@ export interface ScreenSound {
   iabSupported?: boolean;
 }
 
+export interface ScreenIPAddress {
+  address: string;
+  subnet: string;
+  gateway: string;
+}
+
 export interface ScreenDevice {
   id: string;
   manufacturer: string;
   model: string;
   serialNumber: string;
-  certificate?: string;
+  role?: string;
+  certificateStatus?: 'Valid' | 'Invalid';
+  certificateLockStatus?: 'Locked' | 'Unlocked';
   softwareVersion?: string;
+  certificate?: string;
+}
+
+export interface ScreenSuite {
+  id: string;
+  name: string;
+  devices: string[];
+  ipAddresses: number[];
+  status: 'Valid' | 'Invalid';
+}
+
+export interface TemporaryClosure {
+  id: string;
+  startDate: string;
+  endDate?: string;
+  reason: string;
+  notes?: string;
+  active: boolean;
 }
 
 export interface WireTAPDevice {
