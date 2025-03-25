@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Screen, ScreenDevice } from "@/types";
-import { Plus, Trash2, User, Monitor, SpeakerLoud, Dimensions, ArrowDownToLine } from "lucide-react";
+import { Plus, Trash2, User, Monitor, Volume2, Box, ArrowDownToLine } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -101,7 +100,6 @@ export const ScreenDialog = ({
     }
   };
   
-  // Operators management
   const handleOperatorChange = (index: number, field: string, value: string) => {
     setFormData((prev) => {
       const operators = [...(prev.operators || [])];
@@ -125,7 +123,6 @@ export const ScreenDialog = ({
     });
   };
   
-  // Devices management
   const handleAddDevice = () => {
     const newDevice: ScreenDevice = {
       id: crypto.randomUUID(),
@@ -158,7 +155,6 @@ export const ScreenDialog = ({
     }));
   };
   
-  // Sound mixes management
   const handleSoundMixChange = (mix: string) => {
     setFormData((prev) => {
       const currentMixes = prev.sound?.soundMixes || [];
@@ -176,7 +172,6 @@ export const ScreenDialog = ({
     });
   };
   
-  // Nested property setters
   const handleDimensionChange = (field: string, value: string) => {
     const numberValue = value === '' ? undefined : parseFloat(value);
     
@@ -214,7 +209,6 @@ export const ScreenDialog = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate form
     if (!formData.number || !formData.name) {
       toast.error("Please fill in all required fields");
       return;
@@ -230,7 +224,6 @@ export const ScreenDialog = ({
     );
   };
   
-  // Sound mix options
   const soundMixOptions = [
     { id: "5.1", label: "5.1 Surround Sound" },
     { id: "7.1", label: "7.1 Surround Sound" },
@@ -478,7 +471,7 @@ export const ScreenDialog = ({
               </div>
               
               <div className="flex items-center space-x-2 mt-6">
-                <Dimensions className="h-5 w-5 text-muted-foreground" />
+                <Box className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-lg font-medium">Auditorium & Screen Dimensions</h3>
               </div>
               
@@ -627,7 +620,7 @@ export const ScreenDialog = ({
               </div>
               
               <div className="flex items-center space-x-2 mt-6">
-                <SpeakerLoud className="h-5 w-5 text-muted-foreground" />
+                <Volume2 className="h-5 w-5 text-muted-foreground" />
                 <h3 className="text-lg font-medium">Sound System</h3>
               </div>
               
