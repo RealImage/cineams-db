@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -944,3 +945,731 @@ export const TheatreDialog = ({
                     <p className="text-sm text-muted-foreground">
                       Manage the WireTAP devices installed in this theatre
                     </p>
+                    <Button type="button" onClick={handleAddWireTAPDevice} size="sm">
+                      <Plus className="h-4 w-4 mr-1" /> Add Device
+                    </Button>
+                  </div>
+                  
+                  {wireDevices.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Serial Number</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Mapping</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {wireDevices.map((device) => (
+                          <TableRow key={device.id}>
+                            <TableCell>
+                              <Input
+                                value={device.serialNumber}
+                                onChange={(e) => handleWireTAPDeviceChange(device.id, "serialNumber", e.target.value)}
+                                className="h-8"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.status}
+                                onValueChange={(value) => handleWireTAPDeviceChange(device.id, "status", value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Active">Active</SelectItem>
+                                  <SelectItem value="Inactive">Inactive</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={device.mappingStatus}
+                                onValueChange={(value) => handleWireTAPDeviceChange(device.id, "mappingStatus", value)}
+                              >
+                                <SelectTrigger className="h-8">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Mapped">Mapped</SelectItem>
+                                  <SelectItem value="Unmapped">Unmapped</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteWireTAPDevice(device.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="text-center py-4 text-muted-foreground">
+                      No WireTAP devices added yet.
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Content & Key Delivery Tab */}
+            <TabsContent value="delivery" className="mt-4">
+              <div className="space-y-8">
+                {/* Part 1: Content Delivery */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Truck className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Content Delivery</h3>
+                  </div>
+                  
+                  {/* Delivery Time Slots */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">Delivery Time Slots</Label>
+                      <Button type="button" onClick={handleAddDeliveryTimeSlot} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Time Slot
+                      </Button>
+                    </div>
+                    
+                    {formData.deliveryTimeSlots && formData.deliveryTimeSlots.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Day</TableHead>
+                            <TableHead>Start Time</TableHead>
+                            <TableHead>End Time</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.deliveryTimeSlots.map((slot) => (
+                            <TableRow key={slot.id}>
+                              <TableCell>
+                                <Select
+                                  value={slot.day}
+                                  onValueChange={(value) => handleDeliveryTimeSlotChange(
+                                    slot.id, 
+                                    "day", 
+                                    value as 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'
+                                  )}
+                                >
+                                  <SelectTrigger className="h-8">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="Monday">Monday</SelectItem>
+                                    <SelectItem value="Tuesday">Tuesday</SelectItem>
+                                    <SelectItem value="Wednesday">Wednesday</SelectItem>
+                                    <SelectItem value="Thursday">Thursday</SelectItem>
+                                    <SelectItem value="Friday">Friday</SelectItem>
+                                    <SelectItem value="Saturday">Saturday</SelectItem>
+                                    <SelectItem value="Sunday">Sunday</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="time"
+                                  value={slot.startTime}
+                                  onChange={(e) => handleDeliveryTimeSlotChange(slot.id, "startTime", e.target.value)}
+                                  className="h-8"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  type="time"
+                                  value={slot.endTime}
+                                  onChange={(e) => handleDeliveryTimeSlotChange(slot.id, "endTime", e.target.value)}
+                                  className="h-8"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right space-x-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleCopyToAllDays(slot.id)}
+                                  title="Copy to all days"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteDeliveryTimeSlot(slot.id)}
+                                  title="Delete"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No delivery time slots added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Delivery Address */}
+                  <div className="space-y-4 mb-6">
+                    <Label className="text-base">Delivery Address</Label>
+                    
+                    <div className="flex items-center space-x-2 mb-4">
+                      <Switch
+                        id="useTheatreAddress"
+                        checked={formData.deliveryAddress?.useTheatreAddress || false}
+                        onCheckedChange={(checked) => handleDeliveryAddressChange("useTheatreAddress", checked)}
+                      />
+                      <Label htmlFor="useTheatreAddress">Use Theatre Address</Label>
+                    </div>
+                    
+                    {!formData.deliveryAddress?.useTheatreAddress && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="deliveryAddress">Address</Label>
+                            <Input
+                              id="deliveryAddress"
+                              value={formData.deliveryAddress?.address || ""}
+                              onChange={(e) => handleDeliveryAddressChange("address", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="deliveryCity">City</Label>
+                            <Input
+                              id="deliveryCity"
+                              value={formData.deliveryAddress?.city || ""}
+                              onChange={(e) => handleDeliveryAddressChange("city", e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="deliveryState">State</Label>
+                            <Input
+                              id="deliveryState"
+                              value={formData.deliveryAddress?.state || ""}
+                              onChange={(e) => handleDeliveryAddressChange("state", e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="deliveryPostalCode">Postal Code</Label>
+                            <Input
+                              id="deliveryPostalCode"
+                              value={formData.deliveryAddress?.postalCode || ""}
+                              onChange={(e) => handleDeliveryAddressChange("postalCode", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="deliveryCountry">Country</Label>
+                            <Input
+                              id="deliveryCountry"
+                              value={formData.deliveryAddress?.country || ""}
+                              onChange={(e) => handleDeliveryAddressChange("country", e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Delivery Instructions */}
+                  <div className="space-y-2 mb-6">
+                    <Label htmlFor="deliveryInstructions">Delivery Instructions / Notes</Label>
+                    <Textarea
+                      id="deliveryInstructions"
+                      name="deliveryInstructions"
+                      value={formData.deliveryInstructions || ""}
+                      onChange={handleChange}
+                      rows={3}
+                      placeholder="Enter special instructions for delivery"
+                    />
+                  </div>
+                  
+                  {/* DCP Physical Delivery Methods */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">DCP Physical Delivery Methods</Label>
+                      <Button type="button" onClick={handleAddPhysicalDeliveryMethod} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Method
+                      </Button>
+                    </div>
+                    
+                    {formData.dcpPhysicalDeliveryMethods && formData.dcpPhysicalDeliveryMethods.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Media Type</TableHead>
+                            <TableHead>Details</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.dcpPhysicalDeliveryMethods.map((method) => (
+                            <TableRow key={method.id}>
+                              <TableCell>
+                                <Input
+                                  value={method.mediaType}
+                                  onChange={(e) => handlePhysicalDeliveryMethodChange(method.id, "mediaType", e.target.value)}
+                                  className="h-8"
+                                  placeholder="e.g. Hard Drive, USB"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={method.details}
+                                  onChange={(e) => handlePhysicalDeliveryMethodChange(method.id, "details", e.target.value)}
+                                  className="h-8"
+                                  placeholder="Additional details"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeletePhysicalDeliveryMethod(method.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No physical delivery methods added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* DCP Network Delivery Methods */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">DCP Network Delivery Methods</Label>
+                      <Button type="button" onClick={handleAddNetworkDeliveryMethod} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Method
+                      </Button>
+                    </div>
+                    
+                    {formData.dcpNetworkDeliveryMethods && formData.dcpNetworkDeliveryMethods.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Network URL</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.dcpNetworkDeliveryMethods.map((method) => (
+                            <TableRow key={method.id}>
+                              <TableCell>
+                                <Input
+                                  value={method.networkURL}
+                                  onChange={(e) => handleNetworkDeliveryMethodChange(method.id, "networkURL", e.target.value)}
+                                  className="h-8"
+                                  placeholder="e.g. ftp://server.example.com"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteNetworkDeliveryMethod(method.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No network delivery methods added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* DCP Modem Delivery Methods */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">DCP Modem Delivery Methods</Label>
+                      <Button type="button" onClick={handleAddModemDeliveryMethod} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Method
+                      </Button>
+                    </div>
+                    
+                    {formData.dcpModemDeliveryMethods && formData.dcpModemDeliveryMethods.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Modem Phone Number</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.dcpModemDeliveryMethods.map((method) => (
+                            <TableRow key={method.id}>
+                              <TableCell>
+                                <Input
+                                  value={method.modemPhoneNumber}
+                                  onChange={(e) => handleModemDeliveryMethodChange(method.id, "modemPhoneNumber", e.target.value)}
+                                  className="h-8"
+                                  placeholder="e.g. +1-123-456-7890"
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteModemDeliveryMethod(method.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No modem delivery methods added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* DCP Delivery Contacts */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">DCP Delivery Contacts</Label>
+                      <Button type="button" onClick={handleAddDCPDeliveryContact} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Contact
+                      </Button>
+                    </div>
+                    
+                    {formData.dcpDeliveryContacts && formData.dcpDeliveryContacts.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.dcpDeliveryContacts.map((contact) => (
+                            <TableRow key={contact.id}>
+                              <TableCell>
+                                <Input
+                                  value={contact.name || ""}
+                                  onChange={(e) => handleDCPDeliveryContactChange(contact.id, "name", e.target.value)}
+                                  className="h-8"
+                                  placeholder="Contact Name (optional)"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={contact.email}
+                                  onChange={(e) => handleDCPDeliveryContactChange(contact.id, "email", e.target.value)}
+                                  className="h-8"
+                                  placeholder="email@example.com"
+                                  type="email"
+                                  required
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteDCPDeliveryContact(contact.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No DCP delivery contacts added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* Email Settings for DCP Delivery */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center space-x-4">
+                      <Switch
+                        id="sendEmailsForDCPDelivery"
+                        checked={formData.sendEmailsForDCPDelivery || false}
+                        onCheckedChange={(checked) => handleSwitchChange("sendEmailsForDCPDelivery", checked)}
+                      />
+                      <Label htmlFor="sendEmailsForDCPDelivery">
+                        Send Emails for DCP Delivery
+                      </Label>
+                    </div>
+                    
+                    {formData.sendEmailsForDCPDelivery && (
+                      <div className="space-y-2 pl-8">
+                        <Label className="block mb-2">Send Emails for DCP Content Types:</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {contentTypeOptions.map((option) => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`content-type-${option.id}`}
+                                checked={(formData.dcpContentTypesForEmail || []).includes(option.id)}
+                                onChange={() => handleContentTypeChange(option.id)}
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <label htmlFor={`content-type-${option.id}`}>{option.label}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Part 2: Keys Delivery */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Key className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Key Delivery</h3>
+                  </div>
+                  
+                  {/* Key Delivery Contacts */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base">Key Delivery Contacts</Label>
+                      <Button type="button" onClick={handleAddKeyDeliveryContact} size="sm">
+                        <Plus className="h-4 w-4 mr-1" /> Add Contact
+                      </Button>
+                    </div>
+                    
+                    {formData.keyDeliveryContacts && formData.keyDeliveryContacts.length > 0 ? (
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {formData.keyDeliveryContacts.map((contact) => (
+                            <TableRow key={contact.id}>
+                              <TableCell>
+                                <Input
+                                  value={contact.name || ""}
+                                  onChange={(e) => handleKeyDeliveryContactChange(contact.id, "name", e.target.value)}
+                                  className="h-8"
+                                  placeholder="Contact Name (optional)"
+                                />
+                              </TableCell>
+                              <TableCell>
+                                <Input
+                                  value={contact.email}
+                                  onChange={(e) => handleKeyDeliveryContactChange(contact.id, "email", e.target.value)}
+                                  className="h-8"
+                                  placeholder="email@example.com"
+                                  type="email"
+                                  required
+                                />
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDeleteKeyDeliveryContact(contact.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      <div className="text-center py-4 text-muted-foreground border rounded-md">
+                        No key delivery contacts added yet.
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* KDM Delivery Emails in FLM-X */}
+                  <div className="space-y-4 mb-6">
+                    <Label className="text-base">KDM Delivery Emails in FLM-X</Label>
+                    
+                    <RadioGroup
+                      value={formData.kdmDeliveryEmailsInFLMX || "useDropbox"}
+                      onValueChange={(value) => 
+                        handleSelectChange(
+                          "kdmDeliveryEmailsInFLMX", 
+                          value as "useDropbox" | "useKeyDeliveryContacts"
+                        )
+                      }
+                      className="space-y-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="useDropbox" id="kdm-dropbox" />
+                        <Label htmlFor="kdm-dropbox">Use dropbox@qubewire.com</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="useKeyDeliveryContacts" id="kdm-contacts" />
+                        <Label htmlFor="kdm-contacts">Use above emails from Key Delivery Contacts</Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                </div>
+                
+                {/* Part 3: Ingest Settings */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Upload className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Ingest Settings</h3>
+                  </div>
+                  
+                  {/* Auto Ingest of Content */}
+                  <div className="space-y-4 mb-6">
+                    <div className="flex items-center space-x-4">
+                      <Switch
+                        id="autoIngestOfContentEnabled"
+                        checked={formData.autoIngestOfContentEnabled || false}
+                        onCheckedChange={(checked) => handleSwitchChange("autoIngestOfContentEnabled", checked)}
+                      />
+                      <Label htmlFor="autoIngestOfContentEnabled">
+                        Auto Ingest of Content Enabled
+                      </Label>
+                    </div>
+                    
+                    {formData.autoIngestOfContentEnabled && (
+                      <div className="space-y-2 pl-8">
+                        <Label className="block mb-2">Select Content Types enabled for Auto Ingest:</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          {contentTypeOptions.map((option) => (
+                            <div key={option.id} className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={`auto-ingest-${option.id}`}
+                                checked={(formData.autoIngestContentTypes || []).includes(option.id)}
+                                onChange={() => handleAutoIngestContentTypeChange(option.id)}
+                                className="rounded border-gray-300 text-primary focus:ring-primary"
+                              />
+                              <label htmlFor={`auto-ingest-${option.id}`}>{option.label}</label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  {/* QCN Theatre IP Address Range */}
+                  <div className="space-y-2">
+                    <Label htmlFor="qcnTheatreIPAddressRange">QCN Theatre IP Address Range</Label>
+                    <Input
+                      id="qcnTheatreIPAddressRange"
+                      name="qcnTheatreIPAddressRange"
+                      value={formData.qcnTheatreIPAddressRange || ""}
+                      onChange={handleChange}
+                      placeholder="e.g. 192.168.1.0/24"
+                    />
+                  </div>
+                </div>
+              </div>
+            </TabsContent>
+            
+            {/* Screen Management Tab */}
+            <TabsContent value="screens" className="mt-4">
+              <div className="space-y-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Monitor className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Screen Management</h3>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleCreateScreen}
+                    size="sm"
+                    disabled={!formData.id}
+                  >
+                    <Plus className="h-4 w-4 mr-1" /> Add Screen
+                  </Button>
+                </div>
+                
+                {screens.length > 0 ? (
+                  <DataTable
+                    data={screens}
+                    columns={screenColumns}
+                    searchPlaceholder="Search screens..."
+                    actions={screenActions}
+                  />
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground border rounded-md">
+                    {formData.id ? (
+                      <p>No screens added yet. Click "Add Screen" to create a screen.</p>
+                    ) : (
+                      <p>Please save the theatre first before adding screens.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+          
+          <div className="mt-6 flex justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditing ? "Update Theatre" : "Create Theatre"}
+            </Button>
+          </div>
+        </form>
+      </div>
+    );
+  };
+  
+  // Render the component using either a Dialog or directly based on isFullPage
+  return isFullPage ? (
+    renderDialogContent()
+  ) : (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{isEditing ? `Edit ${theatre?.name}` : "Add New Theatre"}</DialogTitle>
+          <DialogDescription>
+            {isEditing
+              ? "Update theatre details and configuration"
+              : "Fill in the details to add a new theatre"}
+          </DialogDescription>
+        </DialogHeader>
+        {renderDialogContent()}
+      </DialogContent>
+    </Dialog>
+  );
+};
