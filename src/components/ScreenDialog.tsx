@@ -912,4 +912,4 @@ export const ScreenDialog = ({
                             {suite.devices.length > 0 ? (
                               <div className="flex flex-col space-y-1">
                                 {suite.devices.map(deviceId => {
-                                  const device = formData.devices?.find(d => d.id === deviceId);
+                                  const device = formData.devices?.find(d => d.id === device
