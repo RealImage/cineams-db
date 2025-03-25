@@ -15,6 +15,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ScreenDialogProps {
   open: boolean;
@@ -89,7 +90,8 @@ export const ScreenDialog = ({
       },
       devices: [],
       ipAddresses: [],
-      suites: []
+      suites: [],
+      temporaryClosures: []
     }
   );
   
@@ -899,5 +901,4 @@ export const ScreenDialog = ({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Digital 2K">Digital 2K</SelectItem>
-                      <SelectItem value="Digital 4K">Digital 4K</SelectItem>
-                      <SelectItem value="IMAX Digital">IMAX Digital</SelectItem>
+                      <SelectItem value="Digital 4K">Digital
