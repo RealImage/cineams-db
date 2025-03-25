@@ -916,4 +916,4 @@ export const ScreenDialog = ({
                     <TableBody>
                       {formData.suites.map((suite) => (
                         <TableRow key={suite.id}>
-                          <TableCell>{suite.name}</TableCell
+                          <TableCell>{suite.name}</TableCell>
