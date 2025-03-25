@@ -49,7 +49,7 @@ export type Projection = {
 export type Sound = {
   processor?: string;
   speakers?: string;
-  soundMixes: string[];
+  soundMixes: string[];  // This is required
   iabSupported?: boolean;
 };
 
