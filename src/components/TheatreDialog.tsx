@@ -5,13 +5,47 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Screen, Theatre, WireTAPDevice } from "@/types";
+import { 
+  Screen, 
+  Theatre, 
+  WireTAPDevice, 
+  DeliveryTimeSlot,
+  DCPPhysicalDeliveryMethod,
+  DCPNetworkDeliveryMethod,
+  DCPModemDeliveryMethod,
+  Contact,
+  DeliveryAddress
+} from "@/types";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { ScreenDialog } from "./ScreenDialog";
-import { Plus, Edit, Trash2, MapPin, Building, Bike, Car, Monitor, Server, Ticket, Cable, Network } from "lucide-react";
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  MapPin, 
+  Building, 
+  Bike, 
+  Car, 
+  Monitor, 
+  Server, 
+  Ticket, 
+  Cable, 
+  Network,
+  Clock,
+  Truck,
+  FileText,
+  Globe,
+  Phone,
+  Mail,
+  Key,
+  Upload,
+  Wifi
+} from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 interface TheatreDialogProps {
   open: boolean;
@@ -50,6 +84,23 @@ export const TheatreDialog = ({
       theatreManagementSystem: "Information Not Available",
       ticketingSystem: "Information Not Available",
       wireTAPDevices: [],
+      // Content delivery defaults
+      deliveryTimeSlots: [],
+      deliveryAddress: { useTheatreAddress: true },
+      deliveryInstructions: "",
+      dcpPhysicalDeliveryMethods: [],
+      dcpNetworkDeliveryMethods: [],
+      dcpModemDeliveryMethods: [],
+      dcpDeliveryContacts: [],
+      sendEmailsForDCPDelivery: false,
+      dcpContentTypesForEmail: [],
+      // Key delivery defaults
+      keyDeliveryContacts: [],
+      kdmDeliveryEmailsInFLMX: "useDropbox",
+      // Ingest settings defaults
+      autoIngestOfContentEnabled: false,
+      autoIngestContentTypes: [],
+      qcnTheatreIPAddressRange: ""
     }
   );
   
@@ -64,7 +115,7 @@ export const TheatreDialog = ({
   const [screenDialogOpen, setScreenDialogOpen] = useState(false);
   const [editingScreen, setEditingScreen] = useState<Screen | undefined>(undefined);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -177,6 +228,7 @@ export const TheatreDialog = ({
     }
   ];
   
+  // WireTAP Device management
   const handleAddWireTAPDevice = () => {
     const newDevice: WireTAPDevice = {
       id: crypto.randomUUID(),
@@ -203,6 +255,271 @@ export const TheatreDialog = ({
         ? { ...device, [field]: value, updatedAt: new Date().toISOString() } 
         : device
     ));
+  };
+
+  // Delivery Time Slots
+  const handleAddDeliveryTimeSlot = () => {
+    const newTimeSlot: DeliveryTimeSlot = {
+      id: crypto.randomUUID(),
+      day: "Monday",
+      startTime: "09:00",
+      endTime: "17:00"
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      deliveryTimeSlots: [...(prev.deliveryTimeSlots || []), newTimeSlot]
+    }));
+  };
+
+  const handleDeleteDeliveryTimeSlot = (slotId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryTimeSlots: (prev.deliveryTimeSlots || []).filter(slot => slot.id !== slotId)
+    }));
+  };
+
+  const handleDeliveryTimeSlotChange = (slotId: string, field: keyof DeliveryTimeSlot, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryTimeSlots: (prev.deliveryTimeSlots || []).map(slot => 
+        slot.id === slotId ? { ...slot, [field]: value } : slot
+      )
+    }));
+  };
+
+  const handleCopyToAllDays = (slotId: string) => {
+    const sourceSlot = formData.deliveryTimeSlots?.find(slot => slot.id === slotId);
+    if (!sourceSlot) return;
+
+    const weekdays: Array<'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday'> = [
+      'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'
+    ];
+
+    // Filter out existing slots
+    const existingDays = formData.deliveryTimeSlots?.map(slot => slot.day) || [];
+    const daysToAdd = weekdays.filter(day => !existingDays.includes(day));
+
+    // Create new slots for missing days
+    const newSlots = daysToAdd.map(day => ({
+      id: crypto.randomUUID(),
+      day,
+      startTime: sourceSlot.startTime,
+      endTime: sourceSlot.endTime
+    }));
+
+    setFormData(prev => ({
+      ...prev,
+      deliveryTimeSlots: [...(prev.deliveryTimeSlots || []), ...newSlots]
+    }));
+
+    toast.success("Time slots copied to all days");
+  };
+
+  // Delivery Address
+  const handleDeliveryAddressChange = (field: keyof DeliveryAddress, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      deliveryAddress: {
+        ...(prev.deliveryAddress || { useTheatreAddress: true }),
+        [field]: value
+      }
+    }));
+  };
+
+  // DCP Physical Delivery Methods
+  const handleAddPhysicalDeliveryMethod = () => {
+    const newMethod: DCPPhysicalDeliveryMethod = {
+      id: crypto.randomUUID(),
+      mediaType: "",
+      details: ""
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      dcpPhysicalDeliveryMethods: [...(prev.dcpPhysicalDeliveryMethods || []), newMethod]
+    }));
+  };
+
+  const handleDeletePhysicalDeliveryMethod = (methodId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpPhysicalDeliveryMethods: (prev.dcpPhysicalDeliveryMethods || []).filter(method => method.id !== methodId)
+    }));
+  };
+
+  const handlePhysicalDeliveryMethodChange = (methodId: string, field: keyof DCPPhysicalDeliveryMethod, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpPhysicalDeliveryMethods: (prev.dcpPhysicalDeliveryMethods || []).map(method => 
+        method.id === methodId ? { ...method, [field]: value } : method
+      )
+    }));
+  };
+
+  // DCP Network Delivery Methods
+  const handleAddNetworkDeliveryMethod = () => {
+    const newMethod: DCPNetworkDeliveryMethod = {
+      id: crypto.randomUUID(),
+      networkURL: ""
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      dcpNetworkDeliveryMethods: [...(prev.dcpNetworkDeliveryMethods || []), newMethod]
+    }));
+  };
+
+  const handleDeleteNetworkDeliveryMethod = (methodId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpNetworkDeliveryMethods: (prev.dcpNetworkDeliveryMethods || []).filter(method => method.id !== methodId)
+    }));
+  };
+
+  const handleNetworkDeliveryMethodChange = (methodId: string, field: keyof DCPNetworkDeliveryMethod, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpNetworkDeliveryMethods: (prev.dcpNetworkDeliveryMethods || []).map(method => 
+        method.id === methodId ? { ...method, [field]: value } : method
+      )
+    }));
+  };
+
+  // DCP Modem Delivery Methods
+  const handleAddModemDeliveryMethod = () => {
+    const newMethod: DCPModemDeliveryMethod = {
+      id: crypto.randomUUID(),
+      modemPhoneNumber: ""
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      dcpModemDeliveryMethods: [...(prev.dcpModemDeliveryMethods || []), newMethod]
+    }));
+  };
+
+  const handleDeleteModemDeliveryMethod = (methodId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpModemDeliveryMethods: (prev.dcpModemDeliveryMethods || []).filter(method => method.id !== methodId)
+    }));
+  };
+
+  const handleModemDeliveryMethodChange = (methodId: string, field: keyof DCPModemDeliveryMethod, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpModemDeliveryMethods: (prev.dcpModemDeliveryMethods || []).map(method => 
+        method.id === methodId ? { ...method, [field]: value } : method
+      )
+    }));
+  };
+
+  // DCP Delivery Contacts
+  const handleAddDCPDeliveryContact = () => {
+    const newContact: Contact = {
+      id: crypto.randomUUID(),
+      name: "",
+      email: ""
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      dcpDeliveryContacts: [...(prev.dcpDeliveryContacts || []), newContact]
+    }));
+  };
+
+  const handleDeleteDCPDeliveryContact = (contactId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpDeliveryContacts: (prev.dcpDeliveryContacts || []).filter(contact => contact.id !== contactId)
+    }));
+  };
+
+  const handleDCPDeliveryContactChange = (contactId: string, field: keyof Contact, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      dcpDeliveryContacts: (prev.dcpDeliveryContacts || []).map(contact => 
+        contact.id === contactId ? { ...contact, [field]: value } : contact
+      )
+    }));
+  };
+
+  // DCP Content Types for Email
+  const contentTypeOptions = [
+    { id: "FTR", label: "Feature" },
+    { id: "TLR", label: "Trailer" },
+    { id: "ADV", label: "Advertisement" },
+    { id: "PSA", label: "Public Service Announcement" },
+    { id: "POL", label: "Policy Trailer" },
+    { id: "SHR", label: "Short" },
+    { id: "TSR", label: "Teaser" },
+    { id: "RTG", label: "Rating Tag" },
+    { id: "PRE", label: "Pre-show" },
+    { id: "INT", label: "Intermission" },
+    { id: "PLY", label: "Policy" },
+    { id: "EXT", label: "Extras" },
+    { id: "SNP", label: "Snippet" },
+    { id: "VAR", label: "Various" }
+  ];
+
+  const handleContentTypeChange = (contentType: string) => {
+    setFormData(prev => {
+      const currentTypes = prev.dcpContentTypesForEmail || [];
+      const updatedTypes = currentTypes.includes(contentType)
+        ? currentTypes.filter(type => type !== contentType)
+        : [...currentTypes, contentType];
+      
+      return {
+        ...prev,
+        dcpContentTypesForEmail: updatedTypes
+      };
+    });
+  };
+
+  // Key Delivery Contacts
+  const handleAddKeyDeliveryContact = () => {
+    const newContact: Contact = {
+      id: crypto.randomUUID(),
+      name: "",
+      email: ""
+    };
+
+    setFormData(prev => ({
+      ...prev,
+      keyDeliveryContacts: [...(prev.keyDeliveryContacts || []), newContact]
+    }));
+  };
+
+  const handleDeleteKeyDeliveryContact = (contactId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      keyDeliveryContacts: (prev.keyDeliveryContacts || []).filter(contact => contact.id !== contactId)
+    }));
+  };
+
+  const handleKeyDeliveryContactChange = (contactId: string, field: keyof Contact, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      keyDeliveryContacts: (prev.keyDeliveryContacts || []).map(contact => 
+        contact.id === contactId ? { ...contact, [field]: value } : contact
+      )
+    }));
+  };
+
+  // Auto Ingest Content Types
+  const handleAutoIngestContentTypeChange = (contentType: string) => {
+    setFormData(prev => {
+      const currentTypes = prev.autoIngestContentTypes || [];
+      const updatedTypes = currentTypes.includes(contentType)
+        ? currentTypes.filter(type => type !== contentType)
+        : [...currentTypes, contentType];
+      
+      return {
+        ...prev,
+        autoIngestContentTypes: updatedTypes
+      };
+    });
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -625,158 +942,4 @@ export const TheatreDialog = ({
                     <p className="text-sm text-muted-foreground">
                       Manage the WireTAP devices installed in this theatre
                     </p>
-                    <Button type="button" onClick={handleAddWireTAPDevice} size="sm">
-                      <Plus className="h-4 w-4 mr-1" /> Add Device
-                    </Button>
-                  </div>
-                  
-                  {wireDevices.length > 0 ? (
-                    <div className="border rounded-md overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Serial Number</TableHead>
-                            <TableHead>Mapping Status</TableHead>
-                            <TableHead>Created</TableHead>
-                            <TableHead>Last Updated</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {wireDevices.map((device) => (
-                            <TableRow key={device.id}>
-                              <TableCell>
-                                <Input 
-                                  value={device.serialNumber} 
-                                  onChange={(e) => handleWireTAPDeviceChange(device.id, "serialNumber", e.target.value)} 
-                                  className="h-8"
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Select
-                                  value={device.status}
-                                  onValueChange={(value) => handleWireTAPDeviceChange(device.id, "status", value)}
-                                >
-                                  <SelectTrigger className="h-8">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Active">Active</SelectItem>
-                                    <SelectItem value="Inactive">Removed</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </TableCell>
-                              <TableCell className="text-xs text-muted-foreground">
-                                {new Date(device.createdAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-xs text-muted-foreground">
-                                {new Date(device.updatedAt).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDeleteWireTAPDevice(device.id)}
-                                  className="h-8 w-8"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <div className="border rounded-md p-8 text-center">
-                      <p className="text-muted-foreground mb-4">No WireTAP devices have been added yet</p>
-                      <Button type="button" onClick={handleAddWireTAPDevice} variant="outline">
-                        <Plus className="h-4 w-4 mr-2" /> Add Device
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="delivery" className="mt-4">
-              <div className="text-center py-10 text-muted-foreground">
-                Content & Key Delivery details will be available in a future update
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="screens" className="mt-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium">Screens ({screens.length})</h3>
-                <Button type="button" onClick={handleCreateScreen} size="sm">
-                  <Plus className="h-4 w-4 mr-1" /> Add Screen
-                </Button>
-              </div>
-              
-              {screens.length > 0 ? (
-                <DataTable
-                  data={screens}
-                  columns={screenColumns}
-                  actions={screenActions}
-                  searchPlaceholder="Search screens..."
-                />
-              ) : (
-                <div className="border rounded-md p-8 text-center">
-                  <p className="text-muted-foreground mb-4">No screens have been added yet</p>
-                  <Button type="button" onClick={handleCreateScreen} variant="outline">
-                    <Plus className="h-4 w-4 mr-2" /> Add Screen
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-            
-            <DialogFooter className="mt-6">
-              {!isFullPage && (
-                <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                  Cancel
-                </Button>
-              )}
-              <Button type="submit">
-                {isEditing ? "Update Theatre" : "Create Theatre"}
-              </Button>
-            </DialogFooter>
-          </Tabs>
-        </form>
-      </div>
-    );
-  };
-  
-  // If full page mode, return content directly
-  if (isFullPage) {
-    return renderDialogContent();
-  }
-  
-  // Otherwise wrap in Dialog
-  return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? "Edit Theatre" : "Create New Theatre"}</DialogTitle>
-            <DialogDescription>
-              {isEditing 
-                ? "Update the details of an existing theatre" 
-                : "Enter the details to create a new theatre"}
-            </DialogDescription>
-          </DialogHeader>
-          
-          {renderDialogContent()}
-        </DialogContent>
-      </Dialog>
-      
-      <ScreenDialog
-        open={screenDialogOpen}
-        onOpenChange={setScreenDialogOpen}
-        theatreId={formData.id || "temp"}
-        screen={editingScreen}
-        onSave={handleSaveScreen}
-      />
-    </>
-  );
-};
-
+                    <Button type="button" onClick={handleAddWireTAPDevice} size="sm

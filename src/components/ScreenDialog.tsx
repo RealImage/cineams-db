@@ -1,16 +1,17 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Screen, ScreenOperator, ScreenDevice } from "@/types";
+import { Screen, ScreenDevice } from "@/types";
+import { Plus, Trash2, User, Monitor, SpeakerLoud, Dimensions, ArrowDownToLine } from "lucide-react";
 import { toast } from "sonner";
-import { Plus, Trash2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ScreenDialogProps {
   open: boolean;
@@ -31,51 +32,43 @@ export const ScreenDialog = ({
   
   const [formData, setFormData] = useState<Partial<Screen>>(
     screen || {
+      id: crypto.randomUUID(),
       theatreId,
       number: "",
       name: "",
       uuid: crypto.randomUUID(),
-      operators: [],
+      operators: [{ name: "", email: "", phone: "" }],
       autoScreenUpdateLock: false,
       flmManagementLock: false,
       multiThumbprintKdmScreen: false,
       status: "Active",
+      seatingCapacity: undefined,
+      coolingType: undefined,
       wheelchairAccessibility: false,
       motionSeats: false,
-      devices: [],
+      dimensions: {
+        auditoriumWidth: undefined,
+        auditoriumHeight: undefined,
+        auditoriumDepth: undefined,
+        screenWidth: undefined,
+        screenHeight: undefined,
+        throwDistance: undefined,
+        gain: undefined
+      },
+      projection: {
+        type: undefined,
+        manufacturer: undefined,
+        masking: false
+      },
+      sound: {
+        processor: undefined,
+        speakers: undefined,
+        soundMixes: [],
+        iabSupported: false
+      },
+      devices: []
     }
   );
-  
-  const [operators, setOperators] = useState<ScreenOperator[]>(
-    screen?.operators || []
-  );
-  
-  const [newOperator, setNewOperator] = useState<ScreenOperator>({
-    name: "",
-    email: "",
-    phone: "",
-  });
-  
-  const [devices, setDevices] = useState<ScreenDevice[]>(
-    screen?.devices || []
-  );
-  
-  const [newDevice, setNewDevice] = useState<ScreenDevice>({
-    id: crypto.randomUUID(),
-    manufacturer: "",
-    model: "",
-    serialNumber: "",
-  });
-  
-  // Update screen number placeholder based on selection
-  useEffect(() => {
-    if (!isEditing && formData.number) {
-      setFormData((prev) => ({
-        ...prev,
-        name: `Audi ${formData.number}`,
-      }));
-    }
-  }, [formData.number, isEditing]);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -90,80 +83,132 @@ export const ScreenDialog = ({
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
   
-  const handleDimensionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
+  const handleNumberChange = (name: string, value: string) => {
+    const numberValue = value === '' ? undefined : parseInt(value, 10);
+    
+    const nameParts = name.split('.');
+    if (nameParts.length === 1) {
+      setFormData((prev) => ({ ...prev, [name]: numberValue }));
+    } else if (nameParts.length === 2) {
+      const [parent, child] = nameParts;
+      setFormData((prev) => ({
+        ...prev,
+        [parent]: {
+          ...prev[parent as keyof Screen],
+          [child]: numberValue
+        }
+      }));
+    }
+  };
+  
+  // Operators management
+  const handleOperatorChange = (index: number, field: string, value: string) => {
+    setFormData((prev) => {
+      const operators = [...(prev.operators || [])];
+      operators[index] = { ...operators[index], [field]: value };
+      return { ...prev, operators };
+    });
+  };
+  
+  const handleAddOperator = () => {
+    setFormData((prev) => ({
+      ...prev,
+      operators: [...(prev.operators || []), { name: "", email: "", phone: "" }]
+    }));
+  };
+  
+  const handleRemoveOperator = (index: number) => {
+    setFormData((prev) => {
+      const operators = [...(prev.operators || [])];
+      operators.splice(index, 1);
+      return { ...prev, operators };
+    });
+  };
+  
+  // Devices management
+  const handleAddDevice = () => {
+    const newDevice: ScreenDevice = {
+      id: crypto.randomUUID(),
+      manufacturer: "",
+      model: "",
+      serialNumber: ""
+    };
+    
+    setFormData((prev) => ({
+      ...prev,
+      devices: [...(prev.devices || []), newDevice]
+    }));
+  };
+  
+  const handleRemoveDevice = (deviceId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      devices: (prev.devices || []).filter(device => device.id !== deviceId)
+    }));
+  };
+  
+  const handleDeviceChange = (deviceId: string, field: keyof ScreenDevice, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      devices: (prev.devices || []).map(device => 
+        device.id === deviceId 
+          ? { ...device, [field]: value } 
+          : device
+      )
+    }));
+  };
+  
+  // Sound mixes management
+  const handleSoundMixChange = (mix: string) => {
+    setFormData((prev) => {
+      const currentMixes = prev.sound?.soundMixes || [];
+      const updatedMixes = currentMixes.includes(mix)
+        ? currentMixes.filter(m => m !== mix)
+        : [...currentMixes, mix];
+      
+      return {
+        ...prev,
+        sound: {
+          ...(prev.sound || {}),
+          soundMixes: updatedMixes
+        }
+      };
+    });
+  };
+  
+  // Nested property setters
+  const handleDimensionChange = (field: string, value: string) => {
+    const numberValue = value === '' ? undefined : parseFloat(value);
+    
     setFormData((prev) => ({
       ...prev,
       dimensions: {
         ...(prev.dimensions || {}),
-        [name]: value ? parseFloat(value) : undefined,
-      },
+        [field]: numberValue
+      }
     }));
   };
   
-  const handleProjectionChange = (name: string, value: string | boolean) => {
+  const handleProjectionChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({
       ...prev,
       projection: {
         ...(prev.projection || {}),
-        [name]: value,
-      },
+        [field]: value
+      }
     }));
   };
   
-  const handleSoundChange = (name: string, value: string | boolean) => {
+  const handleSoundChange = (field: string, value: string | boolean) => {
+    if (field === 'soundMixes') return; // Handled separately
+    
     setFormData((prev) => ({
       ...prev,
       sound: {
         ...(prev.sound || {}),
-        [name]: value,
-      },
+        [field]: value
+      }
     }));
-  };
-  
-  // Handle operators
-  const handleOperatorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewOperator((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const addOperator = () => {
-    if (!newOperator.name || !newOperator.email) {
-      toast.error("Operator name and email are required");
-      return;
-    }
-    
-    setOperators([...operators, { ...newOperator }]);
-    setNewOperator({ name: "", email: "", phone: "" });
-  };
-  
-  const removeOperator = (index: number) => {
-    setOperators(operators.filter((_, i) => i !== index));
-  };
-  
-  // Handle devices
-  const handleDeviceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewDevice((prev) => ({ ...prev, [name]: value }));
-  };
-  
-  const addDevice = () => {
-    if (!newDevice.manufacturer || !newDevice.model || !newDevice.serialNumber) {
-      toast.error("All device fields are required");
-      return;
-    }
-    
-    setDevices([...devices, { ...newDevice, id: crypto.randomUUID() }]);
-    setNewDevice({
-      id: crypto.randomUUID(),
-      manufacturer: "",
-      model: "",
-      serialNumber: "",
-    });
-  };
-  
-  const removeDevice = (index: number) => {
-    setDevices(devices.filter((_, i) => i !== index));
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -175,14 +220,7 @@ export const ScreenDialog = ({
       return;
     }
     
-    // Include operators and devices in the screen data
-    const screenData: Partial<Screen> = {
-      ...formData,
-      operators,
-      devices,
-    };
-    
-    onSave(screenData);
+    onSave(formData);
     onOpenChange(false);
     
     toast.success(
@@ -191,6 +229,16 @@ export const ScreenDialog = ({
         : `Screen "${formData.name}" created successfully`
     );
   };
+  
+  // Sound mix options
+  const soundMixOptions = [
+    { id: "5.1", label: "5.1 Surround Sound" },
+    { id: "7.1", label: "7.1 Surround Sound" },
+    { id: "atmos", label: "Dolby Atmos" },
+    { id: "auro", label: "Auro 3D" },
+    { id: "dtsx", label: "DTS:X" },
+    { id: "imax", label: "IMAX Enhanced" }
+  ];
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -208,9 +256,9 @@ export const ScreenDialog = ({
           <Tabs defaultValue="general" className="w-full">
             <TabsList className="w-full justify-start">
               <TabsTrigger value="general">General Information</TabsTrigger>
-              <TabsTrigger value="metadata">Screen Metadata</TabsTrigger>
+              <TabsTrigger value="metadata">Metadata</TabsTrigger>
               <TabsTrigger value="projection">Projection & Sound</TabsTrigger>
-              <TabsTrigger value="devices">Screen Devices</TabsTrigger>
+              <TabsTrigger value="devices">Devices</TabsTrigger>
             </TabsList>
             
             <TabsContent value="general" className="mt-4 space-y-4">
@@ -222,7 +270,6 @@ export const ScreenDialog = ({
                     name="number"
                     value={formData.number}
                     onChange={handleChange}
-                    placeholder="e.g. 1"
                     required
                   />
                 </div>
@@ -233,7 +280,6 @@ export const ScreenDialog = ({
                     name="name"
                     value={formData.name}
                     onChange={handleChange}
-                    placeholder="e.g. Audi 1"
                     required
                   />
                 </div>
@@ -257,94 +303,90 @@ export const ScreenDialog = ({
                     name="thirdPartyId"
                     value={formData.thirdPartyId || ""}
                     onChange={handleChange}
-                    placeholder="External identifier"
                   />
                 </div>
               </div>
               
               <div className="space-y-2">
-                <Label>Screen Operators</Label>
+                <div className="flex items-center justify-between">
+                  <Label>Screen Operators</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddOperator}>
+                    <Plus className="h-4 w-4 mr-1" /> Add Operator
+                  </Button>
+                </div>
                 
-                {operators.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    {operators.map((operator, index) => (
-                      <div key={index} className="flex items-center space-x-2 p-2 border rounded-md">
-                        <div className="flex-1">
-                          <p className="font-medium">{operator.name}</p>
-                          <p className="text-sm text-muted-foreground">{operator.email}</p>
-                          {operator.phone && <p className="text-sm text-muted-foreground">{operator.phone}</p>}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeOperator(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
+                {formData.operators && formData.operators.map((operator, index) => (
+                  <div key={index} className="grid grid-cols-12 gap-2 items-center mt-2">
+                    <div className="col-span-4">
+                      <Input
+                        placeholder="Name"
+                        value={operator.name}
+                        onChange={(e) => handleOperatorChange(index, "name", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-4">
+                      <Input
+                        placeholder="Email"
+                        type="email"
+                        value={operator.email}
+                        onChange={(e) => handleOperatorChange(index, "email", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-3">
+                      <Input
+                        placeholder="Phone"
+                        value={operator.phone || ""}
+                        onChange={(e) => handleOperatorChange(index, "phone", e.target.value)}
+                      />
+                    </div>
+                    <div className="col-span-1 flex justify-end">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveOperator(index)}
+                        disabled={formData.operators?.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                )}
+                ))}
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="autoScreenUpdateLock">Auto Screen Update Lock</Label>
+                    <Switch 
+                      id="autoScreenUpdateLock"
+                      checked={formData.autoScreenUpdateLock || false}
+                      onCheckedChange={(checked) => handleSwitchChange("autoScreenUpdateLock", checked)}
+                    />
+                  </div>
+                </div>
                 
-                <div className="grid grid-cols-3 gap-2">
-                  <Input
-                    placeholder="Name"
-                    name="name"
-                    value={newOperator.name}
-                    onChange={handleOperatorChange}
-                  />
-                  <Input
-                    placeholder="Email"
-                    name="email"
-                    type="email"
-                    value={newOperator.email}
-                    onChange={handleOperatorChange}
-                  />
-                  <Input
-                    placeholder="Phone (optional)"
-                    name="phone"
-                    value={newOperator.phone || ""}
-                    onChange={handleOperatorChange}
-                  />
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="flmManagementLock">FLM Management Lock</Label>
+                    <Switch 
+                      id="flmManagementLock"
+                      checked={formData.flmManagementLock || false}
+                      onCheckedChange={(checked) => handleSwitchChange("flmManagementLock", checked)}
+                    />
+                  </div>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addOperator}
-                  className="mt-2"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Operator
-                </Button>
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="autoScreenUpdateLock"
-                    checked={formData.autoScreenUpdateLock}
-                    onCheckedChange={(checked) => handleSwitchChange("autoScreenUpdateLock", checked)}
-                  />
-                  <Label htmlFor="autoScreenUpdateLock">Auto Screen Update Lock</Label>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2">
+                    <Label htmlFor="multiThumbprintKdmScreen">Multi Thumbprint KDM Screen</Label>
+                    <Switch 
+                      id="multiThumbprintKdmScreen"
+                      checked={formData.multiThumbprintKdmScreen || false}
+                      onCheckedChange={(checked) => handleSwitchChange("multiThumbprintKdmScreen", checked)}
+                    />
+                  </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="flmManagementLock"
-                    checked={formData.flmManagementLock}
-                    onCheckedChange={(checked) => handleSwitchChange("flmManagementLock", checked)}
-                  />
-                  <Label htmlFor="flmManagementLock">FLM Management Lock</Label>
-                </div>
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="multiThumbprintKdmScreen"
-                  checked={formData.multiThumbprintKdmScreen}
-                  onCheckedChange={(checked) => handleSwitchChange("multiThumbprintKdmScreen", checked)}
-                />
-                <Label htmlFor="multiThumbprintKdmScreen">Multi Thumbprint KDM Screen</Label>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
@@ -379,172 +421,156 @@ export const ScreenDialog = ({
             </TabsContent>
             
             <TabsContent value="metadata" className="mt-4 space-y-4">
+              <div className="flex items-center space-x-2">
+                <User className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Accessibility & Seating</h3>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="seatingCapacity">Seating Capacity</Label>
                   <Input
                     id="seatingCapacity"
-                    name="seatingCapacity"
                     type="number"
                     value={formData.seatingCapacity || ""}
-                    onChange={(e) => setFormData(prev => ({
-                      ...prev,
-                      seatingCapacity: e.target.value ? parseInt(e.target.value) : undefined
-                    }))}
+                    onChange={(e) => handleNumberChange("seatingCapacity", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="coolingType">Cooling Type</Label>
-                  <Input
-                    id="coolingType"
-                    name="coolingType"
+                  <Select
                     value={formData.coolingType || ""}
-                    onChange={handleChange}
-                  />
+                    onValueChange={(value) => handleSelectChange("coolingType", value)}
+                  >
+                    <SelectTrigger id="coolingType">
+                      <SelectValue placeholder="Select cooling type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Central AC">Central AC</SelectItem>
+                      <SelectItem value="Split AC">Split AC</SelectItem>
+                      <SelectItem value="Natural Ventilation">Natural Ventilation</SelectItem>
+                      <SelectItem value="None">None</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Switch
+                  <Label htmlFor="wheelchairAccessibility">Wheelchair Accessibility</Label>
+                  <Switch 
                     id="wheelchairAccessibility"
-                    checked={formData.wheelchairAccessibility}
+                    checked={formData.wheelchairAccessibility || false}
                     onCheckedChange={(checked) => handleSwitchChange("wheelchairAccessibility", checked)}
                   />
-                  <Label htmlFor="wheelchairAccessibility">Wheelchair Accessibility</Label>
                 </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Switch
+                  <Label htmlFor="motionSeats">Motion Seats</Label>
+                  <Switch 
                     id="motionSeats"
-                    checked={formData.motionSeats}
+                    checked={formData.motionSeats || false}
                     onCheckedChange={(checked) => handleSwitchChange("motionSeats", checked)}
                   />
-                  <Label htmlFor="motionSeats">Motion Seats</Label>
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label>Auditorium Dimensions</Label>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="auditoriumWidth" className="text-xs">Width (m)</Label>
-                    <Input
-                      id="auditoriumWidth"
-                      name="auditoriumWidth"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.auditoriumWidth || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="auditoriumHeight" className="text-xs">Height (m)</Label>
-                    <Input
-                      id="auditoriumHeight"
-                      name="auditoriumHeight"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.auditoriumHeight || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="auditoriumDepth" className="text-xs">Depth (m)</Label>
-                    <Input
-                      id="auditoriumDepth"
-                      name="auditoriumDepth"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.auditoriumDepth || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                </div>
+              <div className="flex items-center space-x-2 mt-6">
+                <Dimensions className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Auditorium & Screen Dimensions</h3>
               </div>
               
-              <div className="space-y-2">
-                <Label>Screen Dimensions</Label>
-                <div className="grid grid-cols-4 gap-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="screenWidth" className="text-xs">Width (m)</Label>
-                    <Input
-                      id="screenWidth"
-                      name="screenWidth"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.screenWidth || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="screenHeight" className="text-xs">Height (m)</Label>
-                    <Input
-                      id="screenHeight"
-                      name="screenHeight"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.screenHeight || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="throwDistance" className="text-xs">Throw Distance (m)</Label>
-                    <Input
-                      id="throwDistance"
-                      name="throwDistance"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.throwDistance || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="gain" className="text-xs">Gain</Label>
-                    <Input
-                      id="gain"
-                      name="gain"
-                      type="number"
-                      step="0.1"
-                      value={formData.dimensions?.gain || ""}
-                      onChange={handleDimensionChange}
-                    />
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="auditoriumWidth">Auditorium Width (m)</Label>
+                  <Input
+                    id="auditoriumWidth"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.auditoriumWidth || ""}
+                    onChange={(e) => handleDimensionChange("auditoriumWidth", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="auditoriumHeight">Auditorium Height (m)</Label>
+                  <Input
+                    id="auditoriumHeight"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.auditoriumHeight || ""}
+                    onChange={(e) => handleDimensionChange("auditoriumHeight", e.target.value)}
+                  />
                 </div>
               </div>
               
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="ipAddress">IP Address</Label>
+                  <Label htmlFor="auditoriumDepth">Auditorium Depth (m)</Label>
                   <Input
-                    id="ipAddress"
-                    name="ipAddress"
-                    value={formData.ipAddress || ""}
-                    onChange={handleChange}
+                    id="auditoriumDepth"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.auditoriumDepth || ""}
+                    onChange={(e) => handleDimensionChange("auditoriumDepth", e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="subnet">Subnet Mask</Label>
+                  <Label htmlFor="screenWidth">Screen Width (m)</Label>
                   <Input
-                    id="subnet"
-                    name="subnet"
-                    value={formData.subnet || ""}
-                    onChange={handleChange}
+                    id="screenWidth"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.screenWidth || ""}
+                    onChange={(e) => handleDimensionChange("screenWidth", e.target.value)}
                   />
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="gateway">Gateway</Label>
-                <Input
-                  id="gateway"
-                  name="gateway"
-                  value={formData.gateway || ""}
-                  onChange={handleChange}
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="screenHeight">Screen Height (m)</Label>
+                  <Input
+                    id="screenHeight"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.screenHeight || ""}
+                    onChange={(e) => handleDimensionChange("screenHeight", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="throwDistance">Throw Distance (m)</Label>
+                  <Input
+                    id="throwDistance"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions?.throwDistance || ""}
+                    onChange={(e) => handleDimensionChange("throwDistance", e.target.value)}
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="gain">Screen Gain</Label>
+                  <Input
+                    id="gain"
+                    type="number"
+                    step="0.1"
+                    value={formData.dimensions?.gain || ""}
+                    onChange={(e) => handleDimensionChange("gain", e.target.value)}
+                  />
+                </div>
               </div>
             </TabsContent>
             
             <TabsContent value="projection" className="mt-4 space-y-4">
+              <div className="flex items-center space-x-2">
+                <Monitor className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Projection System</h3>
+              </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="projectionType">Projection Type</Label>
@@ -553,17 +579,16 @@ export const ScreenDialog = ({
                     onValueChange={(value) => handleProjectionChange("type", value)}
                   >
                     <SelectTrigger id="projectionType">
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Select projection type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Digital 2D">Digital 2D</SelectItem>
-                      <SelectItem value="Digital 2D/3D">Digital 2D/3D</SelectItem>
-                      <SelectItem value="Laser">Laser</SelectItem>
-                      <SelectItem value="LED">LED</SelectItem>
-                      <SelectItem value="IMAX">IMAX</SelectItem>
-                      <SelectItem value="IMAX with Laser">IMAX with Laser</SelectItem>
-                      <SelectItem value="35mm">35mm Film</SelectItem>
-                      <SelectItem value="70mm">70mm Film</SelectItem>
+                      <SelectItem value="Digital 2K">Digital 2K</SelectItem>
+                      <SelectItem value="Digital 4K">Digital 4K</SelectItem>
+                      <SelectItem value="IMAX Digital">IMAX Digital</SelectItem>
+                      <SelectItem value="IMAX Laser">IMAX Laser</SelectItem>
+                      <SelectItem value="Dolby Cinema">Dolby Cinema</SelectItem>
+                      <SelectItem value="35mm Film">35mm Film</SelectItem>
+                      <SelectItem value="70mm Film">70mm Film</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -579,26 +604,34 @@ export const ScreenDialog = ({
                     <SelectContent>
                       <SelectItem value="Christie">Christie</SelectItem>
                       <SelectItem value="Barco">Barco</SelectItem>
-                      <SelectItem value="Sony">Sony</SelectItem>
                       <SelectItem value="NEC">NEC</SelectItem>
+                      <SelectItem value="Sony">Sony</SelectItem>
                       <SelectItem value="IMAX">IMAX</SelectItem>
-                      <SelectItem value="Samsung">Samsung</SelectItem>
-                      <SelectItem value="LG">LG</SelectItem>
+                      <SelectItem value="Dolby">Dolby</SelectItem>
+                      <SelectItem value="JVC">JVC</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="masking"
-                  checked={formData.projection?.masking || false}
-                  onCheckedChange={(checked) => handleProjectionChange("masking", checked)}
-                />
-                <Label htmlFor="masking">Screen Masking Available</Label>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="masking">Screen Masking Available</Label>
+                  <Switch 
+                    id="masking"
+                    checked={formData.projection?.masking || false}
+                    onCheckedChange={(checked) => handleProjectionChange("masking", checked)}
+                  />
+                </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="flex items-center space-x-2 mt-6">
+                <SpeakerLoud className="h-5 w-5 text-muted-foreground" />
+                <h3 className="text-lg font-medium">Sound System</h3>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="soundProcessor">Sound Processor</Label>
                   <Select
@@ -606,208 +639,150 @@ export const ScreenDialog = ({
                     onValueChange={(value) => handleSoundChange("processor", value)}
                   >
                     <SelectTrigger id="soundProcessor">
-                      <SelectValue placeholder="Select processor" />
+                      <SelectValue placeholder="Select sound processor" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="Dolby CP650">Dolby CP650</SelectItem>
                       <SelectItem value="Dolby CP750">Dolby CP750</SelectItem>
                       <SelectItem value="Dolby CP850">Dolby CP850</SelectItem>
                       <SelectItem value="Dolby Atmos">Dolby Atmos</SelectItem>
-                      <SelectItem value="QSC Q-SYS">QSC Q-SYS</SelectItem>
-                      <SelectItem value="USL JSD-100">USL JSD-100</SelectItem>
-                      <SelectItem value="DTS-X">DTS-X</SelectItem>
+                      <SelectItem value="DTS">DTS</SelectItem>
+                      <SelectItem value="SDDS">SDDS</SelectItem>
+                      <SelectItem value="Datasat">Datasat</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="speakers">Speakers</Label>
-                  <Input
-                    id="speakers"
-                    name="speakers"
+                  <Select
                     value={formData.sound?.speakers || ""}
-                    onChange={(e) => handleSoundChange("speakers", e.target.value)}
-                    placeholder="e.g. JBL, Klipsch, etc."
-                  />
+                    onValueChange={(value) => handleSoundChange("speakers", value)}
+                  >
+                    <SelectTrigger id="speakers">
+                      <SelectValue placeholder="Select speakers" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="JBL">JBL</SelectItem>
+                      <SelectItem value="Klipsch">Klipsch</SelectItem>
+                      <SelectItem value="QSC">QSC</SelectItem>
+                      <SelectItem value="Meyer Sound">Meyer Sound</SelectItem>
+                      <SelectItem value="Bose">Bose</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               
               <div className="space-y-2">
                 <Label>Sound Mixes Supported</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dolbyStereo"
-                      checked={(formData.sound?.soundMixes || []).includes("Dolby Stereo")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "Dolby Stereo"]
-                          : soundMixes.filter(mix => mix !== "Dolby Stereo");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dolbyStereo">Dolby Stereo</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dolbyDigital"
-                      checked={(formData.sound?.soundMixes || []).includes("Dolby Digital")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "Dolby Digital"]
-                          : soundMixes.filter(mix => mix !== "Dolby Digital");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dolbyDigital">Dolby Digital</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dolbySurround71"
-                      checked={(formData.sound?.soundMixes || []).includes("7.1 Surround")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "7.1 Surround"]
-                          : soundMixes.filter(mix => mix !== "7.1 Surround");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dolbySurround71">7.1 Surround</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dolbySurround51"
-                      checked={(formData.sound?.soundMixes || []).includes("5.1 Surround")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "5.1 Surround"]
-                          : soundMixes.filter(mix => mix !== "5.1 Surround");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dolbySurround51">5.1 Surround</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dolbyAtmos"
-                      checked={(formData.sound?.soundMixes || []).includes("Dolby Atmos")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "Dolby Atmos"]
-                          : soundMixes.filter(mix => mix !== "Dolby Atmos");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dolbyAtmos">Dolby Atmos</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="dtsX"
-                      checked={(formData.sound?.soundMixes || []).includes("DTS-X")}
-                      onCheckedChange={(checked) => {
-                        const soundMixes = formData.sound?.soundMixes || [];
-                        const updated = checked 
-                          ? [...soundMixes, "DTS-X"]
-                          : soundMixes.filter(mix => mix !== "DTS-X");
-                        handleSoundChange("soundMixes", updated);
-                      }}
-                    />
-                    <Label htmlFor="dtsX">DTS-X</Label>
-                  </div>
+                <div className="grid grid-cols-2 gap-2 mt-2">
+                  {soundMixOptions.map(option => (
+                    <div key={option.id} className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id={`soundMix-${option.id}`}
+                        checked={(formData.sound?.soundMixes || []).includes(option.id)}
+                        onChange={() => handleSoundMixChange(option.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor={`soundMix-${option.id}`} className="text-sm font-normal">
+                        {option.label}
+                      </Label>
+                    </div>
+                  ))}
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="iabSupported"
-                  checked={formData.sound?.iabSupported || false}
-                  onCheckedChange={(checked) => handleSoundChange("iabSupported", checked)}
-                />
-                <Label htmlFor="iabSupported">IAB Supported</Label>
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="iabSupported">IAB Supported</Label>
+                  <Switch 
+                    id="iabSupported"
+                    checked={formData.sound?.iabSupported || false}
+                    onCheckedChange={(checked) => handleSoundChange("iabSupported", checked)}
+                  />
+                </div>
               </div>
             </TabsContent>
             
             <TabsContent value="devices" className="mt-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Screen Devices</Label>
-                
-                {devices.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    {devices.map((device, index) => (
-                      <div key={index} className="flex items-center space-x-2 p-2 border rounded-md">
-                        <div className="flex-1">
-                          <p className="font-medium">{device.manufacturer} {device.model}</p>
-                          <p className="text-sm text-muted-foreground">S/N: {device.serialNumber}</p>
-                          {device.softwareVersion && (
-                            <p className="text-xs text-muted-foreground">
-                              Software: {device.softwareVersion}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeDevice(index)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                <div className="grid grid-cols-3 gap-2">
-                  <Input
-                    placeholder="Manufacturer"
-                    name="manufacturer"
-                    value={newDevice.manufacturer}
-                    onChange={handleDeviceChange}
-                  />
-                  <Input
-                    placeholder="Model"
-                    name="model"
-                    value={newDevice.model}
-                    onChange={handleDeviceChange}
-                  />
-                  <Input
-                    placeholder="Serial Number"
-                    name="serialNumber"
-                    value={newDevice.serialNumber}
-                    onChange={handleDeviceChange}
-                  />
-                </div>
-                <Input
-                  placeholder="Software Version (optional)"
-                  name="softwareVersion"
-                  value={newDevice.softwareVersion || ""}
-                  onChange={handleDeviceChange}
-                  className="mt-2"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addDevice}
-                  className="mt-2"
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Device
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-medium">Screen Devices</h3>
+                <Button type="button" onClick={handleAddDevice} size="sm">
+                  <Plus className="h-4 w-4 mr-1" /> Add Device
                 </Button>
               </div>
+              
+              {formData.devices && formData.devices.length > 0 ? (
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Device Manufacturer</TableHead>
+                        <TableHead>Model</TableHead>
+                        <TableHead>Serial Number</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {formData.devices.map((device) => (
+                        <TableRow key={device.id}>
+                          <TableCell>
+                            <Input 
+                              value={device.manufacturer} 
+                              onChange={(e) => handleDeviceChange(device.id, "manufacturer", e.target.value)} 
+                              className="h-8"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input 
+                              value={device.model} 
+                              onChange={(e) => handleDeviceChange(device.id, "model", e.target.value)} 
+                              className="h-8"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input 
+                              value={device.serialNumber} 
+                              onChange={(e) => handleDeviceChange(device.id, "serialNumber", e.target.value)} 
+                              className="h-8"
+                            />
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleRemoveDevice(device.id)}
+                              className="h-8 w-8"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <div className="border rounded-md p-8 text-center">
+                  <p className="text-muted-foreground mb-4">No devices have been added yet</p>
+                  <Button type="button" onClick={handleAddDevice} variant="outline">
+                    <Plus className="h-4 w-4 mr-2" /> Add Device
+                  </Button>
+                </div>
+              )}
             </TabsContent>
-            
-            <DialogFooter className="mt-6">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">
-                {isEditing ? "Update Screen" : "Create Screen"}
-              </Button>
-            </DialogFooter>
           </Tabs>
+          
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit">
+              {isEditing ? "Update Screen" : "Create Screen"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

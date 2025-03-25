@@ -1,3 +1,4 @@
+
 export interface Theatre {
   id: string;
   name: string;
@@ -29,8 +30,63 @@ export interface Theatre {
   theatreManagementSystem?: string;
   ticketingSystem?: string;
   wireTAPDevices?: WireTAPDevice[];
+  // Content delivery fields
+  deliveryTimeSlots?: DeliveryTimeSlot[];
+  deliveryAddress?: DeliveryAddress;
+  deliveryInstructions?: string;
+  dcpPhysicalDeliveryMethods?: DCPPhysicalDeliveryMethod[];
+  dcpNetworkDeliveryMethods?: DCPNetworkDeliveryMethod[];
+  dcpModemDeliveryMethods?: DCPModemDeliveryMethod[];
+  dcpDeliveryContacts?: Contact[];
+  sendEmailsForDCPDelivery?: boolean;
+  dcpContentTypesForEmail?: string[];
+  // Key delivery fields
+  keyDeliveryContacts?: Contact[];
+  kdmDeliveryEmailsInFLMX?: 'useDropbox' | 'useKeyDeliveryContacts';
+  // Ingest settings
+  autoIngestOfContentEnabled?: boolean;
+  autoIngestContentTypes?: string[];
+  qcnTheatreIPAddressRange?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DeliveryTimeSlot {
+  id: string;
+  day: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  startTime: string;
+  endTime: string;
+}
+
+export interface DeliveryAddress {
+  useTheatreAddress: boolean;
+  address?: string;
+  city?: string;
+  state?: string;
+  postalCode?: string;
+  country?: string;
+}
+
+export interface DCPPhysicalDeliveryMethod {
+  id: string;
+  mediaType: string;
+  details: string;
+}
+
+export interface DCPNetworkDeliveryMethod {
+  id: string;
+  networkURL: string;
+}
+
+export interface DCPModemDeliveryMethod {
+  id: string;
+  modemPhoneNumber: string;
+}
+
+export interface Contact {
+  id: string;
+  name?: string;
+  email: string;
 }
 
 export interface Chain {
