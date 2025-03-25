@@ -88,9 +88,7 @@ export const ScreenDialog = ({
     const nameParts = name.split('.');
     if (nameParts.length === 1) {
       setFormData((prev) => {
-        const newData = { ...prev };
-        newData[name as keyof Screen] = numberValue as any;
-        return newData;
+        return { ...prev, [name]: numberValue };
       });
     } else if (nameParts.length === 2) {
       const [parent, child] = nameParts;
