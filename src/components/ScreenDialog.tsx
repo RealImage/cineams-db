@@ -577,7 +577,7 @@ export const ScreenDialog = ({
                   <Checkbox
                     id="wheelchairAccessibility"
                     checked={formData.wheelchairAccessibility || false}
-                    onCheckedChange={(checked) => handleSwitchChange("wheelchairAccessibility", checked)}
+                    onCheckedChange={(checked) => handleSwitchChange("wheelchairAccessibility", !!checked)}
                   />
                   <Label htmlFor="wheelchairAccessibility">Wheelchair Accessibility</Label>
                 </div>
@@ -585,7 +585,7 @@ export const ScreenDialog = ({
                   <Checkbox
                     id="motionSeats"
                     checked={formData.motionSeats || false}
-                    onCheckedChange={(checked) => handleSwitchChange("motionSeats", checked)}
+                    onCheckedChange={(checked) => handleSwitchChange("motionSeats", !!checked)}
                   />
                   <Label htmlFor="motionSeats">Motion Seats</Label>
                 </div>
@@ -760,7 +760,7 @@ export const ScreenDialog = ({
                 <Checkbox
                   id="masking"
                   checked={formData.projection?.masking || false}
-                  onCheckedChange={(checked) => handleProjectionChange("masking", checked)}
+                  onCheckedChange={(checked) => handleProjectionChange("masking", !!checked)}
                 />
                 <Label htmlFor="masking">Masking</Label>
               </div>
@@ -811,7 +811,7 @@ export const ScreenDialog = ({
                 <Checkbox
                   id="iabSupported"
                   checked={formData.sound?.iabSupported || false}
-                  onCheckedChange={(checked) => handleSoundChange("iabSupported", checked)}
+                  onCheckedChange={(checked) => handleSoundChange("iabSupported", !!checked)}
                 />
                 <Label htmlFor="iabSupported">IAB Supported</Label>
               </div>
@@ -916,4 +916,4 @@ export const ScreenDialog = ({
                     <TableBody>
                       {formData.suites.map((suite) => (
                         <TableRow key={suite.id}>
-                          <TableCell>{suite.name}</TableCell>
+                          <TableCell>{suite.name}</
