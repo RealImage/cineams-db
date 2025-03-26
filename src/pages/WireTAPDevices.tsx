@@ -1,8 +1,8 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { Link } from "react-router-dom";
 import {
   Plus,
   Search,
@@ -44,71 +44,9 @@ import { wireTapDevices } from "@/data/wireTapDevices";
 
 const WireTAPDevices = () => {
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
-
-  const handleAddDevice = (formData: any) => {
-    const newDevice: WireTAPDevice = {
-      id: `wt-${Date.now().toString().slice(-6)}`,
-      hardwareSerialNumber: formData.hardwareSerialNumber,
-      applicationSerialNumber: formData.applicationSerialNumber,
-      hostName: formData.hostName,
-      connectivityType: formData.connectivityType,
-      ispName: formData.ispName,
-      theatreId: formData.theatreId,
-      theatreName: formData.theatreName,
-      theatreUUID: formData.theatreUUID,
-      theatreAddress: formData.theatreAddress,
-      theatreAlternateNames: formData.theatreAlternateNames?.split(',').map((name: string) => name.trim()),
-      storageCapacity: formData.storageCapacity,
-      bandwidth: formData.bandwidth,
-      activationStatus: formData.activationStatus,
-      mappingStatus: formData.mappingStatus,
-      vpnStatus: formData.vpnStatus,
-      updatedBy: "current.user@example.com",
-      updatedAt: new Date().toISOString(),
-    };
-    setDevices([...devices, newDevice]);
-    setIsAddDialogOpen(false);
-    toast.success("WireTAP device added successfully");
-  };
-
-  const handleEditDevice = (formData: any) => {
-    if (!currentDevice) return;
-    
-    const updatedDevices = devices.map(device => {
-      if (device.id === currentDevice.id) {
-        return {
-          ...device,
-          hardwareSerialNumber: formData.hardwareSerialNumber,
-          applicationSerialNumber: formData.applicationSerialNumber,
-          hostName: formData.hostName,
-          connectivityType: formData.connectivityType,
-          ispName: formData.ispName,
-          theatreId: formData.theatreId,
-          theatreName: formData.theatreName,
-          theatreUUID: formData.theatreUUID,
-          theatreAddress: formData.theatreAddress,
-          theatreAlternateNames: formData.theatreAlternateNames?.split(',').map((name: string) => name.trim()),
-          storageCapacity: formData.storageCapacity,
-          bandwidth: formData.bandwidth,
-          activationStatus: formData.activationStatus,
-          mappingStatus: formData.mappingStatus,
-          vpnStatus: formData.vpnStatus,
-          updatedBy: "current.user@example.com",
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return device;
-    });
-    
-    setDevices(updatedDevices);
-    setIsEditDialogOpen(false);
-    setCurrentDevice(null);
-    toast.success("WireTAP device updated successfully");
-  };
 
   const handleDeactivateDevice = (device: WireTAPDevice) => {
     const updatedDevices = devices.map(d => {
@@ -330,9 +268,11 @@ const WireTAPDevices = () => {
             Manage your WireTAP devices across all theatres
           </p>
         </div>
-        <Button onClick={() => setIsAddDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Add Device
-        </Button>
+        <Link to="/wiretap-devices/add">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" /> Add Device
+          </Button>
+        </Link>
       </div>
       
       <DataTable
@@ -343,128 +283,6 @@ const WireTAPDevices = () => {
         actions={actions}
       />
       
-      {/* Add Device Dialog */}
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
-          <DialogHeader>
-            <DialogTitle>Add WireTAP Device</DialogTitle>
-            <DialogDescription>
-              Enter the details for the new WireTAP device.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            const formData = new FormData(e.currentTarget);
-            const data = Object.fromEntries(formData.entries());
-            handleAddDevice(data);
-          }} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="hardwareSerialNumber">H/W Serial Number</Label>
-                <Input id="hardwareSerialNumber" name="hardwareSerialNumber" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="applicationSerialNumber">Application Serial Number</Label>
-                <Input id="applicationSerialNumber" name="applicationSerialNumber" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="hostName">Host Name / Node ID</Label>
-                <Input id="hostName" name="hostName" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="connectivityType">Connectivity Type</Label>
-                <Select name="connectivityType" defaultValue="Fixed Broadband">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select connectivity type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Fixed Broadband">Fixed Broadband</SelectItem>
-                    <SelectItem value="Mobile Broadband">Mobile Broadband</SelectItem>
-                    <SelectItem value="4G">4G</SelectItem>
-                    <SelectItem value="5G">5G</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="ispName">ISP Name</Label>
-                <Input id="ispName" name="ispName" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="theatreName">Theatre Name</Label>
-                <Input id="theatreName" name="theatreName" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="theatreId">Theatre ID</Label>
-                <Input id="theatreId" name="theatreId" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="theatreUUID">Theatre UUID</Label>
-                <Input id="theatreUUID" name="theatreUUID" required />
-              </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="theatreAddress">Theatre Address</Label>
-                <Input id="theatreAddress" name="theatreAddress" required />
-              </div>
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="theatreAlternateNames">Theatre Alternate Names (comma-separated)</Label>
-                <Input id="theatreAlternateNames" name="theatreAlternateNames" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="storageCapacity">Storage Capacity</Label>
-                <Input id="storageCapacity" name="storageCapacity" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bandwidth">Bandwidth</Label>
-                <Input id="bandwidth" name="bandwidth" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="activationStatus">Activation Status</Label>
-                <Select name="activationStatus" defaultValue="Active">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mappingStatus">Mapping Status</Label>
-                <Select name="mappingStatus" defaultValue="Mapped">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mapped">Mapped</SelectItem>
-                    <SelectItem value="Unmapped">Unmapped</SelectItem>
-                    <SelectItem value="Pending">Pending</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="vpnStatus">VPN Status</Label>
-                <Select name="vpnStatus" defaultValue="Enabled">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Enabled">Enabled</SelectItem>
-                    <SelectItem value="Disabled">Disabled</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit">Add Device</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
       {/* Edit Device Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">

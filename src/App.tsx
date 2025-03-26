@@ -10,6 +10,7 @@ import EditTheatre from "./pages/EditTheatre";
 import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
 import WireTAPDevices from "./pages/WireTAPDevices";
+import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/chains" element={<Chains />} />
             <Route path="/tdl-devices" element={<TDLDevices />} />
             <Route path="/wiretap-devices" element={<WireTAPDevices />} />
+            <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>
