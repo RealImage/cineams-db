@@ -69,8 +69,8 @@ export const Layout = () => {
     { 
       icon: <List size={20} />, 
       label: "WireTAP Devices", 
-      path: "#",
-      disabled: true 
+      path: "/wiretap-devices",
+      disabled: false 
     },
     { 
       icon: <Building size={20} />, 
