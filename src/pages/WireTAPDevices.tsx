@@ -115,8 +115,8 @@ const WireTAPDevices = () => {
       if (d.id === device.id) {
         return {
           ...d,
-          activationStatus: "Inactive",
-          vpnStatus: "Disabled",
+          activationStatus: "Inactive" as const,
+          vpnStatus: "Disabled" as const,
           updatedBy: "current.user@example.com",
           updatedAt: new Date().toISOString(),
         };
