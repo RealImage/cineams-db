@@ -71,12 +71,50 @@ const WireTAPDevices = () => {
     setIsViewLogsDialogOpen(true);
   };
   
+  const handleEditDevice = (formData: any) => {
+    if (!currentDevice) return;
+
+    const theatreAlternateNames = formData.theatreAlternateNames
+      ? String(formData.theatreAlternateNames).split(',').map((name: string) => name.trim())
+      : undefined;
+
+    const updatedDevices = devices.map(d => {
+      if (d.id === currentDevice.id) {
+        return {
+          ...d,
+          hardwareSerialNumber: formData.hardwareSerialNumber,
+          applicationSerialNumber: formData.applicationSerialNumber,
+          hostName: formData.hostName,
+          connectivityType: formData.connectivityType,
+          ispName: formData.ispName,
+          theatreName: formData.theatreName,
+          theatreId: formData.theatreId,
+          theatreUUID: formData.theatreUUID,
+          theatreAddress: formData.theatreAddress,
+          theatreAlternateNames,
+          storageCapacity: formData.storageCapacity,
+          bandwidth: formData.bandwidth,
+          activationStatus: formData.activationStatus,
+          mappingStatus: formData.mappingStatus,
+          vpnStatus: formData.vpnStatus,
+          updatedBy: "current.user@example.com",
+          updatedAt: new Date().toISOString(),
+        };
+      }
+      return d;
+    });
+    
+    setDevices(updatedDevices);
+    setIsEditDialogOpen(false);
+    setCurrentDevice(null);
+    toast.success(`Device ${formData.hardwareSerialNumber} updated successfully`);
+  };
+  
   const handleDownloadReport = () => {
     toast.success("Downloading WireTAP Devices report");
     // In a real application, we would generate and download the report here
   };
 
-  // Status icon components for better visual indicators
   const getActivationStatusIcon = (status: string) => {
     if (status === "Active") {
       return <CheckCircle className="h-4 w-4 text-green-600" />;
@@ -104,7 +142,6 @@ const WireTAPDevices = () => {
     return <WifiOff className="h-4 w-4 text-red-600" />;
   };
 
-  // Define columns for the data table
   const columns: Column<WireTAPDevice>[] = [
     {
       header: "H/W Serial Number",
@@ -232,7 +269,6 @@ const WireTAPDevices = () => {
     }
   ];
 
-  // Define row actions
   const actions = [
     {
       label: "Edit",
@@ -283,7 +319,6 @@ const WireTAPDevices = () => {
         actions={actions}
       />
       
-      {/* Edit Device Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
@@ -296,8 +331,7 @@ const WireTAPDevices = () => {
             <form onSubmit={(e) => {
               e.preventDefault();
               const formData = new FormData(e.currentTarget);
-              const data = Object.fromEntries(formData.entries());
-              handleEditDevice(data);
+              handleEditDevice(formData);
             }} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -464,7 +498,6 @@ const WireTAPDevices = () => {
         </DialogContent>
       </Dialog>
       
-      {/* View Logs Dialog */}
       <Dialog open={isViewLogsDialogOpen} onOpenChange={setIsViewLogsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
