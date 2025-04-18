@@ -11,6 +11,7 @@ import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
 import WireTAPDevices from "./pages/WireTAPDevices";
 import AddWireTAPDevice from "./pages/AddWireTAPDevice";
+import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/tdl-devices" element={<TDLDevices />} />
             <Route path="/wiretap-devices" element={<WireTAPDevices />} />
             <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
+            <Route path="/reports" element={<Reports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>

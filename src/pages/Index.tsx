@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { Building2, Users, Film, Monitor } from "lucide-react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
+import { WireTAPMonitoringWidget } from "@/components/dashboard/WireTAPMonitoringWidget";
 import { DashboardStats } from "@/types";
 
 export default function Index() {
@@ -159,6 +160,9 @@ export default function Index() {
           </div>
         </DashboardCard>
       </div>
+      
+      {/* Add the WireTAP monitoring widget here */}
+      <WireTAPMonitoringWidget />
       
       <DashboardCard title="Recently Added Theatres">
         <div className="text-sm text-muted-foreground">

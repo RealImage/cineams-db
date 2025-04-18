@@ -1,8 +1,9 @@
 
 import { format } from "date-fns";
-import { Download } from "lucide-react";
+import { Download, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { WireTAPDevice } from "@/types/wireTAP";
+import { isDeviceOfflineTooLong } from "@/components/wiretap/StatusIcons";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,8 @@ export function DeviceLogsDialog({ isOpen, onOpenChange, device }: DeviceLogsDia
     { timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), action: "Configuration Change", details: "Network settings updated" },
   ];
 
+  const isOfflineTooLong = isDeviceOfflineTooLong(device.updatedAt);
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
@@ -39,6 +42,19 @@ export function DeviceLogsDialog({ isOpen, onOpenChange, device }: DeviceLogsDia
             Activity logs for {device.hardwareSerialNumber}
           </DialogDescription>
         </DialogHeader>
+        
+        {isOfflineTooLong && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 mb-4 flex items-center">
+            <Clock className="h-5 w-5 text-red-500 mr-2" />
+            <div>
+              <p className="text-sm font-medium text-red-800">Device Offline Warning</p>
+              <p className="text-xs text-red-600">
+                This device has been offline for more than 24 hours. Last seen on {format(new Date(device.updatedAt), "MMM dd, yyyy 'at' h:mm a")}
+              </p>
+            </div>
+          </div>
+        )}
+        
         <div className="max-h-[400px] overflow-y-auto border rounded-md p-4 bg-muted/30">
           <div className="space-y-3">
             {mockLogs.map((log, index) => (
