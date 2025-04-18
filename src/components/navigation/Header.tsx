@@ -22,6 +22,7 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path === "/chains") return "Chains";
     if (path === "/tdl-devices") return "TDL Devices";
     if (path === "/wiretap-devices") return "WireTAP Devices";
+    if (path === "/reports") return "Reports";
     
     return "Dashboard";
   };

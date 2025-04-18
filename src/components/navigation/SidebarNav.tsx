@@ -63,8 +63,8 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
     { 
       icon: <FileText size={20} />, 
       label: "Reports", 
-      path: "#",
-      disabled: true 
+      path: "/reports",
+      disabled: false 
     },
     { 
       icon: <Map size={20} />, 
