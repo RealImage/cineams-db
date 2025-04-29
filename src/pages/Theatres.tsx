@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Eye, Calendar, User, Tag, Film } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, Calendar, User, Tag, Film, Activity, ToggleLeft, ToggleRight } from "lucide-react";
 import { theatres as mockTheatres } from "@/data/mockData";
 import { Screen, Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
@@ -11,14 +10,19 @@ import { AddTheatreDialog } from "@/components/AddTheatreDialog";
 import { ViewTheatreDialog } from "@/components/ViewTheatreDialog";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import { TheatreLogsDialog } from "@/components/TheatreLogsDialog";
+import { DeleteTheatreDialog } from "@/components/DeleteTheatreDialog";
 
 const Theatres = () => {
   const [theatres, setTheatres] = useState<Theatre[]>(mockTheatres);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [logsDialogOpen, setLogsDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editingTheatre, setEditingTheatre] = useState<Theatre | undefined>(undefined);
   const [viewingTheatre, setViewingTheatre] = useState<Theatre | undefined>(undefined);
+  const [selectedTheatre, setSelectedTheatre] = useState<Theatre | undefined>(undefined);
   
   const handleCreateTheatre = () => {
     setEditingTheatre(undefined);
@@ -26,13 +30,18 @@ const Theatres = () => {
   };
   
   const handleEditTheatre = (theatre: Theatre) => {
-    setEditingTheatre(theatre);
-    setDialogOpen(true);
+    const editUrl = `/theatre/${theatre.id}/edit`;
+    window.open(editUrl, '_blank');
   };
   
   const handleViewTheatre = (theatre: Theatre) => {
     setViewingTheatre(theatre);
     setViewDialogOpen(true);
+  };
+
+  const handleViewLogs = (theatre: Theatre) => {
+    setSelectedTheatre(theatre);
+    setLogsDialogOpen(true);
   };
   
   const handleSaveTheatre = (theatreData: Partial<Theatre>) => {
@@ -55,12 +64,26 @@ const Theatres = () => {
   };
   
   const handleDeleteTheatre = (theatre: Theatre) => {
-    setTheatres(theatres.filter((t) => t.id !== theatre.id));
-    toast.success(`Theatre "${theatre.name}" deleted successfully`);
+    setSelectedTheatre(theatre);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDeleteTheatre = () => {
+    if (selectedTheatre) {
+      setTheatres(theatres.filter((t) => t.id !== selectedTheatre.id));
+      toast.success(`Theatre "${selectedTheatre.name}" deleted successfully`);
+      setDeleteDialogOpen(false);
+    }
   };
   
-  const handleViewDetails = (theatre: Theatre) => {
-    toast.info(`Viewing details for: ${theatre.name}`);
+  const handleToggleStatus = (theatre: Theatre) => {
+    const newStatus = theatre.status === "Active" ? "Inactive" : "Active";
+    const updatedTheatres = theatres.map((t) => 
+      t.id === theatre.id ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } as Theatre : t
+    );
+    
+    setTheatres(updatedTheatres);
+    toast.success(`Theatre "${theatre.name}" ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
   };
   
   const columns: Column<Theatre>[] = [
@@ -193,23 +216,50 @@ const Theatres = () => {
     }
   ];
   
-  const actions = [
-    {
-      label: "View Details",
-      icon: <Eye className="h-4 w-4" />,
-      onClick: handleViewTheatre
-    },
-    {
-      label: "Edit",
-      icon: <Edit className="h-4 w-4" />,
-      onClick: handleEditTheatre
-    },
-    {
-      label: "Delete",
-      icon: <Trash2 className="h-4 w-4" />,
-      onClick: handleDeleteTheatre
+  const getActionsForTheatre = (theatre: Theatre) => {
+    const baseActions = [
+      {
+        label: "View Details",
+        icon: <Eye className="h-4 w-4" />,
+        onClick: handleViewTheatre
+      },
+      {
+        label: "View Logs",
+        icon: <Activity className="h-4 w-4" />,
+        onClick: handleViewLogs
+      },
+      {
+        label: "Edit",
+        icon: <Edit className="h-4 w-4" />,
+        onClick: handleEditTheatre
+      },
+    ];
+
+    if (theatre.status === "Active") {
+      return [
+        ...baseActions,
+        {
+          label: "Deactivate",
+          icon: <ToggleLeft className="h-4 w-4" />,
+          onClick: handleToggleStatus
+        }
+      ];
+    } else {
+      return [
+        ...baseActions,
+        {
+          label: "Activate",
+          icon: <ToggleRight className="h-4 w-4" />,
+          onClick: handleToggleStatus
+        },
+        {
+          label: "Delete",
+          icon: <Trash2 className="h-4 w-4" />,
+          onClick: handleDeleteTheatre
+        }
+      ];
     }
-  ];
+  };
   
   return (
     <motion.div
@@ -234,11 +284,11 @@ const Theatres = () => {
         data={theatres}
         columns={columns}
         searchPlaceholder="Search theatres..."
-        actions={actions}
+        actions={(row) => getActionsForTheatre(row)}
         onRowClick={handleViewTheatre}
       />
       
-      {/* Replace the old TheatreDialog with our new dialogs */}
+      {/* Dialogs */}
       <AddTheatreDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
@@ -256,6 +306,19 @@ const Theatres = () => {
         onOpenChange={setDialogOpen}
         theatre={editingTheatre}
         onSave={handleSaveTheatre}
+      />
+
+      <TheatreLogsDialog
+        open={logsDialogOpen}
+        onOpenChange={setLogsDialogOpen}
+        theatre={selectedTheatre}
+      />
+
+      <DeleteTheatreDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        theatre={selectedTheatre}
+        onConfirmDelete={confirmDeleteTheatre}
       />
     </motion.div>
   );

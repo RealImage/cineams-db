@@ -1,3 +1,4 @@
+
 import { useState, ReactNode } from "react";
 import { 
   Table, 
@@ -35,17 +36,19 @@ export interface Column<T> {
   sortable?: boolean;
 }
 
+type Action<T> = {
+  label: string;
+  onClick: (row: T) => void;
+  icon?: React.ReactNode;
+};
+
 interface DataTableProps<T> {
   data: T[];
   columns: Column<T>[];
   searchable?: boolean;
   searchPlaceholder?: string;
   onRowClick?: (row: T) => void;
-  actions?: {
-    label: string;
-    onClick: (row: T) => void;
-    icon?: React.ReactNode;
-  }[];
+  actions?: ((row: T) => Action<T>[]) | Action<T>[];
 }
 
 export function DataTable<T extends { id: string }>({
@@ -78,6 +81,11 @@ export function DataTable<T extends { id: string }>({
   
   const handlePageChange = (newPage: number) => {
     setPage(Math.max(1, Math.min(newPage, totalPages)));
+  };
+
+  const getRowActions = (row: T) => {
+    if (!actions) return [];
+    return typeof actions === 'function' ? actions(row) : actions;
   };
   
   return (
@@ -160,7 +168,7 @@ export function DataTable<T extends { id: string }>({
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          {actions.map((action, i) => (
+                          {getRowActions(row).map((action, i) => (
                             <DropdownMenuItem 
                               key={i}
                               onClick={(e) => {
