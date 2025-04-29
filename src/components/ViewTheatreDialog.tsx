@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -22,8 +21,9 @@ export const ViewTheatreDialog = ({
   if (!theatre) return null;
   
   const handleEdit = () => {
+    const editUrl = `/theatre/${theatre.id}/edit`;
+    window.open(editUrl, '_blank');
     onOpenChange(false);
-    navigate(`/theatre/${theatre.id}/edit`);
   };
   
   const formatDate = (dateString: string) => {

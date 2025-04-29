@@ -115,7 +115,7 @@ export const ScreenDialog = ({
   
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto h-[80vh] w-full">
         <DialogHeader>
           <DialogTitle>{isEditing ? "Edit Screen" : "Create New Screen"}</DialogTitle>
           <DialogDescription>
@@ -125,9 +125,9 @@ export const ScreenDialog = ({
           </DialogDescription>
         </DialogHeader>
         
-        <form onSubmit={handleSubmit}>
-          <Tabs defaultValue="general" className="w-full">
-            <TabsList className="w-full justify-start">
+        <form onSubmit={handleSubmit} className="flex flex-col h-full">
+          <Tabs defaultValue="general" className="w-full flex-1">
+            <TabsList className="w-full justify-start overflow-x-auto">
               <TabsTrigger value="general">General Information</TabsTrigger>
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="dimensions">Dimensions</TabsTrigger>
@@ -138,65 +138,67 @@ export const ScreenDialog = ({
               <TabsTrigger value="closures">Temporary Closures</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="general">
-              <GeneralTab 
-                formData={formData}
-                setFormData={setFormData}
-                thirdPartyDomain={thirdPartyDomain}
-                setThirdPartyDomain={setThirdPartyDomain}
-                thirdPartyValue={thirdPartyValue}
-                setThirdPartyValue={setThirdPartyValue}
-              />
-            </TabsContent>
-            
-            <TabsContent value="details">
-              <DetailsTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="dimensions">
-              <DimensionsTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="projection">
-              <ProjectionTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="sound">
-              <SoundTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="devices">
-              <DevicesTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="suites">
-              <SuitesTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
-            
-            <TabsContent value="closures">
-              <TemporaryClosuresTab 
-                formData={formData}
-                setFormData={setFormData}
-              />
-            </TabsContent>
+            <div className="flex-1 overflow-y-auto mt-4">
+              <TabsContent value="general">
+                <GeneralTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                  thirdPartyDomain={thirdPartyDomain}
+                  setThirdPartyDomain={setThirdPartyDomain}
+                  thirdPartyValue={thirdPartyValue}
+                  setThirdPartyValue={setThirdPartyValue}
+                />
+              </TabsContent>
+              
+              <TabsContent value="details">
+                <DetailsTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="dimensions">
+                <DimensionsTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="projection">
+                <ProjectionTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="sound">
+                <SoundTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="devices">
+                <DevicesTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="suites">
+                <SuitesTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+              
+              <TabsContent value="closures">
+                <TemporaryClosuresTab 
+                  formData={formData}
+                  setFormData={setFormData}
+                />
+              </TabsContent>
+            </div>
           </Tabs>
           
           <DialogFooter className="mt-4">
