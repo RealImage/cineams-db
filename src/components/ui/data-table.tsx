@@ -1,4 +1,3 @@
-
 import { useState, ReactNode, useEffect, useMemo, useCallback } from "react";
 import { 
   Table, 
@@ -46,6 +45,8 @@ import {
 } from "@/components/ui/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import debounce from 'lodash/debounce';
 
 export interface Column<T> {
@@ -112,6 +113,8 @@ export function DataTable<T extends { id: string }>({
   const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: null });
   const [activeFilters, setActiveFilters] = useState<Filter<T>[]>([]);
   const [showFilters, setShowFilters] = useState(false);
+  const [filterSearchTerms, setFilterSearchTerms] = useState<Record<string, string>>({});
+  const [useSheetFilter, setUseSheetFilter] = useState(window.innerWidth < 768);
   
   // Debounce search changes to minimize unnecessary filtering operations
   const debouncedSearch = useCallback(
@@ -298,6 +301,28 @@ export function DataTable<T extends { id: string }>({
   // Get active filter count
   const getActiveFilterCount = () => activeFilters.length;
   
+    // Check screen size to determine filter UI type
+    useEffect(() => {
+      const handleResize = () => {
+        setUseSheetFilter(window.innerWidth < 768);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }, []);
+  
+  // Filter options with search
+  const getFilteredOptions = (column: Column<T>, columnKey: keyof T) => {
+    const options = getFilterOptions(column, columnKey);
+    const searchTerm = filterSearchTerms[columnKey.toString()] || '';
+    
+    if (!searchTerm) return options;
+    
+    return options.filter(option => 
+      option.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+  
   // Generate page numbers for pagination
   const getPageNumbers = () => {
     const pageNumbers = [];
@@ -334,6 +359,81 @@ export function DataTable<T extends { id: string }>({
     
     return pageNumbers;
   };
+
+  // Filter Content Component - used in both popover and sheet
+  const FilterContent = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h4 className="font-medium">Filters</h4>
+        {getActiveFilterCount() > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 text-xs"
+            onClick={clearAllFilters}
+          >
+            <FilterX className="h-3 w-3 mr-1" /> Clear all
+          </Button>
+        )}
+      </div>
+      <div className="space-y-4">
+        {columns
+          .filter(col => col.filterable)
+          .map((column, idx) => {
+            const columnKey = column.accessor as keyof T;
+            const filterOptions = getFilterOptions(column, columnKey);
+            const activeFilter = activeFilters.find(f => f.column === columnKey);
+            
+            return (
+              <div key={`filter-${idx}`} className="grid gap-2">
+                <label className="text-sm font-medium">{column.header}</label>
+                
+                {/* Search input for filter options */}
+                <Input 
+                  placeholder="Search options..."
+                  value={filterSearchTerms[columnKey.toString()] || ''}
+                  onChange={(e) => {
+                    setFilterSearchTerms(prev => ({
+                      ...prev,
+                      [columnKey.toString()]: e.target.value
+                    }));
+                  }}
+                  className="mb-2"
+                />
+                
+                {/* Filter options list */}
+                <div className="max-h-40 overflow-y-auto border rounded-md p-2">
+                  {getFilteredOptions(column, columnKey).map((option) => (
+                    <div 
+                      key={option} 
+                      className="flex items-center space-x-2 py-1 px-2 hover:bg-muted rounded-sm cursor-pointer"
+                      onClick={() => {
+                        const isSelected = activeFilter?.value === option;
+                        handleFilterChange(columnKey, isSelected ? "" : option);
+                      }}
+                    >
+                      <input 
+                        type="checkbox" 
+                        checked={activeFilter?.value === option}
+                        readOnly
+                        className="rounded"
+                      />
+                      <span className="text-sm">{option}</span>
+                    </div>
+                  ))}
+                  
+                  {getFilteredOptions(column, columnKey).length === 0 && (
+                    <div className="text-sm text-muted-foreground p-2 text-center">
+                      No matching options
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+      </div>
+    </div>
+  );
   
   return (
     <div className="w-full space-y-4 animate-fade-in">
@@ -349,86 +449,46 @@ export function DataTable<T extends { id: string }>({
             />
           </div>
           
-          <Popover open={showFilters} onOpenChange={setShowFilters}>
-            <PopoverTrigger asChild>
-              <Button variant="outline" size="icon" className="relative">
-                <SlidersHorizontal className="h-4 w-4" />
-                {getActiveFilterCount() > 0 && (
-                  <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                    {getActiveFilterCount()}
-                  </Badge>
-                )}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-72 p-3" align="end">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-medium">Filters</h4>
+          {useSheetFilter ? (
+            // Sheet filter for mobile view
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="icon" className="relative">
+                  <SlidersHorizontal className="h-4 w-4" />
                   {getActiveFilterCount() > 0 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 text-xs"
-                      onClick={clearAllFilters}
-                    >
-                      <FilterX className="h-3 w-3 mr-1" /> Clear all
-                    </Button>
+                    <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {getActiveFilterCount()}
+                    </Badge>
                   )}
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle>Filters</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <FilterContent />
                 </div>
-                <div className="space-y-2">
-                  {columns
-                    .filter(col => col.filterable)
-                    .map((column, idx) => {
-                      const columnKey = column.accessor as keyof T;
-                      const filterOptions = getFilterOptions(column, columnKey);
-                      const activeFilter = activeFilters.find(f => f.column === columnKey);
-                      
-                      return (
-                        <div key={`filter-${idx}`} className="grid gap-1">
-                          <label className="text-sm font-medium">{column.header}</label>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="justify-between w-full">
-                                <span className="truncate">
-                                  {activeFilter 
-                                    ? Array.isArray(activeFilter.value)
-                                      ? `${activeFilter.value.length} selected`
-                                      : activeFilter.value
-                                    : "Select..."}
-                                </span>
-                                <ChevronRight className="h-4 w-4 ml-2 -rotate-90" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56" align="start">
-                              {filterOptions.map((option) => (
-                                <DropdownMenuCheckboxItem
-                                  key={option}
-                                  checked={activeFilter ? 
-                                    Array.isArray(activeFilter.value) 
-                                      ? activeFilter.value.includes(option)
-                                      : activeFilter.value === option
-                                    : false
-                                  }
-                                  onCheckedChange={(checked) => {
-                                    if (checked) {
-                                      handleFilterChange(columnKey, option);
-                                    } else if (activeFilter) {
-                                      handleFilterChange(columnKey, "");
-                                    }
-                                  }}
-                                >
-                                  {option}
-                                </DropdownMenuCheckboxItem>
-                              ))}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      );
-                    })}
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+              </SheetContent>
+            </Sheet>
+          ) : (
+            // Popover filter for desktop view
+            <Popover open={showFilters} onOpenChange={setShowFilters}>
+              <PopoverTrigger asChild>
+                <Button variant="outline" size="icon" className="relative">
+                  <SlidersHorizontal className="h-4 w-4" />
+                  {getActiveFilterCount() > 0 && (
+                    <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {getActiveFilterCount()}
+                    </Badge>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4" align="end">
+                <FilterContent />
+              </PopoverContent>
+            </Popover>
+          )}
           
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -473,7 +533,7 @@ export function DataTable<T extends { id: string }>({
             </TableHeader>
             <TableBody>
               {paginatedData.length > 0 ? (
-                paginatedData.map((row, rowIndex) => (
+                paginatedData.map((row) => (
                   <TableRow 
                     key={row.id}
                     className={`${onRowClick ? "cursor-pointer hover:bg-muted/50" : ""}`}
@@ -533,27 +593,25 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
       
-      {totalPages > 1 && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      {totalPages > 0 && (
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t">
           <div className="flex items-center space-x-2">
             <span className="text-sm text-muted-foreground">Rows per page:</span>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
-                  {rowsPerPage} <ChevronRight className="ml-1 h-4 w-4 -rotate-90" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+            <Select 
+              value={rowsPerPage.toString()}
+              onValueChange={(value) => handleRowsPerPageChange(parseInt(value))}
+            >
+              <SelectTrigger className="h-8 w-[70px]">
+                <SelectValue>{rowsPerPage}</SelectValue>
+              </SelectTrigger>
+              <SelectContent align="end">
                 {[10, 25, 50, 100].map((size) => (
-                  <DropdownMenuItem 
-                    key={size}
-                    onClick={() => handleRowsPerPageChange(size)}
-                  >
+                  <SelectItem key={size} value={size.toString()}>
                     {size}
-                  </DropdownMenuItem>
+                  </SelectItem>
                 ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+              </SelectContent>
+            </Select>
           </div>
           
           <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
@@ -564,10 +622,26 @@ export function DataTable<T extends { id: string }>({
             <Pagination>
               <PaginationContent>
                 <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => handlePageChange(currentPage - 1)} 
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronsLeft className="h-4 w-4" />
+                  </Button>
+                </PaginationItem>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
                 
                 {getPageNumbers().map((page, i) => {
@@ -592,10 +666,26 @@ export function DataTable<T extends { id: string }>({
                 })}
                 
                 <PaginationItem>
-                  <PaginationNext 
+                  <Button
+                    variant="outline"
+                    size="icon"
                     onClick={() => handlePageChange(currentPage + 1)}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
-                  />
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </PaginationItem>
+                <PaginationItem>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => handlePageChange(totalPages)}
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronsRight className="h-4 w-4" />
+                  </Button>
                 </PaginationItem>
               </PaginationContent>
             </Pagination>
