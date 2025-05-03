@@ -5,8 +5,9 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { XIcon, Home } from "lucide-react";
+import { XIcon, Home, LogOut, ExternalLink } from "lucide-react";
 import { NavItem } from "./NavItem";
+import { Separator } from "@/components/ui/separator";
 
 import {
   Building2,
@@ -26,6 +27,13 @@ import {
 export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }) => {
   const location = useLocation();
   const isMobile = useIsMobile();
+  
+  // Mock user data (replace with actual user context when available)
+  const userData = {
+    name: "John Smith",
+    company: "Qube Wire",
+    role: "Administrator"
+  };
   
   const navItems = [
     { 
@@ -92,6 +100,33 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
     },
   ];
   
+  const footerLinks = [
+    {
+      icon: <ExternalLink size={16} />,
+      label: "Terms of Service",
+      path: "https://www.qubecinema.com/terms-use",
+      external: true
+    },
+    {
+      icon: <ExternalLink size={16} />,
+      label: "Privacy Policy",
+      path: "https://www.qubewire.com/privacypolicy",
+      external: true
+    },
+    {
+      icon: <ExternalLink size={16} />,
+      label: "About Qube Wire",
+      path: "https://www.qubewire.com/about-us",
+      external: true
+    },
+    {
+      icon: <LogOut size={16} />,
+      label: "Sign Out",
+      path: "/logout",
+      external: false
+    }
+  ];
+  
   const isActive = (path: string) => {
     return location.pathname === path;
   };
@@ -114,6 +149,13 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
         )}
       </div>
       
+      {/* User information */}
+      <div className="mb-6 px-2">
+        <h3 className="font-semibold text-sm">{userData.name}</h3>
+        <p className="text-xs text-muted-foreground">{userData.company}</p>
+        <p className="text-xs text-muted-foreground">{userData.role}</p>
+      </div>
+      
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => (
           <NavItem
@@ -126,6 +168,24 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
           />
         ))}
       </nav>
+      
+      {/* Footer links */}
+      <div className="mt-auto pt-4">
+        <Separator className="mb-4" />
+        <div className="space-y-1">
+          {footerLinks.map((link, i) => (
+            <NavItem
+              key={i}
+              icon={link.icon}
+              label={link.label}
+              path={link.path}
+              isActive={false}
+              external={link.external}
+              className="text-xs py-1.5"
+            />
+          ))}
+        </div>
+      </div>
     </motion.aside>
   );
 };
