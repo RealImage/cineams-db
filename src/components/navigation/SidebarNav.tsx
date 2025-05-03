@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -100,18 +99,20 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
     },
   ];
   
+  // Modified footer links with Terms of Service and Privacy Policy combined
   const footerLinks = [
     {
-      icon: <ExternalLink size={16} />,
-      label: "Terms of Service",
-      path: "https://www.qubecinema.com/terms-use",
-      external: true
-    },
-    {
-      icon: <ExternalLink size={16} />,
-      label: "Privacy Policy",
-      path: "https://www.qubewire.com/privacypolicy",
-      external: true
+      label: "Terms of Service | Privacy Policy",
+      elements: [
+        {
+          label: "Terms of Service",
+          path: "https://www.qubecinema.com/terms-use"
+        },
+        {
+          label: "Privacy Policy",
+          path: "https://www.qubewire.com/privacypolicy"
+        }
+      ]
     },
     {
       icon: <ExternalLink size={16} />,
@@ -169,11 +170,22 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
         ))}
       </nav>
       
-      {/* Footer links */}
+      {/* Footer links with combined Terms/Privacy */}
       <div className="mt-auto pt-4">
         <Separator className="mb-4" />
-        <div className="space-y-1">
-          {footerLinks.map((link, i) => (
+        <div className="space-y-2">
+          {/* Terms and Privacy combined with separator */}
+          <div className="flex items-center px-2 text-xs text-muted-foreground">
+            <ExternalLink size={16} className="mr-2" />
+            <a href="https://www.qubecinema.com/terms-use" target="_blank" rel="noopener noreferrer" 
+               className="hover:text-foreground transition-colors">Terms of Service</a>
+            <span className="mx-1">|</span>
+            <a href="https://www.qubewire.com/privacypolicy" target="_blank" rel="noopener noreferrer"
+               className="hover:text-foreground transition-colors">Privacy Policy</a>
+          </div>
+          
+          {/* About Qube Wire and Sign Out */}
+          {footerLinks.slice(1).map((link, i) => (
             <NavItem
               key={i}
               icon={link.icon}
