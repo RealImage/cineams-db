@@ -32,7 +32,8 @@ import {
   Download, 
   Search,
   SlidersHorizontal,
-  FilterX
+  FilterX,
+  MoreHorizontal
 } from "lucide-react";
 import {
   Pagination,
