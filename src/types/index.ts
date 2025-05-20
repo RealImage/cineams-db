@@ -1,4 +1,3 @@
-
 export type Operator = {
   name: string;
   email: string;
@@ -237,6 +236,15 @@ export type TDLDevice = {
   certificateStatus: string;
   firmwareVersion: string;
   autoUpdateCertificate: boolean;
+};
+
+export type Column<T> = {
+  header: string;
+  accessor: keyof T | string;
+  cell?: (row: T) => React.ReactNode;
+  sortable?: boolean;
+  filterable?: boolean;
+  filterOptions?: string[] | ((data: T[]) => string[]);
 };
 
 export type DashboardStats = {
