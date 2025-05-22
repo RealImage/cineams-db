@@ -1,7 +1,7 @@
-
 import { useState, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table";
-import { Theatre, Column } from "@/types";
+import { Column } from "@/components/ui/data-table"; // Import Column type from data-table
+import { Theatre } from "@/types";
 import { useTheatreColumns, useEnhancedColumns } from "./TheatreColumns";
 import { getTheatreActions, useTheatreActions } from "./TheatreActions";
 
@@ -174,7 +174,7 @@ export const TheatreTable = ({
   return (
     <DataTable
       data={filteredTheatres}
-      columns={enhancedColumns as Column<Theatre>[]}
+      columns={enhancedColumns}
       searchPlaceholder="Search theatres by name, chain, company, location..."
       actions={(row) => getActionsForTheatre(row)}
       onRowClick={onViewTheatre}

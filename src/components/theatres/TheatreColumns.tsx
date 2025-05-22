@@ -1,30 +1,31 @@
 
 import React from "react";
 import { Film, Calendar, User } from "lucide-react";
-import { Column, Theatre } from "@/types";
+import { Theatre } from "@/types";
+import { Column } from "@/components/ui/data-table"; // Import the Column type from data-table
 import { Badge } from "@/components/ui/badge";
 
 export const useTheatreColumns = (): Column<Theatre>[] => {
   const columns: Column<Theatre>[] = [
     {
       header: "Theatre Name",
-      accessor: "name" as keyof Theatre
+      accessor: "name"
     },
     {
       header: "Display Name",
-      accessor: "displayName" as keyof Theatre
+      accessor: "displayName"
     },
     {
       header: "Chain Name",
-      accessor: "chainName" as keyof Theatre
+      accessor: "chainName"
     },
     {
       header: "Company",
-      accessor: "companyName" as keyof Theatre
+      accessor: "companyName"
     },
     {
       header: "Location",
-      accessor: "address" as keyof Theatre,
+      accessor: "address",
       cell: (row: Theatre) => {
         const addressParts = row.address.split(',').map(part => part.trim());
         const location = addressParts.length >= 3 
@@ -40,7 +41,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "Status",
-      accessor: "status" as keyof Theatre,
+      accessor: "status",
       cell: (row: Theatre) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
           row.status === "Active" 
@@ -55,7 +56,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "Ad Integrators",
-      accessor: "adIntegrators" as keyof Theatre,
+      accessor: "adIntegrators",
       cell: (row: Theatre) => {
         const adIntegrators = ["Screenvision", "NCM", "Spotlight Cinema"];
         
@@ -78,7 +79,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "WireTAP",
-      accessor: "wireTap" as keyof Theatre,
+      accessor: "wireTap",
       cell: (row: Theatre) => {
         const wireTapSerials = ["WT8273891", "WT9264719"];
         
@@ -101,7 +102,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "Screens",
-      accessor: "screenCount" as keyof Theatre,
+      accessor: "screenCount",
       cell: (row: Theatre) => (
         <div className="flex items-center">
           <Film className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -111,7 +112,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "Last Updated",
-      accessor: "updatedAt" as keyof Theatre,
+      accessor: "updatedAt",
       cell: (row: Theatre) => (
         <div className="flex items-center">
           <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
@@ -123,7 +124,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
     },
     {
       header: "Updated By",
-      accessor: "updatedBy" as keyof Theatre,
+      accessor: "updatedBy",
       cell: (row: Theatre) => (
         <div className="flex items-center">
           <User className="h-4 w-4 mr-1 text-muted-foreground" />
