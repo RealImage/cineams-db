@@ -80,12 +80,12 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="applicationSerialNumber">Application Serial Number *</Label>
+          <Label htmlFor="applianceSerialNumber">Appliance Serial Number *</Label>
           <Input 
-            id="applicationSerialNumber" 
-            value={formData.applicationSerialNumber}
-            onChange={(e) => onChange({ applicationSerialNumber: e.target.value })}
-            placeholder="Enter application serial number"
+            id="applianceSerialNumber" 
+            value={formData.applianceSerialNumber}
+            onChange={(e) => onChange({ applianceSerialNumber: e.target.value })}
+            placeholder="Enter appliance serial number"
             required
           />
         </div>
