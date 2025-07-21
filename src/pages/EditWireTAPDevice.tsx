@@ -1,0 +1,280 @@
+import { useState, useEffect } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { toast } from "sonner";
+import { 
+  ArrowLeft, 
+  ArrowRight, 
+  Save, 
+  HardDrive, 
+  Wifi, 
+  Database, 
+  Building2 
+} from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import BasicDetailsForm from "@/components/wiretap/BasicDetailsForm";
+import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
+import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
+import { WireTAPDevice } from "@/types/wireTAP";
+import { wireTapDevices } from "@/data/wireTapDevices";
+
+const EditWireTAPDevice = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState("basic-details");
+  const [device, setDevice] = useState<WireTAPDevice | null>(null);
+  const [formData, setFormData] = useState({
+    // Basic Details
+    hardwareSerialNumber: "",
+    applicationSerialNumber: "",
+    hostName: "",
+    applianceType: "WireTAP",
+    mappingStatus: "No",
+    theatreId: "",
+    theatreName: "",
+    noMappingReason: "",
+    pullOutStatus: false,
+    pullOutDate: null,
+    pullOutReason: "",
+    
+    // Hardware Specifications
+    storage: "512 GB",
+    ramSize: "",
+    ramUnit: "GB",
+    mobileNumber: "",
+    simNumber: "",
+    
+    // Connectivity Specifications
+    downloadRestrictions: false,
+    restrictionDays: [],
+    restrictionTimeStart: "",
+    restrictionTimeEnd: "",
+    theatreNetworkInterface: "eth0",
+    theatreBandwidth: "",
+    theatreBandwidthUnit: "MBPS",
+    proposedBandwidth: "",
+    proposedBandwidthUnit: "MBPS",
+    connectivityType: "Fixed Broadband",
+    ispCompany: "",
+    internetInstallationDate: null,
+    pricePerGB: "",
+    ispEquipmentModel: "",
+    ispThirdPartyHandler: "",
+    ispCharges: "",
+    monthlyFUPLimit: "",
+    ispPaymentResponsibility: "",
+    billingType: "Postpaid",
+    billingCycle: "Monthly",
+    billingDate: "1",
+    planStartDate: null,
+    internetIPType: "DHCP",
+    ingestIPType: "DHCP",
+    ingestIPAddress: "",
+    ingestIPMask: "",
+    ingestIPGateway: ""
+  });
+
+  useEffect(() => {
+    // Find the device by ID and populate the form
+    const currentDevice = wireTapDevices.find(d => d.id === id);
+    if (currentDevice) {
+      setDevice(currentDevice);
+      setFormData({
+        // Basic Details
+        hardwareSerialNumber: currentDevice.hardwareSerialNumber,
+        applicationSerialNumber: currentDevice.applicationSerialNumber,
+        hostName: currentDevice.hostName,
+        applianceType: "WireTAP",
+        mappingStatus: currentDevice.mappingStatus === "Mapped" ? "Yes" : "No",
+        theatreId: currentDevice.theatreId,
+        theatreName: currentDevice.theatreName,
+        noMappingReason: currentDevice.mappingStatus === "Unmapped" ? "Not specified" : "",
+        pullOutStatus: false,
+        pullOutDate: null,
+        pullOutReason: "",
+        
+        // Hardware Specifications - Map from device data
+        storage: currentDevice.storageCapacity,
+        ramSize: "8", // Default values as these aren't in the device type
+        ramUnit: "GB",
+        mobileNumber: "",
+        simNumber: "",
+        
+        // Connectivity Specifications - Map from device data
+        downloadRestrictions: false,
+        restrictionDays: [],
+        restrictionTimeStart: "",
+        restrictionTimeEnd: "",
+        theatreNetworkInterface: "eth0",
+        theatreBandwidth: currentDevice.bandwidth,
+        theatreBandwidthUnit: "MBPS",
+        proposedBandwidth: "",
+        proposedBandwidthUnit: "MBPS",
+        connectivityType: currentDevice.connectivityType,
+        ispCompany: currentDevice.ispName,
+        internetInstallationDate: null,
+        pricePerGB: "",
+        ispEquipmentModel: "",
+        ispThirdPartyHandler: "",
+        ispCharges: "",
+        monthlyFUPLimit: "",
+        ispPaymentResponsibility: "",
+        billingType: "Postpaid",
+        billingCycle: "Monthly",
+        billingDate: "1",
+        planStartDate: null,
+        internetIPType: "DHCP",
+        ingestIPType: "DHCP",
+        ingestIPAddress: "",
+        ingestIPMask: "",
+        ingestIPGateway: ""
+      });
+    } else {
+      toast.error("Device not found");
+      navigate("/wiretap-devices");
+    }
+  }, [id, navigate]);
+
+  const handleFormChange = (sectionData: Partial<typeof formData>) => {
+    setFormData(prev => ({ ...prev, ...sectionData }));
+  };
+
+  const handleSubmit = () => {
+    // Validate the form data
+    if (!formData.hardwareSerialNumber) {
+      toast.error("Hardware Serial Number is required");
+      setActiveTab("basic-details");
+      return;
+    }
+    
+    if (!formData.applicationSerialNumber) {
+      toast.error("Application Serial Number is required");
+      setActiveTab("basic-details");
+      return;
+    }
+
+    if (formData.mappingStatus === "Yes" && !formData.theatreId) {
+      toast.error("Theatre selection is required when mapping status is Yes");
+      setActiveTab("basic-details");
+      return;
+    }
+
+    if (formData.mappingStatus === "No" && !formData.noMappingReason) {
+      toast.error("Reason for no mapping is required");
+      setActiveTab("basic-details");
+      return;
+    }
+
+    if (formData.pullOutStatus && !formData.pullOutDate) {
+      toast.error("Pull out date is required when pull out status is enabled");
+      setActiveTab("basic-details");
+      return;
+    }
+
+    // Submit the form - in a real app, this would be an API call
+    console.log("Updating device:", id, formData);
+    toast.success("WireTAP device updated successfully");
+    navigate("/wiretap-devices");
+  };
+
+  const handleNext = () => {
+    if (activeTab === "basic-details") {
+      setActiveTab("hardware-specs");
+    } else if (activeTab === "hardware-specs") {
+      setActiveTab("connectivity-specs");
+    }
+  };
+
+  const handlePrevious = () => {
+    if (activeTab === "connectivity-specs") {
+      setActiveTab("hardware-specs");
+    } else if (activeTab === "hardware-specs") {
+      setActiveTab("basic-details");
+    }
+  };
+
+  const isLastStep = activeTab === "connectivity-specs";
+  const isFirstStep = activeTab === "basic-details";
+
+  if (!device) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3 }}
+      className="space-y-6"
+    >
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Edit WireTAP Device</h1>
+          <p className="text-muted-foreground mt-1">
+            Update details for {device.hardwareSerialNumber}
+          </p>
+        </div>
+        <Button variant="outline" onClick={() => navigate("/wiretap-devices")}>
+          <ArrowLeft className="h-4 w-4 mr-2" /> Back to Devices
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-3">
+          <TabsTrigger value="basic-details" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4" /> Basic Details
+          </TabsTrigger>
+          <TabsTrigger value="hardware-specs" className="flex items-center gap-2">
+            <HardDrive className="h-4 w-4" /> Device Specifications
+          </TabsTrigger>
+          <TabsTrigger value="connectivity-specs" className="flex items-center gap-2">
+            <Wifi className="h-4 w-4" /> Connectivity Specifications
+          </TabsTrigger>
+        </TabsList>
+        
+        <Card className="mt-4">
+          <CardContent className="pt-6">
+            <TabsContent value="basic-details">
+              <BasicDetailsForm formData={formData} onChange={handleFormChange} />
+            </TabsContent>
+            
+            <TabsContent value="hardware-specs">
+              <HardwareSpecsForm formData={formData} onChange={handleFormChange} />
+            </TabsContent>
+            
+            <TabsContent value="connectivity-specs">
+              <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
+            </TabsContent>
+          </CardContent>
+          
+          <CardFooter className="flex justify-between border-t p-4">
+            <Button 
+              variant="outline" 
+              onClick={handlePrevious}
+              disabled={isFirstStep}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+            </Button>
+            
+            <div className="flex gap-2">
+              {!isLastStep ? (
+                <Button onClick={handleNext}>
+                  Next <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              ) : (
+                <Button onClick={handleSubmit}>
+                  <Save className="h-4 w-4 mr-2" /> Update Device
+                </Button>
+              )}
+            </div>
+          </CardFooter>
+        </Card>
+      </Tabs>
+    </motion.div>
+  );
+};
+
+export default EditWireTAPDevice;
