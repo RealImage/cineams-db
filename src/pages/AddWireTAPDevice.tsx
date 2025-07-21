@@ -160,7 +160,7 @@ const AddWireTAPDevice = () => {
             <Building2 className="h-4 w-4" /> Basic Details
           </TabsTrigger>
           <TabsTrigger value="hardware-specs" className="flex items-center gap-2">
-            <HardDrive className="h-4 w-4" /> Hardware Specifications
+            <HardDrive className="h-4 w-4" /> Device Specifications
           </TabsTrigger>
           <TabsTrigger value="connectivity-specs" className="flex items-center gap-2">
             <Wifi className="h-4 w-4" /> Connectivity Specifications
