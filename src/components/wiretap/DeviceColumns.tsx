@@ -42,7 +42,10 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
             {row.connectivityType} <Info className="h-4 w-4 text-gray-500" />
           </TooltipTrigger>
           <TooltipContent>
-            <p><strong>ISP:</strong> {row.ispName}</p>
+            <div className="space-y-1">
+              <p><strong>ISP:</strong> {row.ispName}</p>
+              <p><strong>Mapped Bandwidth:</strong> {row.bandwidth}</p>
+            </div>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -73,11 +76,6 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
   {
     header: "Storage Capacity",
     accessor: "storageCapacity",
-    sortable: true
-  },
-  {
-    header: "Bandwidth",
-    accessor: "bandwidth",
     sortable: true
   },
   {
