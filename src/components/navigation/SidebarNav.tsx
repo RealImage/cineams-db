@@ -141,7 +141,7 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
       <div className="flex items-center justify-between mb-6">
         <Link to="/" className="flex items-center space-x-2">
           <Home className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">CinemasDB</span>
+          <span className="font-bold text-xl">CinemaDB</span>
         </Link>
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
