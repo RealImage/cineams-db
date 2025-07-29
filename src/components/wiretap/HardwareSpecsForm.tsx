@@ -39,12 +39,13 @@ const softwareAgents = [
   { id: 5, provider: "Qube Wire", agentName: "Inventory Agent", version: "", updatedOn: "" },
   { id: 6, provider: "Qube Wire", agentName: "TDL Agent", version: "", updatedOn: "" },
   { id: 7, provider: "Qube Wire", agentName: "Configuration Agent", version: "", updatedOn: "" },
-  { id: 8, provider: "iCount", agentName: "iCount", version: "", updatedOn: "" },
-  { id: 9, provider: "Slate", agentName: "AgentQ", version: "", updatedOn: "" },
-  { id: 10, provider: "Qlog", agentName: "Qlog Agent", version: "", updatedOn: "" },
-  { id: 11, provider: "Scheduler", agentName: "Scheduler Agent", version: "", updatedOn: "" },
-  { id: 12, provider: "Scheduler", agentName: "Content Agent", version: "", updatedOn: "" },
-  { id: 13, provider: "Scheduler", agentName: "AgentQS", version: "", updatedOn: "" },
+  { id: 8, provider: "Qube Wire", agentName: "Live Wire", version: "", updatedOn: "" },
+  { id: 9, provider: "iCount", agentName: "iCount", version: "", updatedOn: "" },
+  { id: 10, provider: "Slate", agentName: "AgentQ", version: "", updatedOn: "" },
+  { id: 11, provider: "Qlog", agentName: "Qlog Agent", version: "", updatedOn: "" },
+  { id: 12, provider: "Scheduler", agentName: "Scheduler Agent", version: "", updatedOn: "" },
+  { id: 13, provider: "Scheduler", agentName: "Content Agent", version: "", updatedOn: "" },
+  { id: 14, provider: "Scheduler", agentName: "AgentQS", version: "", updatedOn: "" },
 ];
 
 const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
