@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
-import { XIcon, Home, LogOut, ExternalLink } from "lucide-react";
+import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { NavItem } from "./NavItem";
 import { Separator } from "@/components/ui/separator";
 
@@ -23,9 +23,24 @@ import {
   Map,
 } from "lucide-react";
 
-export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean, setSidebarOpen: (open: boolean) => void }) => {
+export const SidebarNav = ({ 
+  sidebarOpen, 
+  setSidebarOpen, 
+  onCollapsedChange 
+}: { 
+  sidebarOpen: boolean, 
+  setSidebarOpen: (open: boolean) => void,
+  onCollapsedChange?: (collapsed: boolean) => void 
+}) => {
   const location = useLocation();
   const isMobile = useIsMobile();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const toggleCollapsed = () => {
+    const newCollapsed = !isCollapsed;
+    setIsCollapsed(newCollapsed);
+    onCollapsedChange?.(newCollapsed);
+  };
   
   // Mock user data (replace with actual user context when available)
   const userData = {
@@ -134,28 +149,52 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
   
   return (
     <motion.aside
-      className="fixed inset-y-0 left-0 z-50 w-64 bg-background border-r border-border px-3 py-4 flex flex-col"
+      className={`fixed inset-y-0 left-0 z-50 bg-background border-r border-border py-4 flex flex-col transition-all duration-300 ${
+        isCollapsed ? 'w-16 px-2' : 'w-64 px-3'
+      }`}
       initial={isMobile ? { x: "-100%" } : false}
       animate={isMobile && sidebarOpen ? { x: 0 } : false}
     >
       <div className="flex items-center justify-between mb-6">
-        <Link to="/" className="flex items-center space-x-2">
-          <Home className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">CinemaDB</span>
-        </Link>
+        {!isCollapsed ? (
+          <Link to="/" className="flex items-center space-x-2">
+            <Home className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl">CinemaDB</span>
+          </Link>
+        ) : (
+          <Link to="/" className="flex justify-center w-full">
+            <Home className="h-6 w-6 text-primary" />
+          </Link>
+        )}
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={() => setSidebarOpen(false)}>
             <XIcon size={20} />
           </Button>
         )}
       </div>
+
+      {/* Collapse/Expand button */}
+      {!isMobile && (
+        <div className="mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={toggleCollapsed}
+            className="w-full flex justify-center"
+          >
+            {isCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          </Button>
+        </div>
+      )}
       
       {/* User information */}
-      <div className="mb-6 px-2">
-        <h3 className="font-semibold text-sm">{userData.name}</h3>
-        <p className="text-xs text-muted-foreground">{userData.company}</p>
-        <p className="text-xs text-muted-foreground">{userData.role}</p>
-      </div>
+      {!isCollapsed && (
+        <div className="mb-6 px-2">
+          <h3 className="font-semibold text-sm">{userData.name}</h3>
+          <p className="text-xs text-muted-foreground">{userData.company}</p>
+          <p className="text-xs text-muted-foreground">{userData.role}</p>
+        </div>
+      )}
       
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => (
@@ -166,6 +205,7 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
             path={item.path}
             isActive={isActive(item.path)}
             disabled={item.disabled}
+            collapsed={isCollapsed}
           />
         ))}
       </nav>
@@ -174,28 +214,49 @@ export const SidebarNav = ({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boole
       <div className="mt-auto pt-4">
         <Separator className="mb-4" />
         <div className="space-y-2">
-          {/* Terms and Privacy combined with separator */}
-          <div className="flex items-center px-2 text-xs text-muted-foreground">
-            <ExternalLink size={16} className="mr-2" />
-            <a href="https://www.qubecinema.com/terms-use" target="_blank" rel="noopener noreferrer" 
-               className="hover:text-foreground transition-colors">Terms of Service</a>
-            <span className="mx-1">|</span>
-            <a href="https://www.qubewire.com/privacypolicy" target="_blank" rel="noopener noreferrer"
-               className="hover:text-foreground transition-colors">Privacy Policy</a>
-          </div>
-          
-          {/* About Qube Wire and Sign Out */}
-          {footerLinks.slice(1).map((link, i) => (
-            <NavItem
-              key={i}
-              icon={link.icon}
-              label={link.label}
-              path={link.path}
-              isActive={false}
-              external={link.external}
-              className="text-xs py-1.5"
-            />
-          ))}
+          {!isCollapsed ? (
+            <>
+              {/* Terms and Privacy combined with separator */}
+              <div className="flex items-center px-2 text-xs text-muted-foreground">
+                <ExternalLink size={16} className="mr-2" />
+                <a href="https://www.qubecinema.com/terms-use" target="_blank" rel="noopener noreferrer" 
+                   className="hover:text-foreground transition-colors">Terms of Service</a>
+                <span className="mx-1">|</span>
+                <a href="https://www.qubewire.com/privacypolicy" target="_blank" rel="noopener noreferrer"
+                   className="hover:text-foreground transition-colors">Privacy Policy</a>
+              </div>
+              
+              {/* About Qube Wire and Sign Out */}
+              {footerLinks.slice(1).map((link, i) => (
+                <NavItem
+                  key={i}
+                  icon={link.icon}
+                  label={link.label}
+                  path={link.path}
+                  isActive={false}
+                  external={link.external}
+                  className="text-xs py-1.5"
+                  collapsed={false}
+                />
+              ))}
+            </>
+          ) : (
+            /* Collapsed footer - only icons with tooltips */
+            <>
+              {footerLinks.slice(1).map((link, i) => (
+                <NavItem
+                  key={i}
+                  icon={link.icon}
+                  label={link.label}
+                  path={link.path}
+                  isActive={false}
+                  external={link.external}
+                  className="text-xs py-1.5"
+                  collapsed={true}
+                />
+              ))}
+            </>
+          )}
         </div>
       </div>
     </motion.aside>
