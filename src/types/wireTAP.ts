@@ -16,6 +16,8 @@ export interface WireTAPDevice {
   activationStatus: "Active" | "Inactive";
   mappingStatus: "Mapped" | "Unmapped" | "Pending";
   vpnStatus: "Enabled" | "Disabled";
+  wireTapApplianceType: "Standard" | "Pro" | "Enterprise";
+  pullOutStatus: "Installed" | "Pulled Out" | "Maintenance";
   updatedBy: string;
   updatedAt: string;
 }

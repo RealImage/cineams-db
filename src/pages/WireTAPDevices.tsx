@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Link, useNavigate } from "react-router-dom";
@@ -10,12 +10,54 @@ import { WireTAPDevice } from "@/types/wireTAP";
 import { wireTapDevices } from "@/data/wireTapDevices";
 import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
+import { DeviceFiltersComponent, DeviceFilters } from "@/components/wiretap/DeviceFilters";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
+  const [filters, setFilters] = useState<DeviceFilters>({});
+  // Filter devices based on active filters
+  const filteredDevices = useMemo(() => {
+    return devices.filter(device => {
+      // Location filter (search in theatre address)
+      if (filters.location) {
+        const locationLower = filters.location.toLowerCase();
+        const addressLower = device.theatreAddress.toLowerCase();
+        if (!addressLower.includes(locationLower)) {
+          return false;
+        }
+      }
+
+      // Activation Status filter
+      if (filters.activationStatus && device.activationStatus !== filters.activationStatus) {
+        return false;
+      }
+
+      // Mapping Status filter
+      if (filters.mappingStatus && device.mappingStatus !== filters.mappingStatus) {
+        return false;
+      }
+
+      // VPN Status filter
+      if (filters.vpnStatus && device.vpnStatus !== filters.vpnStatus) {
+        return false;
+      }
+
+      // WireTAP Appliance Type filter
+      if (filters.wireTapApplianceType && device.wireTapApplianceType !== filters.wireTapApplianceType) {
+        return false;
+      }
+
+      // Pull-Out Status filter
+      if (filters.pullOutStatus && device.pullOutStatus !== filters.pullOutStatus) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [devices, filters]);
 
   const handleDeactivateDevice = (device: WireTAPDevice) => {
     const updatedDevices = devices.map(d => {
@@ -83,8 +125,15 @@ const WireTAPDevices = () => {
         </Link>
       </div>
       
+      {/* Filters Component */}
+      <DeviceFiltersComponent
+        devices={devices}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+      
       <DataTable
-        data={devices}
+        data={filteredDevices}
         columns={columns}
         searchable={true}
         searchPlaceholder="Search WireTAP devices..."
