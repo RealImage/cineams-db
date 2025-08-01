@@ -535,15 +535,6 @@ export const TheatreDialog = ({
                     disabled
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="thirdPartyId">Third-Party ID</Label>
-                  <Input
-                    id="thirdPartyId"
-                    name="thirdPartyId"
-                    value={formData.thirdPartyId || ""}
-                    onChange={handleChange}
-                  />
-                </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -831,7 +822,15 @@ export const TheatreDialog = ({
                 </div>
                 
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">Integration configuration will be added here.</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="thirdPartyId">Third-Party ID</Label>
+                    <Input
+                      id="thirdPartyId"
+                      name="thirdPartyId"
+                      value={formData.thirdPartyId || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
                 </div>
               </div>
             </TabsContent>
