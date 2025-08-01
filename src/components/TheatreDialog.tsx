@@ -539,21 +539,43 @@ export const TheatreDialog = ({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="chainName">Chain Name</Label>
+                  <Select
+                    value={formData.chainName || ""}
+                    onValueChange={(value) => {
+                      handleSelectChange("chainName", value);
+                      // Auto-populate Chain ID based on selection
+                      const chainMapping: Record<string, string> = {
+                        "AMC Theatres": "AMC001",
+                        "Regal Cinemas": "REG001", 
+                        "Cinemark": "CIN001",
+                        "Marcus Theatres": "MAR001",
+                        "Harkins Theatres": "HAR001"
+                      };
+                      handleSelectChange("chainId", chainMapping[value] || "");
+                    }}
+                  >
+                    <SelectTrigger id="chainName">
+                      <SelectValue placeholder="Select chain" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AMC Theatres">AMC Theatres</SelectItem>
+                      <SelectItem value="Regal Cinemas">Regal Cinemas</SelectItem>
+                      <SelectItem value="Cinemark">Cinemark</SelectItem>
+                      <SelectItem value="Marcus Theatres">Marcus Theatres</SelectItem>
+                      <SelectItem value="Harkins Theatres">Harkins Theatres</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="chainId">Chain ID</Label>
                   <Input
                     id="chainId"
                     name="chainId"
                     value={formData.chainId || ""}
                     onChange={handleChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="chainName">Chain Name</Label>
-                  <Input
-                    id="chainName"
-                    name="chainName"
-                    value={formData.chainName || ""}
-                    onChange={handleChange}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
               </div>
