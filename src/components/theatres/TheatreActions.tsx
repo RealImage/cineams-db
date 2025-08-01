@@ -67,7 +67,7 @@ export const getTheatreActions = ({
 export const useTheatreActions = () => {
   const handleEditTheatre = (theatre: Theatre) => {
     const editUrl = `/theatre/${theatre.id}/edit`;
-    window.open(editUrl, '_blank');
+    window.location.href = editUrl;
   };
   
   const handleToggleStatus = (theatre: Theatre) => {
