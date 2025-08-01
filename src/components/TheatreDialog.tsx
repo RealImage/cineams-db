@@ -582,21 +582,43 @@ export const TheatreDialog = ({
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
+                  <Label htmlFor="companyName">Company Name</Label>
+                  <Select
+                    value={formData.companyName || ""}
+                    onValueChange={(value) => {
+                      handleSelectChange("companyName", value);
+                      // Auto-populate Company ID based on selection
+                      const companyMapping: Record<string, string> = {
+                        "AMC Entertainment Holdings": "AMC_ENT001",
+                        "Cineworld Group": "CIN_GRP001",
+                        "Cinemark Holdings": "CIN_HLD001",
+                        "Marcus Corporation": "MAR_CRP001",
+                        "Harkins Theatres LLC": "HAR_LLC001"
+                      };
+                      handleSelectChange("companyId", companyMapping[value] || "");
+                    }}
+                  >
+                    <SelectTrigger id="companyName">
+                      <SelectValue placeholder="Select company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AMC Entertainment Holdings">AMC Entertainment Holdings</SelectItem>
+                      <SelectItem value="Cineworld Group">Cineworld Group</SelectItem>
+                      <SelectItem value="Cinemark Holdings">Cinemark Holdings</SelectItem>
+                      <SelectItem value="Marcus Corporation">Marcus Corporation</SelectItem>
+                      <SelectItem value="Harkins Theatres LLC">Harkins Theatres LLC</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="companyId">Company ID</Label>
                   <Input
                     id="companyId"
                     name="companyId"
                     value={formData.companyId || ""}
                     onChange={handleChange}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Input
-                    id="companyName"
-                    name="companyName"
-                    value={formData.companyName || ""}
-                    onChange={handleChange}
+                    disabled
+                    className="bg-muted"
                   />
                 </div>
               </div>
