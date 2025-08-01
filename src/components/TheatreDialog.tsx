@@ -537,6 +537,44 @@ export const TheatreDialog = ({
                 </div>
               </div>
               
+              <div className="space-y-2">
+                <Label htmlFor="theatreType">Theatre Type</Label>
+                <Select
+                  value={formData.type || ""}
+                  onValueChange={(value) => handleSelectChange("type", value)}
+                >
+                  <SelectTrigger id="theatreType">
+                    <SelectValue placeholder="Select theatre type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Amusement Park">Amusement Park</SelectItem>
+                    <SelectItem value="Cemetery">Cemetery</SelectItem>
+                    <SelectItem value="Church">Church</SelectItem>
+                    <SelectItem value="College / University">College / University</SelectItem>
+                    <SelectItem value="Complex">Complex</SelectItem>
+                    <SelectItem value="Conference / Exhibition">Conference / Exhibition</SelectItem>
+                    <SelectItem value="Cruise Shop">Cruise Shop</SelectItem>
+                    <SelectItem value="Dine-in">Dine-in</SelectItem>
+                    <SelectItem value="Drive-in">Drive-in</SelectItem>
+                    <SelectItem value="Film Festival">Film Festival</SelectItem>
+                    <SelectItem value="Home / Residence">Home / Residence</SelectItem>
+                    <SelectItem value="Hotel">Hotel</SelectItem>
+                    <SelectItem value="Karaoke">Karaoke</SelectItem>
+                    <SelectItem value="Lab">Lab</SelectItem>
+                    <SelectItem value="Multiplex">Multiplex</SelectItem>
+                    <SelectItem value="Multipurpose Facility">Multipurpose Facility</SelectItem>
+                    <SelectItem value="Needs Review">Needs Review</SelectItem>
+                    <SelectItem value="Offices">Offices</SelectItem>
+                    <SelectItem value="Open Air Theatre">Open Air Theatre</SelectItem>
+                    <SelectItem value="Pop-up">Pop-up</SelectItem>
+                    <SelectItem value="Screening Room">Screening Room</SelectItem>
+                    <SelectItem value="Single Screen">Single Screen</SelectItem>
+                    <SelectItem value="VR Zone">VR Zone</SelectItem>
+                    <SelectItem value="Yacht">Yacht</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="chainName">Chain Name</Label>
@@ -623,31 +661,20 @@ export const TheatreDialog = ({
                 </div>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="listing">Listing</Label>
-                  <Select
-                    value={formData.listing || ""}
-                    onValueChange={(value) => handleSelectChange("listing", value)}
-                  >
-                    <SelectTrigger id="listing">
-                      <SelectValue placeholder="Select listing type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Listed">Listed</SelectItem>
-                      <SelectItem value="Private">Private</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="type">Type</Label>
-                  <Input
-                    id="type"
-                    name="type"
-                    value={formData.type || ""}
-                    onChange={handleChange}
-                  />
-                </div>
+              <div className="space-y-2">
+                <Label htmlFor="listing">Listing</Label>
+                <Select
+                  value={formData.listing || ""}
+                  onValueChange={(value) => handleSelectChange("listing", value)}
+                >
+                  <SelectTrigger id="listing">
+                    <SelectValue placeholder="Select listing type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Listed">Listed</SelectItem>
+                    <SelectItem value="Private">Private</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </TabsContent>
             
