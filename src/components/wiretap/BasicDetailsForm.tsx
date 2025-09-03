@@ -99,6 +99,18 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
             placeholder="Enter host name or node ID"
           />
         </div>
+      </div>
+      
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="clusterName">Cluster Name</Label>
+          <Input 
+            id="clusterName" 
+            value={formData.clusterName}
+            onChange={(e) => onChange({ clusterName: e.target.value })}
+            placeholder="Enter cluster name"
+          />
+        </div>
         
         <div className="space-y-2">
           <Label htmlFor="applianceType">Appliance Type</Label>
