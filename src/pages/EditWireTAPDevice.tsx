@@ -9,12 +9,14 @@ import {
   HardDrive, 
   Wifi, 
   Database, 
-  Building2 
+  Building2,
+  Lock 
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import BasicDetailsForm from "@/components/wiretap/BasicDetailsForm";
 import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
 import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
@@ -246,7 +248,16 @@ const EditWireTAPDevice = () => {
             </TabsContent>
             
             <TabsContent value="connectivity-specs">
-              <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
+              <Alert className="mb-6">
+                <Lock className="h-4 w-4" />
+                <AlertDescription>
+                  These connectivity specifications are properties of the theatre and cannot be edited from this device page. 
+                  To modify these settings, please edit the theatre configuration.
+                </AlertDescription>
+              </Alert>
+              <div className="opacity-60 pointer-events-none">
+                <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
+              </div>
             </TabsContent>
           </CardContent>
           
