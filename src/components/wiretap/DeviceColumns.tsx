@@ -1,6 +1,6 @@
-
 import { format } from "date-fns";
-import { Info } from "lucide-react";
+import { Info, Copy, Check } from "lucide-react";
+import { useState } from "react";
 import { Column } from "@/components/ui/data-table";
 import { WireTAPDevice } from "@/types/wireTAP";
 import { 
@@ -10,6 +10,34 @@ import {
   TooltipTrigger 
 } from "@/components/ui/tooltip";
 import { getActivationStatusIcon, getMappingStatusIcon, getVPNStatusIcon } from "./StatusIcons";
+
+const CopyableField = ({ label, value }: { label: string; value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between group">
+      <span><strong>{label}:</strong> {value}</span>
+      <button
+        onClick={handleCopy}
+        className="opacity-0 group-hover:opacity-100 transition-opacity ml-2 p-1 hover:bg-gray-100 rounded"
+        title="Copy to clipboard"
+      >
+        {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+      </button>
+    </div>
+  );
+};
 
 export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
   {
@@ -22,10 +50,11 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
             {row.hardwareSerialNumber} <Info className="h-4 w-4 text-gray-500" />
           </TooltipTrigger>
           <TooltipContent className="max-w-sm">
-            <div className="space-y-1">
-              <p><strong>Appliance S/N:</strong> {row.applicationSerialNumber}</p>
-              <p><strong>Cluster Name:</strong> {row.clusterName || 'N/A'}</p>
-              <p><strong>Host Name / Node ID:</strong> {row.hostName}</p>
+            <div className="space-y-2">
+              <CopyableField label="H/W Serial Number" value={row.hardwareSerialNumber} />
+              <CopyableField label="Appliance Serial Number" value={row.applicationSerialNumber} />
+              <CopyableField label="Cluster Name" value={row.clusterName || 'N/A'} />
+              <CopyableField label="Host Name / Node ID" value={row.hostName} />
             </div>
           </TooltipContent>
         </Tooltip>
