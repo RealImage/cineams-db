@@ -4,6 +4,7 @@ export interface WireTAPDevice {
   hardwareSerialNumber: string;
   applicationSerialNumber: string;
   hostName: string;
+  clusterName?: string;
   connectivityType: string;
   ispName: string;
   theatreId: string;

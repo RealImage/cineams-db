@@ -24,6 +24,7 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
           <TooltipContent className="max-w-sm">
             <div className="space-y-1">
               <p><strong>Appliance S/N:</strong> {row.applicationSerialNumber}</p>
+              <p><strong>Cluster Name:</strong> {row.clusterName || 'N/A'}</p>
               <p><strong>Host Name / Node ID:</strong> {row.hostName}</p>
             </div>
           </TooltipContent>
