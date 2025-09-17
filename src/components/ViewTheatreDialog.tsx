@@ -22,7 +22,7 @@ export const ViewTheatreDialog = ({
   
   const handleEdit = () => {
     const editUrl = `/theatre/${theatre.id}/edit`;
-    window.open(editUrl, '_blank');
+    navigate(editUrl);
     onOpenChange(false);
   };
   
