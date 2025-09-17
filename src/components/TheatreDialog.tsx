@@ -488,6 +488,7 @@ export const TheatreDialog = ({
               <TabsTrigger value="integration">Integration Details</TabsTrigger>
               <TabsTrigger value="delivery">Content & Key Delivery</TabsTrigger>
               <TabsTrigger value="screens">Screen Management</TabsTrigger>
+              <TabsTrigger value="ip-suites">IP & Suites</TabsTrigger>
             </TabsList>
             
             {/* General Information Tab */}
@@ -1585,6 +1586,22 @@ export const TheatreDialog = ({
                     </Button>
                   </div>
                 )}
+              </div>
+            </TabsContent>
+            
+            {/* IP & Suites Tab */}
+            <TabsContent value="ip-suites" className="mt-4">
+              <div className="space-y-6">
+                <div className="space-y-1">
+                  <h3 className="text-lg font-medium">IP Addresses & Suites</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Manage IP configurations and suite information for this theatre
+                  </p>
+                </div>
+                
+                <div className="border rounded-md p-8 text-center">
+                  <p className="text-muted-foreground">IP & Suites configuration will be available here</p>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
