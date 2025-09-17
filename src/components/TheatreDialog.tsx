@@ -18,6 +18,7 @@ import {
   Contact,
   DeliveryAddress
 } from "@/types";
+import { IPSuitesTabContent } from "./theatres/ip-suites/IPSuitesTabContent";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { ScreenDialog } from "@/components/screens/ScreenDialog";
 import { 
@@ -1591,18 +1592,13 @@ export const TheatreDialog = ({
             
             {/* IP & Suites Tab */}
             <TabsContent value="ip-suites" className="mt-4">
-              <div className="space-y-6">
-                <div className="space-y-1">
-                  <h3 className="text-lg font-medium">IP Addresses & Suites</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Manage IP configurations and suite information for this theatre
-                  </p>
-                </div>
-                
-                <div className="border rounded-md p-8 text-center">
-                  <p className="text-muted-foreground">IP & Suites configuration will be available here</p>
-                </div>
-              </div>
+              <IPSuitesTabContent 
+                screens={screens}
+                onScreenDataChange={(screenId, dataType, data) => {
+                  // Handle screen-specific IP/device/suite data changes
+                  console.log('Screen data changed:', { screenId, dataType, data });
+                }}
+              />
             </TabsContent>
           </Tabs>
           
