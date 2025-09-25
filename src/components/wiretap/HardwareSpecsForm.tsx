@@ -32,20 +32,21 @@ interface HardwareSpecsFormProps {
 const storageOptions = ["512 GB", "1 TB", "2 TB", "3 TB", "4 TB", "8 TB"];
 
 const softwareAgents = [
-  { id: 1, provider: "Qube Wire", agentName: "Agent Redux", version: "", updatedOn: "" },
-  { id: 2, provider: "Qube Wire", agentName: "Manifest Agent", version: "", updatedOn: "" },
-  { id: 3, provider: "Qube Wire", agentName: "Content Ingest Agent", version: "", updatedOn: "" },
-  { id: 4, provider: "Qube Wire", agentName: "KDM Agent", version: "", updatedOn: "" },
-  { id: 5, provider: "Qube Wire", agentName: "Inventory Agent", version: "", updatedOn: "" },
-  { id: 6, provider: "Qube Wire", agentName: "TDL Agent", version: "", updatedOn: "" },
-  { id: 7, provider: "Qube Wire", agentName: "Configuration Agent", version: "", updatedOn: "" },
-  { id: 8, provider: "Qube Wire", agentName: "Live Wire", version: "", updatedOn: "" },
-  { id: 9, provider: "iCount", agentName: "iCount", version: "", updatedOn: "" },
-  { id: 10, provider: "Slate", agentName: "AgentQ", version: "", updatedOn: "" },
-  { id: 11, provider: "Qlog", agentName: "Qlog Agent", version: "", updatedOn: "" },
-  { id: 12, provider: "Scheduler", agentName: "Scheduler Agent", version: "", updatedOn: "" },
-  { id: 13, provider: "Scheduler", agentName: "Content Agent", version: "", updatedOn: "" },
-  { id: 14, provider: "Scheduler", agentName: "AgentQS", version: "", updatedOn: "" },
+  { id: 1, provider: "Qube Wire", agentName: "Kadet (Agent Zero)", version: "", updatedOn: "" },
+  { id: 2, provider: "Qube Wire", agentName: "Agent Redux", version: "", updatedOn: "" },
+  { id: 3, provider: "Qube Wire", agentName: "Manifest Agent", version: "", updatedOn: "" },
+  { id: 4, provider: "Qube Wire", agentName: "Content Ingest Agent", version: "", updatedOn: "" },
+  { id: 5, provider: "Qube Wire", agentName: "KDM Agent", version: "", updatedOn: "" },
+  { id: 6, provider: "Qube Wire", agentName: "Inventory Agent", version: "", updatedOn: "" },
+  { id: 7, provider: "Qube Wire", agentName: "TDL Agent", version: "", updatedOn: "" },
+  { id: 8, provider: "Qube Wire", agentName: "Configuration Agent", version: "", updatedOn: "" },
+  { id: 9, provider: "Qube Wire", agentName: "Live Wire", version: "", updatedOn: "" },
+  { id: 10, provider: "iCount", agentName: "iCount", version: "", updatedOn: "" },
+  { id: 11, provider: "Slate", agentName: "AgentQ", version: "", updatedOn: "" },
+  { id: 12, provider: "Qlog", agentName: "Qlog Agent", version: "", updatedOn: "" },
+  { id: 13, provider: "Scheduler", agentName: "Scheduler Agent", version: "", updatedOn: "" },
+  { id: 14, provider: "Scheduler", agentName: "Content Agent", version: "", updatedOn: "" },
+  { id: 15, provider: "Scheduler", agentName: "AgentQS", version: "", updatedOn: "" },
 ];
 
 const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
