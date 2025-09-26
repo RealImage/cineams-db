@@ -29,14 +29,14 @@ interface BasicDetailsFormProps {
 }
 
 const applianceTypes = [
-  "WireTAP", 
-  "WireTAP Lite", 
-  "WireTAP Air", 
-  "WireTAP Air BB v2", 
-  "Brazil Dell WireOS",
-  "WireTAP WireOS",
+  "Dell 3930",
+  "Dell ITC", 
+  "Genstor",
+  "HP Z 22",
+  "Netport",
   "WireTAP Air BB V2",
-  "Test Appliances"
+  "WireTAP Air V1",
+  "WireTAP Lite"
 ];
 
 // Mock theatre data for the theatre search functionality
