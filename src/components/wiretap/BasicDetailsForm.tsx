@@ -219,7 +219,7 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
       </div>
       
       <div className="border-t pt-6">
-        <h3 className="text-lg font-medium mb-4">Pull Out Status</h3>
+        <h3 className="text-lg font-medium mb-4">Temporary Pull Out / Deactivation Status</h3>
         
         <div className="space-y-4">
           <div className="flex items-center space-x-2">
