@@ -10,12 +10,14 @@ import { WireTAPDevice } from "@/types/wireTAP";
 import { wireTapDevices } from "@/data/wireTapDevices";
 import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
+import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { DeviceFiltersComponent, DeviceFilters } from "@/components/wiretap/DeviceFilters";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
+  const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({});
   // Filter devices based on active filters
@@ -59,16 +61,13 @@ const WireTAPDevices = () => {
     });
   }, [devices, filters]);
 
-  const handleToggleDeviceActivation = (device: WireTAPDevice) => {
-    const newActivationStatus = device.activationStatus === "Active" ? "Inactive" : "Active";
-    const newVpnStatus = newActivationStatus === "Active" ? "Enabled" : "Disabled";
-    
+  const handleActivateDevice = (device: WireTAPDevice) => {
     const updatedDevices = devices.map(d => {
       if (d.id === device.id) {
         return {
           ...d,
-          activationStatus: newActivationStatus as "Active" | "Inactive",
-          vpnStatus: newVpnStatus as "Enabled" | "Disabled",
+          activationStatus: "Active" as const,
+          vpnStatus: "Enabled" as const,
           updatedBy: "current.user@example.com",
           updatedAt: new Date().toISOString(),
         };
@@ -77,8 +76,37 @@ const WireTAPDevices = () => {
     });
     
     setDevices(updatedDevices);
-    const actionVerb = newActivationStatus === "Active" ? "activated" : "deactivated";
-    toast.success(`Device ${device.hardwareSerialNumber} ${actionVerb} successfully`);
+    toast.success(`Device ${device.hardwareSerialNumber} activated successfully`);
+  };
+
+  const handleDeactivateDevice = (device: WireTAPDevice, reason: string) => {
+    const updatedDevices = devices.map(d => {
+      if (d.id === device.id) {
+        return {
+          ...d,
+          activationStatus: "Inactive" as const,
+          vpnStatus: "Disabled" as const,
+          updatedBy: "current.user@example.com",
+          updatedAt: new Date().toISOString(),
+          deactivationReason: reason,
+        };
+      }
+      return d;
+    });
+    
+    setDevices(updatedDevices);
+    toast.success(`Device ${device.hardwareSerialNumber} deactivated successfully`);
+  };
+
+  const handleToggleDeviceActivation = (device: WireTAPDevice) => {
+    if (device.activationStatus === "Active") {
+      // Show confirmation dialog for deactivation
+      setCurrentDevice(device);
+      setIsDeactivateDialogOpen(true);
+    } else {
+      // Activate directly without confirmation
+      handleActivateDevice(device);
+    }
   };
   
   const handleViewLogs = (device: WireTAPDevice) => {
@@ -148,6 +176,13 @@ const WireTAPDevices = () => {
         isOpen={isViewLogsDialogOpen}
         onOpenChange={setIsViewLogsDialogOpen}
         device={currentDevice}
+      />
+      
+      <DeactivateDeviceDialog
+        isOpen={isDeactivateDialogOpen}
+        onOpenChange={setIsDeactivateDialogOpen}
+        device={currentDevice}
+        onConfirm={handleDeactivateDevice}
       />
     </motion.div>
   );
