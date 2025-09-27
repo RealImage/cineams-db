@@ -59,13 +59,16 @@ const WireTAPDevices = () => {
     });
   }, [devices, filters]);
 
-  const handleDeactivateDevice = (device: WireTAPDevice) => {
+  const handleToggleDeviceActivation = (device: WireTAPDevice) => {
+    const newActivationStatus = device.activationStatus === "Active" ? "Inactive" : "Active";
+    const newVpnStatus = newActivationStatus === "Active" ? "Enabled" : "Disabled";
+    
     const updatedDevices = devices.map(d => {
       if (d.id === device.id) {
         return {
           ...d,
-          activationStatus: "Inactive" as const,
-          vpnStatus: "Disabled" as const,
+          activationStatus: newActivationStatus as "Active" | "Inactive",
+          vpnStatus: newVpnStatus as "Enabled" | "Disabled",
           updatedBy: "current.user@example.com",
           updatedAt: new Date().toISOString(),
         };
@@ -74,7 +77,8 @@ const WireTAPDevices = () => {
     });
     
     setDevices(updatedDevices);
-    toast.success(`Device ${device.hardwareSerialNumber} deactivated successfully`);
+    const actionVerb = newActivationStatus === "Active" ? "activated" : "deactivated";
+    toast.success(`Device ${device.hardwareSerialNumber} ${actionVerb} successfully`);
   };
   
   const handleViewLogs = (device: WireTAPDevice) => {
@@ -84,7 +88,7 @@ const WireTAPDevices = () => {
 
   const columns = getDeviceColumns();
 
-  const actions = [
+  const getActions = (device: WireTAPDevice) => [
     {
       label: "Edit",
       icon: <Edit className="h-4 w-4" />,
@@ -93,9 +97,9 @@ const WireTAPDevices = () => {
       }
     },
     {
-      label: "Deactivate",
+      label: device.activationStatus === "Active" ? "Deactivate" : "Activate",
       icon: <Trash2 className="h-4 w-4" />,
-      onClick: handleDeactivateDevice
+      onClick: handleToggleDeviceActivation
     },
     {
       label: "View Logs",
@@ -137,7 +141,7 @@ const WireTAPDevices = () => {
         columns={columns}
         searchable={true}
         searchPlaceholder="Search WireTAP devices..."
-        actions={actions}
+        actions={getActions}
       />
       
       <DeviceLogsDialog
