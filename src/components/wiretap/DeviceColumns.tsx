@@ -109,6 +109,11 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
     sortable: true
   },
   {
+    header: "Appliance Type",
+    accessor: "wireTapApplianceType",
+    sortable: true
+  },
+  {
     header: "Activation Status",
     accessor: "activationStatus",
     cell: (row: WireTAPDevice) => (
