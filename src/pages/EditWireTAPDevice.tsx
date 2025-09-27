@@ -20,6 +20,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import BasicDetailsForm from "@/components/wiretap/BasicDetailsForm";
 import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
 import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
+import DeviceLogsTable from "@/components/wiretap/DeviceLogsTable";
 import { WireTAPDevice } from "@/types/wireTAP";
 import { wireTapDevices } from "@/data/wireTapDevices";
 
@@ -187,18 +188,22 @@ const EditWireTAPDevice = () => {
       setActiveTab("hardware-specs");
     } else if (activeTab === "hardware-specs") {
       setActiveTab("connectivity-specs");
+    } else if (activeTab === "connectivity-specs") {
+      setActiveTab("device-logs");
     }
   };
 
   const handlePrevious = () => {
-    if (activeTab === "connectivity-specs") {
+    if (activeTab === "device-logs") {
+      setActiveTab("connectivity-specs");
+    } else if (activeTab === "connectivity-specs") {
       setActiveTab("hardware-specs");
     } else if (activeTab === "hardware-specs") {
       setActiveTab("basic-details");
     }
   };
 
-  const isLastStep = activeTab === "connectivity-specs";
+  const isLastStep = activeTab === "device-logs";
   const isFirstStep = activeTab === "basic-details";
 
   if (!device) {
@@ -225,7 +230,7 @@ const EditWireTAPDevice = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="basic-details" className="flex items-center gap-2">
             <Building2 className="h-4 w-4" /> Basic Details
           </TabsTrigger>
@@ -234,6 +239,9 @@ const EditWireTAPDevice = () => {
           </TabsTrigger>
           <TabsTrigger value="connectivity-specs" className="flex items-center gap-2">
             <Wifi className="h-4 w-4" /> Connectivity Specifications
+          </TabsTrigger>
+          <TabsTrigger value="device-logs" className="flex items-center gap-2">
+            <Database className="h-4 w-4" /> Device Logs
           </TabsTrigger>
         </TabsList>
         
@@ -258,6 +266,10 @@ const EditWireTAPDevice = () => {
               <div className="opacity-60 pointer-events-none">
                 <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
               </div>
+            </TabsContent>
+            
+            <TabsContent value="device-logs">
+              <DeviceLogsTable deviceId={id} />
             </TabsContent>
           </CardContent>
           
