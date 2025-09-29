@@ -2,7 +2,7 @@
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Plus, Edit, Trash2, Eye } from "lucide-react";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -12,12 +12,14 @@ import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { DeviceFiltersComponent, DeviceFilters } from "@/components/wiretap/DeviceFilters";
+import AddDeviceDialog from "@/components/wiretap/AddDeviceDialog";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
+  const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({});
   // Filter devices based on active filters
@@ -150,11 +152,9 @@ const WireTAPDevices = () => {
             Manage your WireTAP devices across all theatres
           </p>
         </div>
-        <Link to="/wiretap-devices/add">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" /> Add Device
-          </Button>
-        </Link>
+        <Button onClick={() => setIsAddDeviceDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" /> Add Device
+        </Button>
       </div>
       
       {/* Filters Component */}
@@ -183,6 +183,11 @@ const WireTAPDevices = () => {
         onOpenChange={setIsDeactivateDialogOpen}
         device={currentDevice}
         onConfirm={handleDeactivateDevice}
+      />
+      
+      <AddDeviceDialog
+        isOpen={isAddDeviceDialogOpen}
+        onOpenChange={setIsAddDeviceDialogOpen}
       />
     </motion.div>
   );
