@@ -190,7 +190,7 @@ const AddDeviceDialog = ({ isOpen, onOpenChange, onDeviceRegister }: AddDeviceDi
             onClick={handleRegister}
             disabled={!fetchedDetails && !showManualRegistration}
           >
-            {fetchedDetails ? "Continue to Edit Device" : "Continue Manual Registration"}
+            Continue
           </Button>
         </DialogFooter>
       </DialogContent>
