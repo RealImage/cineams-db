@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { 
@@ -27,8 +27,10 @@ import { wireTapDevices } from "@/data/wireTapDevices";
 const EditWireTAPDevice = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [activeTab, setActiveTab] = useState("basic-details");
   const [device, setDevice] = useState<WireTAPDevice | null>(null);
+  const [isNewDevice, setIsNewDevice] = useState(false);
   const [formData, setFormData] = useState({
     // Basic Details
     hardwareSerialNumber: "",
@@ -81,65 +83,106 @@ const EditWireTAPDevice = () => {
   });
 
   useEffect(() => {
-    // Find the device by ID and populate the form
-    const currentDevice = wireTapDevices.find(d => d.id === id);
-    if (currentDevice) {
-      setDevice(currentDevice);
-      setFormData({
-        // Basic Details
-        hardwareSerialNumber: currentDevice.hardwareSerialNumber,
-        applicationSerialNumber: currentDevice.applicationSerialNumber,
-        hostName: currentDevice.hostName,
-        applianceType: "WireTAP",
-        mappingStatus: currentDevice.mappingStatus === "Mapped" ? "Yes" : "No",
-        theatreId: currentDevice.theatreId,
-        theatreName: currentDevice.theatreName,
-        noMappingReason: currentDevice.mappingStatus === "Unmapped" ? "Not specified" : "",
-        pullOutStatus: false,
-        pullOutDate: null,
-        pullOutReason: "",
-        
-        // Hardware Specifications - Map from device data
-        storage: currentDevice.storageCapacity,
-        ramSize: "8", // Default values as these aren't in the device type
-        ramUnit: "GB",
-        mobileNumber: "",
-        simNumber: "",
-        
-        // Connectivity Specifications - Map from device data
-        downloadRestrictions: false,
-        restrictionDays: [],
-        restrictionTimeStart: "",
-        restrictionTimeEnd: "",
-        theatreNetworkInterface: "eth0",
-        theatreBandwidth: currentDevice.bandwidth,
-        theatreBandwidthUnit: "MBPS",
-        proposedBandwidth: "",
-        proposedBandwidthUnit: "MBPS",
-        connectivityType: currentDevice.connectivityType,
-        ispCompany: currentDevice.ispName,
-        internetInstallationDate: null,
-        pricePerGB: "",
-        ispEquipmentModel: "",
-        ispThirdPartyHandler: "",
-        ispCharges: "",
-        monthlyFUPLimit: "",
-        ispPaymentResponsibility: "",
-        billingType: "Postpaid",
-        billingCycle: "Monthly",
-        billingDate: "1",
-        planStartDate: null,
-        internetIPType: "DHCP",
-        ingestIPType: "DHCP",
-        ingestIPAddress: "",
-        ingestIPMask: "",
-        ingestIPGateway: ""
-      });
+    if (id === "new") {
+      // Handle new device from AddDeviceDialog
+      const deviceData = location.state?.deviceData;
+      if (deviceData) {
+        setIsNewDevice(true);
+        // Create a mock device object for display
+        setDevice({
+          id: "new",
+          hardwareSerialNumber: deviceData.hardwareSerialNumber,
+          applicationSerialNumber: deviceData.applicationSerialNumber,
+          hostName: deviceData.hostName,
+          clusterName: deviceData.clusterName,
+          wireTapApplianceType: deviceData.wireTapApplianceType,
+          activationStatus: "Inactive",
+          vpnStatus: "Disabled",
+          theatreId: "",
+          theatreName: "",
+          theatreUUID: "",
+          theatreAddress: "",
+          storageCapacity: "512 GB",
+          bandwidth: "",
+          connectivityType: "Fixed Broadband",
+          ispName: "",
+          mappingStatus: "Unmapped",
+          pullOutStatus: "Installed",
+          updatedBy: "System",
+          updatedAt: new Date().toISOString()
+        });
+        setFormData(prev => ({
+          ...prev,
+          hardwareSerialNumber: deviceData.hardwareSerialNumber,
+          applicationSerialNumber: deviceData.applicationSerialNumber,
+          hostName: deviceData.hostName,
+          applianceType: deviceData.wireTapApplianceType,
+        }));
+      } else {
+        toast.error("Device data not found");
+        navigate("/wiretap-devices");
+      }
     } else {
-      toast.error("Device not found");
-      navigate("/wiretap-devices");
+      // Find existing device by ID and populate the form
+      const currentDevice = wireTapDevices.find(d => d.id === id);
+      if (currentDevice) {
+        setDevice(currentDevice);
+        setFormData({
+          // Basic Details
+          hardwareSerialNumber: currentDevice.hardwareSerialNumber,
+          applicationSerialNumber: currentDevice.applicationSerialNumber,
+          hostName: currentDevice.hostName,
+          applianceType: "WireTAP",
+          mappingStatus: currentDevice.mappingStatus === "Mapped" ? "Yes" : "No",
+          theatreId: currentDevice.theatreId,
+          theatreName: currentDevice.theatreName,
+          noMappingReason: currentDevice.mappingStatus === "Unmapped" ? "Not specified" : "",
+          pullOutStatus: false,
+          pullOutDate: null,
+          pullOutReason: "",
+          
+          // Hardware Specifications - Map from device data
+          storage: currentDevice.storageCapacity,
+          ramSize: "8", // Default values as these aren't in the device type
+          ramUnit: "GB",
+          mobileNumber: "",
+          simNumber: "",
+          
+          // Connectivity Specifications - Map from device data
+          downloadRestrictions: false,
+          restrictionDays: [],
+          restrictionTimeStart: "",
+          restrictionTimeEnd: "",
+          theatreNetworkInterface: "eth0",
+          theatreBandwidth: currentDevice.bandwidth,
+          theatreBandwidthUnit: "MBPS",
+          proposedBandwidth: "",
+          proposedBandwidthUnit: "MBPS",
+          connectivityType: currentDevice.connectivityType,
+          ispCompany: currentDevice.ispName,
+          internetInstallationDate: null,
+          pricePerGB: "",
+          ispEquipmentModel: "",
+          ispThirdPartyHandler: "",
+          ispCharges: "",
+          monthlyFUPLimit: "",
+          ispPaymentResponsibility: "",
+          billingType: "Postpaid",
+          billingCycle: "Monthly",
+          billingDate: "1",
+          planStartDate: null,
+          internetIPType: "DHCP",
+          ingestIPType: "DHCP",
+          ingestIPAddress: "",
+          ingestIPMask: "",
+          ingestIPGateway: ""
+        });
+      } else {
+        toast.error("Device not found");
+        navigate("/wiretap-devices");
+      }
     }
-  }, [id, navigate]);
+  }, [id, navigate, location.state]);
 
   const handleFormChange = (sectionData: Partial<typeof formData>) => {
     setFormData(prev => ({ ...prev, ...sectionData }));
@@ -219,9 +262,14 @@ const EditWireTAPDevice = () => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Edit WireTAP Device</h1>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isNewDevice ? "Add WireTAP Device" : "Edit WireTAP Device"}
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Update details for {device.hardwareSerialNumber}
+            {isNewDevice 
+              ? `Complete registration for ${device.hardwareSerialNumber}`
+              : `Update details for ${device.hardwareSerialNumber}`
+            }
           </p>
         </div>
         <Button variant="outline" onClick={() => navigate("/wiretap-devices")}>
