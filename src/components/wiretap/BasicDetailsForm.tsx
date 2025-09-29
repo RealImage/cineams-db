@@ -21,6 +21,12 @@ import {
 } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 interface BasicDetailsFormProps {
@@ -66,8 +72,9 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <TooltipProvider>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="hardwareSerialNumber">Hardware Serial Number *</Label>
           <Input 
@@ -114,7 +121,17 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
       <div className="space-y-6">
         
         <div className="space-y-2">
-          <Label htmlFor="applianceType">Appliance Type</Label>
+          <div className="flex items-center gap-2">
+            <Label htmlFor="applianceType">Appliance Type</Label>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info className="h-4 w-4 text-muted-foreground" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Appliance Type list is fetched from the CinemasDB Master List.</p>
+              </TooltipContent>
+            </Tooltip>
+          </div>
           <Select 
             value={formData.applianceType} 
             onValueChange={(value) => onChange({ applianceType: value })}
@@ -273,8 +290,9 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
             </>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 };
 
