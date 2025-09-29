@@ -188,6 +188,10 @@ const WireTAPDevices = () => {
       <AddDeviceDialog
         isOpen={isAddDeviceDialogOpen}
         onOpenChange={setIsAddDeviceDialogOpen}
+        onDeviceRegister={(deviceData) => {
+          // Navigate to edit page with pre-populated data
+          navigate('/wiretap-devices/new/edit', { state: { deviceData } });
+        }}
       />
     </motion.div>
   );

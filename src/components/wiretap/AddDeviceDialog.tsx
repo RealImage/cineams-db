@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 interface AddDeviceDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
+  onDeviceRegister?: (deviceData: any) => void;
 }
 
 interface DeviceDetails {
@@ -25,7 +26,7 @@ interface DeviceDetails {
   applianceType?: string;
 }
 
-const AddDeviceDialog = ({ isOpen, onOpenChange }: AddDeviceDialogProps) => {
+const AddDeviceDialog = ({ isOpen, onOpenChange, onDeviceRegister }: AddDeviceDialogProps) => {
   const [hardwareSerialNumber, setHardwareSerialNumber] = useState("");
   const [osSerialNumber, setOsSerialNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -66,11 +67,21 @@ const AddDeviceDialog = ({ isOpen, onOpenChange }: AddDeviceDialogProps) => {
 
   const handleRegister = () => {
     if (fetchedDetails) {
-      toast.success("Device registered successfully with auto-fetched details");
+      const deviceData = {
+        hardwareSerialNumber,
+        applicationSerialNumber: osSerialNumber,
+        hostName: fetchedDetails.hostName,
+        clusterName: fetchedDetails.clusterName,
+        wireTapApplianceType: fetchedDetails.applianceType,
+      };
+      
+      toast.success("Device details found! Redirecting to complete registration...");
+      onDeviceRegister?.(deviceData);
+      handleClose();
     } else {
       toast.info("Device registration will require manual configuration");
+      handleClose();
     }
-    handleClose();
   };
 
   const handleClose = () => {
@@ -179,7 +190,7 @@ const AddDeviceDialog = ({ isOpen, onOpenChange }: AddDeviceDialogProps) => {
             onClick={handleRegister}
             disabled={!fetchedDetails && !showManualRegistration}
           >
-            {fetchedDetails ? "Register Device" : "Continue Manual Registration"}
+            {fetchedDetails ? "Continue to Edit Device" : "Continue Manual Registration"}
           </Button>
         </DialogFooter>
       </DialogContent>
