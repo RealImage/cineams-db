@@ -321,27 +321,29 @@ const EditWireTAPDevice = () => {
             </TabsContent>
           </CardContent>
           
-          <CardFooter className="flex justify-between border-t p-4">
-            <Button 
-              variant="outline" 
-              onClick={handlePrevious}
-              disabled={isFirstStep}
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" /> Previous
-            </Button>
-            
-            <div className="flex gap-2">
-              {!isLastStep ? (
-                <Button onClick={handleNext}>
-                  Next <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              ) : (
-                <Button onClick={handleSubmit}>
-                  <Save className="h-4 w-4 mr-2" /> Update Device
-                </Button>
-              )}
-            </div>
-          </CardFooter>
+          {activeTab !== "device-logs" && (
+            <CardFooter className="flex justify-between border-t p-4">
+              <Button 
+                variant="outline" 
+                onClick={handlePrevious}
+                disabled={isFirstStep}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" /> Previous
+              </Button>
+              
+              <div className="flex gap-2">
+                {!isLastStep ? (
+                  <Button onClick={handleNext}>
+                    Next <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                ) : (
+                  <Button onClick={handleSubmit}>
+                    <Save className="h-4 w-4 mr-2" /> Update Device
+                  </Button>
+                )}
+              </div>
+            </CardFooter>
+          )}
         </Card>
       </Tabs>
     </motion.div>
