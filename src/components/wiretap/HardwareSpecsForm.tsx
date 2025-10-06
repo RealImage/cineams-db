@@ -73,6 +73,9 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
         agent={selectedAgent}
         open={isConfigDialogOpen}
         onOpenChange={setIsConfigDialogOpen}
+        wireTapSerialNumber={formData.wireTapSerialNumber}
+        applianceSerialNumber={formData.applianceSerialNumber}
+        hostname={formData.hostname}
       />
       {/* Section 1: Hardware Specifications */}
       <div className="space-y-6">

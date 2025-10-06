@@ -25,12 +25,18 @@ interface EditAgentConfigDialogProps {
   agent: Agent | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  wireTapSerialNumber?: string;
+  applianceSerialNumber?: string;
+  hostname?: string;
 }
 
 const EditAgentConfigDialog = ({
   agent,
   open,
   onOpenChange,
+  wireTapSerialNumber,
+  applianceSerialNumber,
+  hostname,
 }: EditAgentConfigDialogProps) => {
   const [config, setConfig] = useState({
     enabled: true,
@@ -59,6 +65,25 @@ const EditAgentConfigDialog = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">WireTAP Serial Number</p>
+                <p className="text-sm font-semibold">{wireTapSerialNumber || "—"}</p>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-muted-foreground">Appliance Serial Number</p>
+                <p className="text-sm font-semibold">{applianceSerialNumber || "—"}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-muted-foreground">Hostname</p>
+              <p className="text-sm font-semibold">{hostname || "—"}</p>
+            </div>
+          </div>
+
+          <Separator />
+
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
               <Label htmlFor="enabled">Enable Agent</Label>
