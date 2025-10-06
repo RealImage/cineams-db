@@ -1,5 +1,5 @@
 
-import { HardDrive, Database, Smartphone, Info } from "lucide-react";
+import { HardDrive, Database, Smartphone, Info, MoreVertical, Eye, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { 
@@ -23,6 +23,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 interface HardwareSpecsFormProps {
   formData: any;
@@ -215,6 +222,7 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
                 <TableHead className="font-semibold">Agent Name</TableHead>
                 <TableHead className="font-semibold">Version</TableHead>
                 <TableHead className="font-semibold">Updated On</TableHead>
+                <TableHead className="font-semibold text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -224,6 +232,25 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
                   <TableCell>{agent.agentName}</TableCell>
                   <TableCell className="text-muted-foreground">{agent.version || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{agent.updatedOn || "—"}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Configuration
+                        </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit Configuration
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
