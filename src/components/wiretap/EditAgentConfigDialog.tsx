@@ -121,22 +121,22 @@ const EditAgentConfigDialog = ({
 
         <ScrollArea className="max-h-[60vh] pr-4">
           <div className="space-y-6 py-4">
-            <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">WireTAP Serial Number</p>
-                  <p className="text-sm font-semibold">{wireTapSerialNumber || "—"}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Appliance Serial Number</p>
-                  <p className="text-sm font-semibold">{applianceSerialNumber || "—"}</p>
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Hostname</p>
-                <p className="text-sm font-semibold">{hostname || "—"}</p>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Label>Hardware Serial Number</Label>
+              <p className="text-sm">{wireTapSerialNumber || "—"}</p>
             </div>
+            
+            <div className="space-y-2">
+              <Label>Appliance Serial Number</Label>
+              <p className="text-sm">{applianceSerialNumber || "—"}</p>
+            </div>
+            
+            <div className="space-y-2">
+              <Label>Host Name / Node ID</Label>
+              <p className="text-sm">{hostname || "—"}</p>
+            </div>
+          </div>
 
             <Separator />
 
