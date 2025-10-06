@@ -1,7 +1,9 @@
 
+import { useState } from "react";
 import { HardDrive, Database, Smartphone, Info, MoreVertical, Eye, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import EditAgentConfigDialog from "./EditAgentConfigDialog";
 import { 
   Select, 
   SelectContent, 
@@ -57,8 +59,21 @@ const softwareAgents = [
 ];
 
 const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
+  const [selectedAgent, setSelectedAgent] = useState<typeof softwareAgents[0] | null>(null);
+  const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+
+  const handleEditConfig = (agent: typeof softwareAgents[0]) => {
+    setSelectedAgent(agent);
+    setIsConfigDialogOpen(true);
+  };
+
   return (
     <div className="space-y-8">
+      <EditAgentConfigDialog
+        agent={selectedAgent}
+        open={isConfigDialogOpen}
+        onOpenChange={setIsConfigDialogOpen}
+      />
       {/* Section 1: Hardware Specifications */}
       <div className="space-y-6">
         <div className="border-b pb-4">
@@ -244,7 +259,7 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
                           <Eye className="h-4 w-4 mr-2" />
                           View Configuration
                         </DropdownMenuItem>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditConfig(agent)}>
                           <Edit className="h-4 w-4 mr-2" />
                           Edit Configuration
                         </DropdownMenuItem>
