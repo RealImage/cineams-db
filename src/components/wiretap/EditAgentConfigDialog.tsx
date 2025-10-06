@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Agent {
   id: number;
@@ -30,6 +32,12 @@ interface EditAgentConfigDialogProps {
   hostname?: string;
 }
 
+const CONTENT_TYPES = [
+  "FTR", "TLR", "TSR", "TST", "RTG", "ADV", 
+  "SHR", "XSN", "PSA", "POL", "CLP", "PRO", 
+  "STR", "EPS", "HLT", "EVT"
+];
+
 const EditAgentConfigDialog = ({
   agent,
   open,
@@ -38,25 +46,72 @@ const EditAgentConfigDialog = ({
   applianceSerialNumber,
   hostname,
 }: EditAgentConfigDialogProps) => {
-  const [config, setConfig] = useState({
-    enabled: true,
-    autoUpdate: false,
-    logLevel: "info",
-    customParam1: "",
-    customParam2: "",
+  // Content Ingest Agent specific config
+  const [contentIngestConfig, setContentIngestConfig] = useState({
+    enableAutoIngestToServer: false,
+    serverContentTypes: [] as string[],
+    enableAutoIngestToTMS: false,
+    tmsContentTypes: [] as string[],
+    enableAutoIngestToFTP: false,
+    ftpUsername: "",
+    ftpPassword: "",
+    ftpContentTypes: [] as string[],
   });
 
   const handleSave = () => {
-    // Handle save configuration
-    console.log("Saving configuration for agent:", agent?.agentName, config);
+    console.log("Saving configuration for agent:", agent?.agentName, contentIngestConfig);
     onOpenChange(false);
+  };
+
+  const toggleContentType = (
+    field: 'serverContentTypes' | 'tmsContentTypes' | 'ftpContentTypes',
+    type: string
+  ) => {
+    setContentIngestConfig(prev => ({
+      ...prev,
+      [field]: prev[field].includes(type)
+        ? prev[field].filter(t => t !== type)
+        : [...prev[field], type]
+    }));
   };
 
   if (!agent) return null;
 
+  const isContentIngestAgent = agent.agentName === "Content Ingest Agent";
+
+  const ContentTypeSelector = ({ 
+    selected, 
+    field 
+  }: { 
+    selected: string[]; 
+    field: 'serverContentTypes' | 'tmsContentTypes' | 'ftpContentTypes' 
+  }) => (
+    <div className="rounded-md border p-3">
+      <ScrollArea className="h-32">
+        <div className="grid grid-cols-4 gap-3">
+          {CONTENT_TYPES.map((type) => (
+            <div key={type} className="flex items-center space-x-2">
+              <Checkbox
+                id={`${field}-${type}`}
+                checked={selected.includes(type)}
+                onCheckedChange={() => toggleContentType(field, type)}
+              />
+              <label
+                htmlFor={`${field}-${type}`}
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                {type}
+              </label>
+            </div>
+          ))}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Edit Agent Configuration</DialogTitle>
           <DialogDescription>
@@ -64,98 +119,140 @@ const EditAgentConfigDialog = ({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
-          <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">WireTAP Serial Number</p>
-                <p className="text-sm font-semibold">{wireTapSerialNumber || "—"}</p>
+        <ScrollArea className="max-h-[60vh] pr-4">
+          <div className="space-y-6 py-4">
+            <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">WireTAP Serial Number</p>
+                  <p className="text-sm font-semibold">{wireTapSerialNumber || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Appliance Serial Number</p>
+                  <p className="text-sm font-semibold">{applianceSerialNumber || "—"}</p>
+                </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-muted-foreground">Appliance Serial Number</p>
-                <p className="text-sm font-semibold">{applianceSerialNumber || "—"}</p>
+                <p className="text-sm font-medium text-muted-foreground">Hostname</p>
+                <p className="text-sm font-semibold">{hostname || "—"}</p>
               </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-muted-foreground">Hostname</p>
-              <p className="text-sm font-semibold">{hostname || "—"}</p>
-            </div>
+
+            <Separator />
+
+            {isContentIngestAgent ? (
+              <>
+                {/* Auto Ingest to Server */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="enableAutoIngestToServer">Enable Content Auto Ingest to Server</Label>
+                    </div>
+                    <Switch
+                      id="enableAutoIngestToServer"
+                      checked={contentIngestConfig.enableAutoIngestToServer}
+                      onCheckedChange={(checked) =>
+                        setContentIngestConfig({ ...contentIngestConfig, enableAutoIngestToServer: checked })
+                      }
+                    />
+                  </div>
+                  {contentIngestConfig.enableAutoIngestToServer && (
+                    <div className="space-y-2 pl-4">
+                      <Label>Select content type to auto ingest</Label>
+                      <ContentTypeSelector 
+                        selected={contentIngestConfig.serverContentTypes} 
+                        field="serverContentTypes" 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Auto Ingest to TMS - API */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="enableAutoIngestToTMS">Enable Content Auto Ingest to TMS - API</Label>
+                    </div>
+                    <Switch
+                      id="enableAutoIngestToTMS"
+                      checked={contentIngestConfig.enableAutoIngestToTMS}
+                      onCheckedChange={(checked) =>
+                        setContentIngestConfig({ ...contentIngestConfig, enableAutoIngestToTMS: checked })
+                      }
+                    />
+                  </div>
+                  {contentIngestConfig.enableAutoIngestToTMS && (
+                    <div className="space-y-2 pl-4">
+                      <Label>Select content type to auto ingest</Label>
+                      <ContentTypeSelector 
+                        selected={contentIngestConfig.tmsContentTypes} 
+                        field="tmsContentTypes" 
+                      />
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Auto Ingest to External Storage / TMS FTP */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="enableAutoIngestToFTP">Enable Content Auto Ingest to External Storage / TMS FTP</Label>
+                    </div>
+                    <Switch
+                      id="enableAutoIngestToFTP"
+                      checked={contentIngestConfig.enableAutoIngestToFTP}
+                      onCheckedChange={(checked) =>
+                        setContentIngestConfig({ ...contentIngestConfig, enableAutoIngestToFTP: checked })
+                      }
+                    />
+                  </div>
+                  {contentIngestConfig.enableAutoIngestToFTP && (
+                    <div className="space-y-4 pl-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="ftpUsername">FTP Username</Label>
+                        <Input
+                          id="ftpUsername"
+                          value={contentIngestConfig.ftpUsername}
+                          onChange={(e) =>
+                            setContentIngestConfig({ ...contentIngestConfig, ftpUsername: e.target.value })
+                          }
+                          placeholder="Enter FTP username"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="ftpPassword">FTP Password</Label>
+                        <Input
+                          id="ftpPassword"
+                          type="password"
+                          value={contentIngestConfig.ftpPassword}
+                          onChange={(e) =>
+                            setContentIngestConfig({ ...contentIngestConfig, ftpPassword: e.target.value })
+                          }
+                          placeholder="Enter FTP password"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Select content type to auto ingest</Label>
+                        <ContentTypeSelector 
+                          selected={contentIngestConfig.ftpContentTypes} 
+                          field="ftpContentTypes" 
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground">
+                Configuration options for {agent.agentName} coming soon
+              </div>
+            )}
           </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="enabled">Enable Agent</Label>
-              <p className="text-sm text-muted-foreground">
-                Activate or deactivate this agent
-              </p>
-            </div>
-            <Switch
-              id="enabled"
-              checked={config.enabled}
-              onCheckedChange={(checked) =>
-                setConfig({ ...config, enabled: checked })
-              }
-            />
-          </div>
-
-          <Separator />
-
-          <div className="flex items-center justify-between">
-            <div className="space-y-0.5">
-              <Label htmlFor="autoUpdate">Auto Update</Label>
-              <p className="text-sm text-muted-foreground">
-                Automatically update agent when new version is available
-              </p>
-            </div>
-            <Switch
-              id="autoUpdate"
-              checked={config.autoUpdate}
-              onCheckedChange={(checked) =>
-                setConfig({ ...config, autoUpdate: checked })
-              }
-            />
-          </div>
-
-          <Separator />
-
-          <div className="space-y-2">
-            <Label htmlFor="logLevel">Log Level</Label>
-            <Input
-              id="logLevel"
-              value={config.logLevel}
-              onChange={(e) =>
-                setConfig({ ...config, logLevel: e.target.value })
-              }
-              placeholder="e.g., info, debug, error"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="customParam1">Custom Parameter 1</Label>
-            <Input
-              id="customParam1"
-              value={config.customParam1}
-              onChange={(e) =>
-                setConfig({ ...config, customParam1: e.target.value })
-              }
-              placeholder="Enter custom parameter"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="customParam2">Custom Parameter 2</Label>
-            <Input
-              id="customParam2"
-              value={config.customParam2}
-              onChange={(e) =>
-                setConfig({ ...config, customParam2: e.target.value })
-              }
-              placeholder="Enter custom parameter"
-            />
-          </div>
-        </div>
+        </ScrollArea>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
