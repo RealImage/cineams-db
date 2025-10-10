@@ -41,7 +41,7 @@ const CopyableField = ({ label, value }: { label: string; value: string }) => {
 
 export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
   {
-    header: "H/W Serial Number",
+    header: "Appliance Serial Number",
     accessor: "hardwareSerialNumber",
     cell: (row: WireTAPDevice) => (
       <TooltipProvider>
