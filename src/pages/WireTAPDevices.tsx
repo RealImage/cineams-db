@@ -3,7 +3,8 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Eye } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, RefreshCw } from "lucide-react";
+import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { WireTAPDevice } from "@/types/wireTAP";
@@ -22,6 +23,7 @@ const WireTAPDevices = () => {
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({});
+  const [lastFetchedDate, setLastFetchedDate] = useState<Date>(new Date());
   // Filter devices based on active filters
   const filteredDevices = useMemo(() => {
     return devices.filter(device => {
@@ -116,6 +118,11 @@ const WireTAPDevices = () => {
     setIsViewLogsDialogOpen(true);
   };
 
+  const handleFetchNewDevices = () => {
+    setLastFetchedDate(new Date());
+    toast.success("Fetching new devices...");
+  };
+
   const columns = getDeviceColumns();
 
   const getActions = (device: WireTAPDevice) => [
@@ -152,9 +159,19 @@ const WireTAPDevices = () => {
             Manage your WireTAP devices across all theatres
           </p>
         </div>
-        <Button onClick={() => setIsAddDeviceDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Add Device
-        </Button>
+        <div className="flex flex-col items-end gap-2">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsAddDeviceDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" /> Add Device
+            </Button>
+            <Button onClick={handleFetchNewDevices} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
+            </Button>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Last Fetched on: {format(lastFetchedDate, "MMM dd, yyyy hh:mm a")}
+          </p>
+        </div>
       </div>
       
       {/* Filters Component */}
