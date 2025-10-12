@@ -74,18 +74,7 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
   return (
     <TooltipProvider>
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <Label htmlFor="hardwareSerialNumber">Hardware Serial Number *</Label>
-          <Input 
-            id="hardwareSerialNumber" 
-            value={formData.hardwareSerialNumber}
-            onChange={(e) => onChange({ hardwareSerialNumber: e.target.value })}
-            placeholder="Enter hardware serial number"
-            required
-          />
-        </div>
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="applianceSerialNumber">Appliance Serial Number *</Label>
           <Input 
@@ -93,6 +82,17 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
             value={formData.applianceSerialNumber}
             onChange={(e) => onChange({ applianceSerialNumber: e.target.value })}
             placeholder="Enter appliance serial number"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="hardwareSerialNumber">Hardware Serial Number *</Label>
+          <Input 
+            id="hardwareSerialNumber" 
+            value={formData.hardwareSerialNumber}
+            onChange={(e) => onChange({ hardwareSerialNumber: e.target.value })}
+            placeholder="Enter hardware serial number"
             required
           />
         </div>
