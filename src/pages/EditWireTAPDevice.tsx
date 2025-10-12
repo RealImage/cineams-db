@@ -2,17 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Save, 
-  HardDrive, 
-  Wifi, 
-  Database, 
-  Building2,
-  Lock 
-} from "lucide-react";
-
+import { ArrowLeft, ArrowRight, Save, HardDrive, Wifi, Database, Building2, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -23,9 +13,12 @@ import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
 import DeviceLogsTable from "@/components/wiretap/DeviceLogsTable";
 import { WireTAPDevice } from "@/types/wireTAP";
 import { wireTapDevices } from "@/data/wireTapDevices";
-
 const EditWireTAPDevice = () => {
-  const { id } = useParams<{ id: string }>();
+  const {
+    id
+  } = useParams<{
+    id: string;
+  }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [activeTab, setActiveTab] = useState("basic-details");
@@ -44,14 +37,12 @@ const EditWireTAPDevice = () => {
     pullOutStatus: false,
     pullOutDate: null,
     pullOutReason: "",
-    
     // Hardware Specifications
     storage: "512 GB",
     ramSize: "",
     ramUnit: "GB",
     mobileNumber: "",
     simNumber: "",
-    
     // Connectivity Specifications
     downloadRestrictions: false,
     restrictionDays: [],
@@ -81,7 +72,6 @@ const EditWireTAPDevice = () => {
     ingestIPMask: "",
     ingestIPGateway: ""
   });
-
   useEffect(() => {
     if (id === "new") {
       // Handle new device from AddDeviceDialog
@@ -116,7 +106,7 @@ const EditWireTAPDevice = () => {
           hardwareSerialNumber: deviceData.hardwareSerialNumber,
           applicationSerialNumber: deviceData.applicationSerialNumber,
           hostName: deviceData.hostName,
-          applianceType: deviceData.wireTapApplianceType,
+          applianceType: deviceData.wireTapApplianceType
         }));
       } else {
         toast.error("Device data not found");
@@ -140,14 +130,13 @@ const EditWireTAPDevice = () => {
           pullOutStatus: false,
           pullOutDate: null,
           pullOutReason: "",
-          
           // Hardware Specifications - Map from device data
           storage: currentDevice.storageCapacity,
-          ramSize: "8", // Default values as these aren't in the device type
+          ramSize: "8",
+          // Default values as these aren't in the device type
           ramUnit: "GB",
           mobileNumber: "",
           simNumber: "",
-          
           // Connectivity Specifications - Map from device data
           downloadRestrictions: false,
           restrictionDays: [],
@@ -183,11 +172,12 @@ const EditWireTAPDevice = () => {
       }
     }
   }, [id, navigate, location.state]);
-
   const handleFormChange = (sectionData: Partial<typeof formData>) => {
-    setFormData(prev => ({ ...prev, ...sectionData }));
+    setFormData(prev => ({
+      ...prev,
+      ...sectionData
+    }));
   };
-
   const handleSubmit = () => {
     // Validate the form data
     if (!formData.hardwareSerialNumber) {
@@ -195,25 +185,21 @@ const EditWireTAPDevice = () => {
       setActiveTab("basic-details");
       return;
     }
-    
     if (!formData.applicationSerialNumber) {
       toast.error("Application Serial Number is required");
       setActiveTab("basic-details");
       return;
     }
-
     if (formData.mappingStatus === "Yes" && !formData.theatreId) {
       toast.error("Theatre selection is required when mapping status is Yes");
       setActiveTab("basic-details");
       return;
     }
-
     if (formData.mappingStatus === "No" && !formData.noMappingReason) {
       toast.error("Reason for no mapping is required");
       setActiveTab("basic-details");
       return;
     }
-
     if (formData.pullOutStatus && !formData.pullOutDate) {
       toast.error("Pull out date is required when pull out status is enabled");
       setActiveTab("basic-details");
@@ -225,7 +211,6 @@ const EditWireTAPDevice = () => {
     toast.success("WireTAP device updated successfully");
     navigate("/wiretap-devices");
   };
-
   const handleNext = () => {
     if (activeTab === "basic-details") {
       setActiveTab("hardware-specs");
@@ -235,7 +220,6 @@ const EditWireTAPDevice = () => {
       setActiveTab("device-logs");
     }
   };
-
   const handlePrevious = () => {
     if (activeTab === "device-logs") {
       setActiveTab("connectivity-specs");
@@ -245,31 +229,27 @@ const EditWireTAPDevice = () => {
       setActiveTab("basic-details");
     }
   };
-
   const isLastStep = activeTab === "device-logs";
   const isFirstStep = activeTab === "basic-details";
-
   if (!device) {
     return <div>Loading...</div>;
   }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-      className="space-y-6"
-    >
+  return <motion.div initial={{
+    opacity: 0,
+    y: 20
+  }} animate={{
+    opacity: 1,
+    y: 0
+  }} transition={{
+    duration: 0.3
+  }} className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
             {isNewDevice ? "Add WireTAP Device" : "Edit WireTAP Device"}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {isNewDevice 
-              ? `Complete registration for ${device.hardwareSerialNumber}`
-              : `Update details for ${device.hardwareSerialNumber}`
-            }
+            {isNewDevice ? `Complete registration for ${device.hardwareSerialNumber}` : `Update details for ${device.hardwareSerialNumber}`}
           </p>
         </div>
         <Button variant="outline" onClick={() => navigate("/wiretap-devices")}>
@@ -306,10 +286,7 @@ const EditWireTAPDevice = () => {
             <TabsContent value="connectivity-specs">
               <Alert className="mb-6">
                 <Lock className="h-4 w-4" />
-                <AlertDescription>
-                  These connectivity specifications are properties of the theatre and cannot be edited from this device page. 
-                  To modify these settings, please edit the theatre configuration.
-                </AlertDescription>
+                <AlertDescription>These connectivity specifications are properties of the theatre and cannot be edited from this device page. To modify these settings, please edit the theatre configuration. Click here to access the Theatre Page.</AlertDescription>
               </Alert>
               <div className="opacity-60 pointer-events-none">
                 <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
@@ -321,33 +298,21 @@ const EditWireTAPDevice = () => {
             </TabsContent>
           </CardContent>
           
-          {activeTab !== "device-logs" && (
-            <CardFooter className="flex justify-between border-t p-4">
-              <Button 
-                variant="outline" 
-                onClick={handlePrevious}
-                disabled={isFirstStep}
-              >
+          {activeTab !== "device-logs" && <CardFooter className="flex justify-between border-t p-4">
+              <Button variant="outline" onClick={handlePrevious} disabled={isFirstStep}>
                 <ArrowLeft className="h-4 w-4 mr-2" /> Previous
               </Button>
               
               <div className="flex gap-2">
-                {!isLastStep ? (
-                  <Button onClick={handleNext}>
+                {!isLastStep ? <Button onClick={handleNext}>
                     Next <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button onClick={handleSubmit}>
+                  </Button> : <Button onClick={handleSubmit}>
                     <Save className="h-4 w-4 mr-2" /> Update Device
-                  </Button>
-                )}
+                  </Button>}
               </div>
-            </CardFooter>
-          )}
+            </CardFooter>}
         </Card>
       </Tabs>
-    </motion.div>
-  );
+    </motion.div>;
 };
-
 export default EditWireTAPDevice;
