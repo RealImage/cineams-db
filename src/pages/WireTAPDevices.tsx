@@ -9,11 +9,13 @@ import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { WireTAPDevice } from "@/types/wireTAP";
 import { wireTapDevices } from "@/data/wireTapDevices";
+import { newWireTapDevices } from "@/data/newWireTapDevices";
 import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { DeviceFiltersComponent, DeviceFilters } from "@/components/wiretap/DeviceFilters";
 import AddDeviceDialog from "@/components/wiretap/AddDeviceDialog";
+import { FetchNewDevicesDialog } from "@/components/wiretap/FetchNewDevicesDialog";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const WireTAPDevices = () => {
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
+  const [isFetchNewDevicesDialogOpen, setIsFetchNewDevicesDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({});
   const [lastFetchedDate, setLastFetchedDate] = useState<Date>(new Date());
@@ -120,7 +123,13 @@ const WireTAPDevices = () => {
 
   const handleFetchNewDevices = () => {
     setLastFetchedDate(new Date());
-    toast.success("Fetching new devices...");
+    setIsFetchNewDevicesDialogOpen(true);
+  };
+
+  const handleAddNewDevices = (selectedDevices: WireTAPDevice[]) => {
+    // Add selected devices to the inventory
+    setDevices([...devices, ...selectedDevices]);
+    toast.success(`${selectedDevices.length} device${selectedDevices.length !== 1 ? 's' : ''} added to inventory`);
   };
 
   const columns = getDeviceColumns();
@@ -209,6 +218,13 @@ const WireTAPDevices = () => {
           // Navigate to edit page with pre-populated data
           navigate('/wiretap-devices/new/edit', { state: { deviceData } });
         }}
+      />
+      
+      <FetchNewDevicesDialog
+        isOpen={isFetchNewDevicesDialogOpen}
+        onOpenChange={setIsFetchNewDevicesDialogOpen}
+        newDevices={newWireTapDevices}
+        onAddDevices={handleAddNewDevices}
       />
     </motion.div>
   );
