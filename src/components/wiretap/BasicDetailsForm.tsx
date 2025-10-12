@@ -118,8 +118,7 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
         </div>
       </div>
       
-      <div className="space-y-6">
-        
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label htmlFor="applianceType">Appliance Type</Label>
@@ -139,10 +138,28 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
             <SelectTrigger>
               <SelectValue placeholder="Select appliance type" />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="z-50 bg-background">
               {applianceTypes.map(type => (
                 <SelectItem key={type} value={type}>{type}</SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="theatreNetworkInterface">Theatre Network Interface</Label>
+          <Select 
+            value={formData.theatreNetworkInterface} 
+            onValueChange={(value) => onChange({ theatreNetworkInterface: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select network interface" />
+            </SelectTrigger>
+            <SelectContent className="z-50 bg-background">
+              <SelectItem value="ethernet">Ethernet</SelectItem>
+              <SelectItem value="wifi">WiFi</SelectItem>
+              <SelectItem value="cellular">Cellular</SelectItem>
+              <SelectItem value="fiber">Fiber</SelectItem>
             </SelectContent>
           </Select>
         </div>
