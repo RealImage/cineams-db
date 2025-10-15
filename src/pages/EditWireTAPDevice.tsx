@@ -286,7 +286,24 @@ const EditWireTAPDevice = () => {
             <TabsContent value="connectivity-specs">
               <Alert className="mb-6">
                 <Lock className="h-4 w-4" />
-                <AlertDescription>These connectivity specifications are properties of the theatre and cannot be edited from this device page. To modify these settings, please edit the theatre configuration. Click here to access the Theatre Page.</AlertDescription>
+                <AlertDescription>
+                  These connectivity specifications are properties of the theatre and cannot be edited from this device page. 
+                  To modify these settings, please edit the theatre configuration.{" "}
+                  {formData.theatreId ? (
+                    <a
+                      href={`https://cineams-db.lovable.app/theatre/${formData.theatreId}/edit`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-primary underline hover:text-primary/80 font-medium"
+                    >
+                      Click here to access the Theatre Page
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground">
+                      (Theatre must be mapped first)
+                    </span>
+                  )}.
+                </AlertDescription>
               </Alert>
               <div className="opacity-60 pointer-events-none">
                 <ConnectivitySpecsForm formData={formData} onChange={handleFormChange} />
