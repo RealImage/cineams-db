@@ -16,7 +16,8 @@ import {
   DCPNetworkDeliveryMethod,
   DCPModemDeliveryMethod,
   Contact,
-  DeliveryAddress
+  DeliveryAddress,
+  TheatreMapping
 } from "@/types";
 import { IPSuitesTabContent } from "./theatres/ip-suites/IPSuitesTabContent";
 import { DataTable, Column } from "@/components/ui/data-table";
@@ -79,6 +80,8 @@ export const TheatreDialog = ({
       chainName: "",
       companyId: "",
       companyName: "",
+      exhibitorIntegratorCompanies: [],
+      theatreMappings: [],
       listing: "Listed",
       type: "",
       address: "",
@@ -493,190 +496,347 @@ export const TheatreDialog = ({
             </TabsList>
             
             {/* General Information Tab */}
-            <TabsContent value="general" className="mt-4 space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Theatre Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name || ""}
-                    onChange={handleChange}
-                  />
+            <TabsContent value="general" className="mt-4 space-y-6">
+              {/* Basic Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Basic Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Theatre Name</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      value={formData.name || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <Input
+                      id="displayName"
+                      name="displayName"
+                      value={formData.displayName || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="displayName">Display Name</Label>
+                  <Label htmlFor="alternateNames">Alternate Names</Label>
                   <Input
-                    id="displayName"
-                    name="displayName"
-                    value={formData.displayName || ""}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="alternateNames">Alternate Names</Label>
-                <Input
-                  id="alternateNames"
-                  name="alternateNames"
-                  value={formData.alternateNames?.join(", ") || ""}
-                  onChange={handleChange}
-                  placeholder="Comma-separated names"
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="uuid">UUID</Label>
-                  <Input
-                    id="uuid"
-                    name="uuid"
-                    value={formData.uuid || ""}
-                    onChange={handleChange}
-                    disabled
-                  />
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="theatreType">Theatre Type</Label>
-                <Select
-                  value={formData.type || ""}
-                  onValueChange={(value) => handleSelectChange("type", value)}
-                >
-                  <SelectTrigger id="theatreType">
-                    <SelectValue placeholder="Select theatre type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Amusement Park">Amusement Park</SelectItem>
-                    <SelectItem value="Cemetery">Cemetery</SelectItem>
-                    <SelectItem value="Church">Church</SelectItem>
-                    <SelectItem value="College / University">College / University</SelectItem>
-                    <SelectItem value="Complex">Complex</SelectItem>
-                    <SelectItem value="Conference / Exhibition">Conference / Exhibition</SelectItem>
-                    <SelectItem value="Cruise Shop">Cruise Shop</SelectItem>
-                    <SelectItem value="Dine-in">Dine-in</SelectItem>
-                    <SelectItem value="Drive-in">Drive-in</SelectItem>
-                    <SelectItem value="Film Festival">Film Festival</SelectItem>
-                    <SelectItem value="Home / Residence">Home / Residence</SelectItem>
-                    <SelectItem value="Hotel">Hotel</SelectItem>
-                    <SelectItem value="Karaoke">Karaoke</SelectItem>
-                    <SelectItem value="Lab">Lab</SelectItem>
-                    <SelectItem value="Multiplex">Multiplex</SelectItem>
-                    <SelectItem value="Multipurpose Facility">Multipurpose Facility</SelectItem>
-                    <SelectItem value="Needs Review">Needs Review</SelectItem>
-                    <SelectItem value="Offices">Offices</SelectItem>
-                    <SelectItem value="Open Air Theatre">Open Air Theatre</SelectItem>
-                    <SelectItem value="Pop-up">Pop-up</SelectItem>
-                    <SelectItem value="Screening Room">Screening Room</SelectItem>
-                    <SelectItem value="Single Screen">Single Screen</SelectItem>
-                    <SelectItem value="VR Zone">VR Zone</SelectItem>
-                    <SelectItem value="Yacht">Yacht</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="chainName">Chain Name</Label>
-                  <Select
-                    value={formData.chainName || ""}
-                    onValueChange={(value) => {
-                      handleSelectChange("chainName", value);
-                      // Auto-populate Chain ID based on selection
-                      const chainMapping: Record<string, string> = {
-                        "AMC Theatres": "AMC001",
-                        "Regal Cinemas": "REG001", 
-                        "Cinemark": "CIN001",
-                        "Marcus Theatres": "MAR001",
-                        "Harkins Theatres": "HAR001"
-                      };
-                      handleSelectChange("chainId", chainMapping[value] || "");
+                    id="alternateNames"
+                    name="alternateNames"
+                    value={formData.alternateNames?.join(", ") || ""}
+                    onChange={(e) => {
+                      const names = e.target.value.split(",").map(n => n.trim()).filter(n => n);
+                      setFormData(prev => ({ ...prev, alternateNames: names }));
                     }}
+                    placeholder="Comma-separated names"
+                  />
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="uuid">UUID</Label>
+                    <Input
+                      id="uuid"
+                      name="uuid"
+                      value={formData.uuid || ""}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Theatre Location</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      value={formData.address || ""}
+                      onChange={handleChange}
+                    />
+                  </div>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="theatreType">Theatre Type</Label>
+                  <Select
+                    value={formData.type || ""}
+                    onValueChange={(value) => handleSelectChange("type", value)}
                   >
-                    <SelectTrigger id="chainName">
-                      <SelectValue placeholder="Select chain" />
+                    <SelectTrigger id="theatreType">
+                      <SelectValue placeholder="Select theatre type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="AMC Theatres">AMC Theatres</SelectItem>
-                      <SelectItem value="Regal Cinemas">Regal Cinemas</SelectItem>
-                      <SelectItem value="Cinemark">Cinemark</SelectItem>
-                      <SelectItem value="Marcus Theatres">Marcus Theatres</SelectItem>
-                      <SelectItem value="Harkins Theatres">Harkins Theatres</SelectItem>
+                      <SelectItem value="Amusement Park">Amusement Park</SelectItem>
+                      <SelectItem value="Cemetery">Cemetery</SelectItem>
+                      <SelectItem value="Church">Church</SelectItem>
+                      <SelectItem value="College / University">College / University</SelectItem>
+                      <SelectItem value="Complex">Complex</SelectItem>
+                      <SelectItem value="Conference / Exhibition">Conference / Exhibition</SelectItem>
+                      <SelectItem value="Cruise Shop">Cruise Shop</SelectItem>
+                      <SelectItem value="Dine-in">Dine-in</SelectItem>
+                      <SelectItem value="Drive-in">Drive-in</SelectItem>
+                      <SelectItem value="Film Festival">Film Festival</SelectItem>
+                      <SelectItem value="Home / Residence">Home / Residence</SelectItem>
+                      <SelectItem value="Hotel">Hotel</SelectItem>
+                      <SelectItem value="Karaoke">Karaoke</SelectItem>
+                      <SelectItem value="Lab">Lab</SelectItem>
+                      <SelectItem value="Multiplex">Multiplex</SelectItem>
+                      <SelectItem value="Multipurpose Facility">Multipurpose Facility</SelectItem>
+                      <SelectItem value="Needs Review">Needs Review</SelectItem>
+                      <SelectItem value="Offices">Offices</SelectItem>
+                      <SelectItem value="Open Air Theatre">Open Air Theatre</SelectItem>
+                      <SelectItem value="Pop-up">Pop-up</SelectItem>
+                      <SelectItem value="Screening Room">Screening Room</SelectItem>
+                      <SelectItem value="Single Screen">Single Screen</SelectItem>
+                      <SelectItem value="VR Zone">VR Zone</SelectItem>
+                      <SelectItem value="Yacht">Yacht</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Chain / Company Information Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Chain / Company Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="chainName">Chain Name</Label>
+                    <Select
+                      value={formData.chainName || ""}
+                      onValueChange={(value) => {
+                        handleSelectChange("chainName", value);
+                        const chainMapping: Record<string, string> = {
+                          "AMC Theatres": "AMC001",
+                          "Regal Cinemas": "REG001", 
+                          "Cinemark": "CIN001",
+                          "Marcus Theatres": "MAR001",
+                          "Harkins Theatres": "HAR001"
+                        };
+                        handleSelectChange("chainId", chainMapping[value] || "");
+                      }}
+                    >
+                      <SelectTrigger id="chainName">
+                        <SelectValue placeholder="Select chain" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AMC Theatres">AMC Theatres</SelectItem>
+                        <SelectItem value="Regal Cinemas">Regal Cinemas</SelectItem>
+                        <SelectItem value="Cinemark">Cinemark</SelectItem>
+                        <SelectItem value="Marcus Theatres">Marcus Theatres</SelectItem>
+                        <SelectItem value="Harkins Theatres">Harkins Theatres</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="chainId">Chain ID</Label>
+                    <Input
+                      id="chainId"
+                      name="chainId"
+                      value={formData.chainId || ""}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="companyName">Company Name</Label>
+                    <Select
+                      value={formData.companyName || ""}
+                      onValueChange={(value) => {
+                        handleSelectChange("companyName", value);
+                        const companyMapping: Record<string, string> = {
+                          "AMC Entertainment Holdings": "AMC_ENT001",
+                          "Cineworld Group": "CIN_GRP001",
+                          "Cinemark Holdings": "CIN_HLD001",
+                          "Marcus Corporation": "MAR_CRP001",
+                          "Harkins Theatres LLC": "HAR_LLC001"
+                        };
+                        handleSelectChange("companyId", companyMapping[value] || "");
+                      }}
+                    >
+                      <SelectTrigger id="companyName">
+                        <SelectValue placeholder="Select company" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AMC Entertainment Holdings">AMC Entertainment Holdings</SelectItem>
+                        <SelectItem value="Cineworld Group">Cineworld Group</SelectItem>
+                        <SelectItem value="Cinemark Holdings">Cinemark Holdings</SelectItem>
+                        <SelectItem value="Marcus Corporation">Marcus Corporation</SelectItem>
+                        <SelectItem value="Harkins Theatres LLC">Harkins Theatres LLC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="companyId">Company ID</Label>
+                    <Input
+                      id="companyId"
+                      name="companyId"
+                      value={formData.companyId || ""}
+                      disabled
+                      className="bg-muted"
+                    />
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="chainId">Chain ID</Label>
+                  <Label htmlFor="exhibitorIntegratorCompanies">Exhibitor / Integrator Companies</Label>
                   <Input
-                    id="chainId"
-                    name="chainId"
-                    value={formData.chainId || ""}
-                    onChange={handleChange}
+                    id="exhibitorIntegratorCompanies"
+                    name="exhibitorIntegratorCompanies"
+                    value={formData.exhibitorIntegratorCompanies?.join(", ") || ""}
                     disabled
                     className="bg-muted"
+                    placeholder="Read-only: Comma-separated companies"
                   />
                 </div>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Company Name</Label>
-                  <Select
-                    value={formData.companyName || ""}
-                    onValueChange={(value) => {
-                      handleSelectChange("companyName", value);
-                      // Auto-populate Company ID based on selection
-                      const companyMapping: Record<string, string> = {
-                        "AMC Entertainment Holdings": "AMC_ENT001",
-                        "Cineworld Group": "CIN_GRP001",
-                        "Cinemark Holdings": "CIN_HLD001",
-                        "Marcus Corporation": "MAR_CRP001",
-                        "Harkins Theatres LLC": "HAR_LLC001"
+
+              {/* Theatre Mapping Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold border-b pb-2 flex-1">Theatre Mapping</h3>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      const newMapping: TheatreMapping = {
+                        id: crypto.randomUUID(),
+                        domain: "",
+                        theatreId: ""
                       };
-                      handleSelectChange("companyId", companyMapping[value] || "");
+                      setFormData(prev => ({
+                        ...prev,
+                        theatreMappings: [...(prev.theatreMappings || []), newMapping]
+                      }));
                     }}
                   >
-                    <SelectTrigger id="companyName">
-                      <SelectValue placeholder="Select company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="AMC Entertainment Holdings">AMC Entertainment Holdings</SelectItem>
-                      <SelectItem value="Cineworld Group">Cineworld Group</SelectItem>
-                      <SelectItem value="Cinemark Holdings">Cinemark Holdings</SelectItem>
-                      <SelectItem value="Marcus Corporation">Marcus Corporation</SelectItem>
-                      <SelectItem value="Harkins Theatres LLC">Harkins Theatres LLC</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Mapping
+                  </Button>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="companyId">Company ID</Label>
-                  <Input
-                    id="companyId"
-                    name="companyId"
-                    value={formData.companyId || ""}
-                    onChange={handleChange}
-                    disabled
-                    className="bg-muted"
-                  />
+                
+                <div className="border rounded-lg">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Domain</TableHead>
+                        <TableHead>Theatre ID</TableHead>
+                        <TableHead className="w-[100px]">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(formData.theatreMappings || [])
+                        .sort((a, b) => a.domain.localeCompare(b.domain))
+                        .map((mapping) => (
+                        <TableRow key={mapping.id}>
+                          <TableCell>
+                            <Select
+                              value={mapping.domain}
+                              onValueChange={(value) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  theatreMappings: (prev.theatreMappings || []).map(m =>
+                                    m.id === mapping.id ? { ...m, domain: value } : m
+                                  )
+                                }));
+                              }}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select domain" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="amcnetworks.com">amcnetworks.com</SelectItem>
+                                <SelectItem value="maccs.com">maccs.com</SelectItem>
+                                <SelectItem value="emick.com">emick.com</SelectItem>
+                                <SelectItem value="ifc-networks.com">ifc-networks.com</SelectItem>
+                                <SelectItem value="cinemacloudworks.com">cinemacloudworks.com</SelectItem>
+                                <SelectItem value="cinemadb.io">cinemadb.io</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              value={mapping.theatreId}
+                              onChange={(e) => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  theatreMappings: (prev.theatreMappings || []).map(m =>
+                                    m.id === mapping.id ? { ...m, theatreId: e.target.value } : m
+                                  )
+                                }));
+                              }}
+                              placeholder="Enter Theatre ID"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setFormData(prev => ({
+                                  ...prev,
+                                  theatreMappings: (prev.theatreMappings || []).filter(m => m.id !== mapping.id)
+                                }));
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(!formData.theatreMappings || formData.theatreMappings.length === 0) && (
+                        <TableRow>
+                          <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                            No theatre mappings added. Click "Add Mapping" to create one.
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="listing">Listing</Label>
-                <Select
-                  value={formData.listing || ""}
-                  onValueChange={(value) => handleSelectChange("listing", value)}
-                >
-                  <SelectTrigger id="listing">
-                    <SelectValue placeholder="Select listing type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Listed">Listed</SelectItem>
-                    <SelectItem value="Private">Private</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {/* Company Status Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2">Company Status</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={formData.status || ""}
+                      onValueChange={(value) => handleSelectChange("status", value)}
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Active">Active</SelectItem>
+                        <SelectItem value="Inactive">Inactive</SelectItem>
+                        <SelectItem value="Deleted">Deleted</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="listing">Listing</Label>
+                    <Select
+                      value={formData.listing || ""}
+                      onValueChange={(value) => handleSelectChange("listing", value)}
+                    >
+                      <SelectTrigger id="listing">
+                        <SelectValue placeholder="Select listing type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Listed">Listed</SelectItem>
+                        <SelectItem value="Private">Private</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
             </TabsContent>
             

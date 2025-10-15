@@ -130,6 +130,12 @@ export type Contact = {
   phone?: string;
 };
 
+export type TheatreMapping = {
+  id: string;
+  domain: string;
+  theatreId: string;
+};
+
 export type Theatre = {
   id: string;
   name: string;
@@ -141,6 +147,8 @@ export type Theatre = {
   chainName: string;
   companyId: string;
   companyName: string;
+  exhibitorIntegratorCompanies?: string[];
+  theatreMappings?: TheatreMapping[];
   listing?: "Listed" | "Private";
   type: string;
   address: string;
