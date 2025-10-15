@@ -5,7 +5,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-001",
     hardwareSerialNumber: "HW-875942",
-    applicationSerialNumber: "APP-9823421",
+    applicationSerialNumber: "QWA-L28038",
     hostName: "NODE-LAX01",
     connectivityType: "Fixed Broadband",
     ispName: "Spectrum Business",
@@ -27,7 +27,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-002",
     hardwareSerialNumber: "HW-875943",
-    applicationSerialNumber: "APP-9823422",
+    applicationSerialNumber: "QWA-M12304",
     hostName: "NODE-CHI02",
     connectivityType: "Mobile Broadband",
     ispName: "AT&T Business",
@@ -49,7 +49,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-003",
     hardwareSerialNumber: "HW-875944",
-    applicationSerialNumber: "APP-9823423",
+    applicationSerialNumber: "QWA-T23893",
     hostName: "NODE-NYC03",
     connectivityType: "5G",
     ispName: "Verizon Business",
@@ -71,7 +71,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-004",
     hardwareSerialNumber: "HW-875945",
-    applicationSerialNumber: "APP-9823424",
+    applicationSerialNumber: "QWA-L45621",
     hostName: "NODE-MIA04",
     connectivityType: "4G",
     ispName: "T-Mobile Business",
@@ -93,7 +93,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-005",
     hardwareSerialNumber: "HW-875946",
-    applicationSerialNumber: "APP-9823425",
+    applicationSerialNumber: "QWA-M67890",
     hostName: "NODE-SEA05",
     connectivityType: "Fixed Broadband",
     ispName: "Comcast Business",
@@ -115,7 +115,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-006",
     hardwareSerialNumber: "HW-875947",
-    applicationSerialNumber: "APP-9823426",
+    applicationSerialNumber: "QWA-T34567",
     hostName: "NODE-ATL06",
     connectivityType: "5G",
     ispName: "AT&T Business",
@@ -137,7 +137,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-007",
     hardwareSerialNumber: "HW-875948",
-    applicationSerialNumber: "APP-9823427",
+    applicationSerialNumber: "QWA-L89012",
     hostName: "NODE-DEN07",
     connectivityType: "Fixed Broadband",
     ispName: "CenturyLink Business",
@@ -159,7 +159,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-008",
     hardwareSerialNumber: "HW-875949",
-    applicationSerialNumber: "APP-9823428",
+    applicationSerialNumber: "QWA-M23456",
     hostName: "NODE-AUS08",
     connectivityType: "4G",
     ispName: "Verizon Business",
@@ -181,7 +181,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-009",
     hardwareSerialNumber: "HW-875950",
-    applicationSerialNumber: "APP-9823429",
+    applicationSerialNumber: "QWA-T78901",
     hostName: "NODE-PHX09",
     connectivityType: "Mobile Broadband",
     ispName: "T-Mobile Business",
@@ -203,7 +203,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-010",
     hardwareSerialNumber: "HW-875951",
-    applicationSerialNumber: "APP-9823430",
+    applicationSerialNumber: "QWA-L56789",
     hostName: "NODE-BOS10",
     connectivityType: "Fixed Broadband",
     ispName: "Comcast Business",

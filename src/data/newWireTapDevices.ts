@@ -6,7 +6,7 @@ export const newWireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-new-001",
     hardwareSerialNumber: "HW-876001",
-    applicationSerialNumber: "APP-9824001",
+    applicationSerialNumber: "QWA-M98765",
     hostName: "NODE-DAL11",
     clusterName: "Dallas-Central",
     connectivityType: "Fixed Broadband",
@@ -29,7 +29,7 @@ export const newWireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-new-002",
     hardwareSerialNumber: "HW-876002",
-    applicationSerialNumber: "APP-9824002",
+    applicationSerialNumber: "QWA-T45678",
     hostName: "NODE-SFO12",
     clusterName: "SF-Bay-Area",
     connectivityType: "5G",
@@ -52,7 +52,7 @@ export const newWireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-new-003",
     hardwareSerialNumber: "HW-876003",
-    applicationSerialNumber: "APP-9824003",
+    applicationSerialNumber: "QWA-L12345",
     hostName: "NODE-LV13",
     clusterName: "Vegas-Strip",
     connectivityType: "Fixed Broadband",
@@ -75,7 +75,7 @@ export const newWireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-new-004",
     hardwareSerialNumber: "HW-876004",
-    applicationSerialNumber: "APP-9824004",
+    applicationSerialNumber: "QWA-M54321",
     hostName: "NODE-POR14",
     clusterName: "Portland-Metro",
     connectivityType: "Mobile Broadband",
@@ -98,7 +98,7 @@ export const newWireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-new-005",
     hardwareSerialNumber: "HW-876005",
-    applicationSerialNumber: "APP-9824005",
+    applicationSerialNumber: "QWA-T87654",
     hostName: "NODE-MIN15",
     clusterName: "Minneapolis-North",
     connectivityType: "4G",
