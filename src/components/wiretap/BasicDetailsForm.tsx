@@ -81,7 +81,9 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
             id="applianceSerialNumber" 
             value={formData.applianceSerialNumber}
             onChange={(e) => onChange({ applianceSerialNumber: e.target.value })}
-            placeholder="Enter appliance serial number"
+            placeholder="e.g., QWA-L28038"
+            pattern="^QWA-[A-Z]\d{5}$"
+            title="Format: QWA-[Letter][5 digits] (e.g., QWA-L28038, QWA-M12304)"
             required
           />
         </div>
