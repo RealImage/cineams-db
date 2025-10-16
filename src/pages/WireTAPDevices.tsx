@@ -3,7 +3,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Plus, Edit, Trash2, Eye, RefreshCw } from "lucide-react";
+import { Edit, Trash2, Eye, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,6 @@ import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { DeviceFiltersComponent, DeviceFilters } from "@/components/wiretap/DeviceFilters";
-import AddDeviceDialog from "@/components/wiretap/AddDeviceDialog";
 import { FetchNewDevicesDialog } from "@/components/wiretap/FetchNewDevicesDialog";
 
 const WireTAPDevices = () => {
@@ -22,7 +21,6 @@ const WireTAPDevices = () => {
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
-  const [isAddDeviceDialogOpen, setIsAddDeviceDialogOpen] = useState(false);
   const [isFetchNewDevicesDialogOpen, setIsFetchNewDevicesDialogOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [filters, setFilters] = useState<DeviceFilters>({});
@@ -169,14 +167,9 @@ const WireTAPDevices = () => {
           </p>
         </div>
         <div className="flex flex-col items-end gap-2">
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setIsAddDeviceDialogOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" /> Add Device
-            </Button>
-            <Button onClick={handleFetchNewDevices} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
-            </Button>
-          </div>
+          <Button onClick={handleFetchNewDevices} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
+          </Button>
           <p className="text-sm text-muted-foreground">
             Last Fetched on: {format(lastFetchedDate, "MMM dd, yyyy hh:mm a")}
           </p>
@@ -209,15 +202,6 @@ const WireTAPDevices = () => {
         onOpenChange={setIsDeactivateDialogOpen}
         device={currentDevice}
         onConfirm={handleDeactivateDevice}
-      />
-      
-      <AddDeviceDialog
-        isOpen={isAddDeviceDialogOpen}
-        onOpenChange={setIsAddDeviceDialogOpen}
-        onDeviceRegister={(deviceData) => {
-          // Navigate to edit page with pre-populated data
-          navigate('/wiretap-devices/new/edit', { state: { deviceData } });
-        }}
       />
       
       <FetchNewDevicesDialog
