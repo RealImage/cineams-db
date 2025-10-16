@@ -77,35 +77,6 @@ export const DeviceFiltersComponent = ({ devices, onFiltersChange, filters }: De
 
   return (
     <div className="space-y-4">
-      {/* Filter Toggle and Active Filters */}
-      <div className="flex items-center justify-between">
-        <Button
-          variant="outline"
-          onClick={() => setShowFilters(!showFilters)}
-          className="flex items-center gap-2"
-        >
-          <Filter className="h-4 w-4" />
-          Filters
-          {getActiveFilterCount() > 0 && (
-            <Badge variant="secondary" className="ml-1">
-              {getActiveFilterCount()}
-            </Badge>
-          )}
-        </Button>
-
-        {getActiveFilterCount() > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={clearAllFilters}
-            className="flex items-center gap-1"
-          >
-            <RotateCcw className="h-4 w-4" />
-            Clear All
-          </Button>
-        )}
-      </div>
-
       {/* Active Filters Display */}
       {getActiveFilterCount() > 0 && (
         <div className="flex flex-wrap gap-2">
