@@ -4,7 +4,7 @@ import { WireTAPDevice } from "@/types/wireTAP";
 export const wireTapDevices: WireTAPDevice[] = [
   {
     id: "wt-001",
-    hardwareSerialNumber: "HWS-L28038",
+    hardwareSerialNumber: "HW-875942",
     applicationSerialNumber: "QWA-L28038",
     hostName: "NODE-LAX01",
     connectivityType: "Fixed Broadband",
@@ -26,7 +26,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-002",
-    hardwareSerialNumber: "HWS-M12304",
+    hardwareSerialNumber: "HW-875943",
     applicationSerialNumber: "QWA-M12304",
     hostName: "NODE-CHI02",
     connectivityType: "Mobile Broadband",
@@ -48,7 +48,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-003",
-    hardwareSerialNumber: "HWS-T23893",
+    hardwareSerialNumber: "HW-875944",
     applicationSerialNumber: "QWA-T23893",
     hostName: "NODE-NYC03",
     connectivityType: "5G",
@@ -70,7 +70,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-004",
-    hardwareSerialNumber: "HWS-L45621",
+    hardwareSerialNumber: "HW-875945",
     applicationSerialNumber: "QWA-L45621",
     hostName: "NODE-MIA04",
     connectivityType: "4G",
@@ -92,7 +92,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-005",
-    hardwareSerialNumber: "HWS-M67890",
+    hardwareSerialNumber: "HW-875946",
     applicationSerialNumber: "QWA-M67890",
     hostName: "NODE-SEA05",
     connectivityType: "Fixed Broadband",
@@ -114,7 +114,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-006",
-    hardwareSerialNumber: "HWS-T34567",
+    hardwareSerialNumber: "HW-875947",
     applicationSerialNumber: "QWA-T34567",
     hostName: "NODE-ATL06",
     connectivityType: "5G",
@@ -136,7 +136,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-007",
-    hardwareSerialNumber: "HWS-L89012",
+    hardwareSerialNumber: "HW-875948",
     applicationSerialNumber: "QWA-L89012",
     hostName: "NODE-DEN07",
     connectivityType: "Fixed Broadband",
@@ -158,7 +158,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-008",
-    hardwareSerialNumber: "HWS-M23456",
+    hardwareSerialNumber: "HW-875949",
     applicationSerialNumber: "QWA-M23456",
     hostName: "NODE-AUS08",
     connectivityType: "4G",
@@ -180,7 +180,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-009",
-    hardwareSerialNumber: "HWS-T78901",
+    hardwareSerialNumber: "HW-875950",
     applicationSerialNumber: "QWA-T78901",
     hostName: "NODE-PHX09",
     connectivityType: "Mobile Broadband",
@@ -202,7 +202,7 @@ export const wireTapDevices: WireTAPDevice[] = [
   },
   {
     id: "wt-010",
-    hardwareSerialNumber: "HWS-L56789",
+    hardwareSerialNumber: "HW-875951",
     applicationSerialNumber: "QWA-L56789",
     hostName: "NODE-BOS10",
     connectivityType: "Fixed Broadband",
