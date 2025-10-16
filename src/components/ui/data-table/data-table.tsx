@@ -77,6 +77,21 @@ export function DataTable<T extends { id: string }>({
         return activeFilters.every(filter => {
           const columnValue = item[filter.column];
           
+          // Handle date range filtering
+          if (typeof filter.value === 'object' && !Array.isArray(filter.value)) {
+            const dateRange = filter.value as { from?: Date; to?: Date };
+            const itemDate = new Date(columnValue as string);
+            
+            if (dateRange.from && dateRange.to) {
+              return itemDate >= dateRange.from && itemDate <= dateRange.to;
+            } else if (dateRange.from) {
+              return itemDate >= dateRange.from;
+            } else if (dateRange.to) {
+              return itemDate <= dateRange.to;
+            }
+            return true;
+          }
+          
           if (Array.isArray(filter.value)) {
             if (Array.isArray(columnValue)) {
               return filter.value.some(v => columnValue.includes(v));
@@ -172,10 +187,11 @@ export function DataTable<T extends { id: string }>({
   };
   
   // Handle filter change
-  const handleFilterChange = (column: keyof T, value: string | string[]) => {
+  const handleFilterChange = (column: keyof T, value: string | string[] | { from?: Date; to?: Date }) => {
     const newFilters = activeFilters.filter(filter => filter.column !== column);
     
-    if (value !== "" && !(Array.isArray(value) && value.length === 0)) {
+    if (value !== "" && !(Array.isArray(value) && value.length === 0) && 
+        !(typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to)) {
       newFilters.push({ column, value });
     }
     

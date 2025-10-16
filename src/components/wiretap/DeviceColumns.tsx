@@ -80,7 +80,12 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
         </Tooltip>
       </TooltipProvider>
     ),
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterOptions: (data: WireTAPDevice[]) => {
+      const types = new Set(data.map(d => d.connectivityType));
+      return Array.from(types).sort();
+    }
   },
   {
     header: "Theatre",
@@ -111,7 +116,9 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
   {
     header: "Appliance Type",
     accessor: "wireTapApplianceType",
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterOptions: ["Standard", "Pro", "Enterprise"]
   },
   {
     header: "Activation Status",
@@ -124,7 +131,9 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
         </span>
       </div>
     ),
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterOptions: ["Active", "Inactive"]
   },
   {
     header: "Mapping Status",
@@ -143,7 +152,9 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
         </span>
       </div>
     ),
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterOptions: ["Mapped", "Unmapped", "Pending"]
   },
   {
     header: "VPN Status",
@@ -156,7 +167,9 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
         </span>
       </div>
     ),
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterOptions: ["Enabled", "Disabled"]
   },
   {
     header: "Updated By",
@@ -167,6 +180,8 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
     header: "Updated At",
     accessor: "updatedAt",
     cell: (row: WireTAPDevice) => format(new Date(row.updatedAt), "MMM dd, yyyy 'at' h:mm a"),
-    sortable: true
+    sortable: true,
+    filterable: true,
+    filterType: 'dateRange' as const
   }
 ];

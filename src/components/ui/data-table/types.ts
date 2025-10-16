@@ -8,6 +8,7 @@ export interface Column<T> {
   sortable?: boolean;
   filterable?: boolean;
   filterOptions?: string[] | ((data: T[]) => string[]);
+  filterType?: 'select' | 'dateRange';
 }
 
 export type SortDirection = 'asc' | 'desc' | null;
@@ -25,7 +26,7 @@ export type Action<T> = {
 
 export interface Filter<T> {
   column: keyof T;
-  value: string | string[];
+  value: string | string[] | { from?: Date; to?: Date };
 }
 
 export interface DataTableProps<T> {
