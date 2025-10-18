@@ -492,7 +492,7 @@ export const TheatreDialog = ({
             <TabsList className="w-full justify-start">
               <TabsTrigger value="general">General Information</TabsTrigger>
               <TabsTrigger value="location">Location & Systems</TabsTrigger>
-              <TabsTrigger value="integration">Integration Details</TabsTrigger>
+              <TabsTrigger value="integration">Connectivity Details</TabsTrigger>
               <TabsTrigger value="delivery">Content & Key Delivery</TabsTrigger>
               <TabsTrigger value="screens">Screen Management</TabsTrigger>
               <TabsTrigger value="ip-suites">IP & Suites</TabsTrigger>
@@ -1038,7 +1038,7 @@ export const TheatreDialog = ({
               <div className="space-y-6">
                 <div className="flex items-center space-x-2">
                   <Network className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="text-lg font-medium">Integration Details</h3>
+                  <h3 className="text-lg font-medium">Connectivity Details</h3>
                 </div>
                 
                 <div className="space-y-4">
