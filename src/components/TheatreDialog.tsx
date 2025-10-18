@@ -22,6 +22,7 @@ import {
 import { IPSuitesTabContent } from "./theatres/ip-suites/IPSuitesTabContent";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { ScreenDialog } from "@/components/screens/ScreenDialog";
+import { EditTheatreMappingDialog } from "./EditTheatreMappingDialog";
 import { 
   Plus, 
   Edit, 
@@ -121,6 +122,8 @@ export const TheatreDialog = ({
   const [screens, setScreens] = useState<Screen[]>(theatre?.screens || []);
   const [screenDialogOpen, setScreenDialogOpen] = useState(false);
   const [editingScreen, setEditingScreen] = useState<Screen | undefined>(undefined);
+  const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
+  const [editingMapping, setEditingMapping] = useState<TheatreMapping | undefined>(undefined);
   
   useEffect(() => {
     if (theatre) {
@@ -694,10 +697,10 @@ export const TheatreDialog = ({
                 </div>
               </div>
 
-              {/* Theatre Mapping Section */}
+              {/* Thirdparty Identifiers Section */}
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-lg font-semibold border-b pb-2 flex-1">Theatre Mapping</h3>
+                  <h3 className="text-lg font-semibold border-b pb-2 flex-1">Thirdparty Identifiers</h3>
                   <Button
                     type="button"
                     variant="outline"
@@ -712,10 +715,12 @@ export const TheatreDialog = ({
                         ...prev,
                         theatreMappings: [...(prev.theatreMappings || []), newMapping]
                       }));
+                      setEditingMapping(newMapping);
+                      setMappingDialogOpen(true);
                     }}
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Mapping
+                    Add Identifier
                   </Button>
                 </div>
                 
@@ -724,75 +729,57 @@ export const TheatreDialog = ({
                     <TableHeader>
                       <TableRow>
                         <TableHead>Domain</TableHead>
-                        <TableHead>Theatre ID</TableHead>
+                        <TableHead>ID</TableHead>
                         <TableHead className="w-[100px]">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {(formData.theatreMappings || [])
                         .sort((a, b) => a.domain.localeCompare(b.domain))
-                        .map((mapping) => (
-                        <TableRow key={mapping.id}>
-                          <TableCell>
-                            <Select
-                              value={mapping.domain}
-                              onValueChange={(value) => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  theatreMappings: (prev.theatreMappings || []).map(m =>
-                                    m.id === mapping.id ? { ...m, domain: value } : m
-                                  )
-                                }));
-                              }}
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select domain" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="amcnetworks.com">amcnetworks.com</SelectItem>
-                                <SelectItem value="maccs.com">maccs.com</SelectItem>
-                                <SelectItem value="emick.com">emick.com</SelectItem>
-                                <SelectItem value="ifc-networks.com">ifc-networks.com</SelectItem>
-                                <SelectItem value="cinemacloudworks.com">cinemacloudworks.com</SelectItem>
-                                <SelectItem value="cinemadb.io">cinemadb.io</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              value={mapping.theatreId}
-                              onChange={(e) => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  theatreMappings: (prev.theatreMappings || []).map(m =>
-                                    m.id === mapping.id ? { ...m, theatreId: e.target.value } : m
-                                  )
-                                }));
-                              }}
-                              placeholder="Enter Theatre ID"
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setFormData(prev => ({
-                                  ...prev,
-                                  theatreMappings: (prev.theatreMappings || []).filter(m => m.id !== mapping.id)
-                                }));
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
+                        .map((mapping) => {
+                          const isReadOnly = mapping.domain === "cinemadb.io" || mapping.domain === "cinemark.com";
+                          
+                          return (
+                            <TableRow key={mapping.id}>
+                              <TableCell className="font-medium">{mapping.domain}</TableCell>
+                              <TableCell>{mapping.theatreId}</TableCell>
+                              <TableCell>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      setEditingMapping(mapping);
+                                      setMappingDialogOpen(true);
+                                    }}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  {!isReadOnly && (
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setFormData(prev => ({
+                                          ...prev,
+                                          theatreMappings: (prev.theatreMappings || []).filter(m => m.id !== mapping.id)
+                                        }));
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
                       {(!formData.theatreMappings || formData.theatreMappings.length === 0) && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                            No theatre mappings added. Click "Add Mapping" to create one.
+                            No thirdparty identifiers added. Click "Add Identifier" to create one.
                           </TableCell>
                         </TableRow>
                       )}
@@ -1805,6 +1792,23 @@ export const TheatreDialog = ({
         screen={editingScreen}
         onSave={handleSaveScreen}
       />
+      
+      {editingMapping && (
+        <EditTheatreMappingDialog
+          open={mappingDialogOpen}
+          onOpenChange={setMappingDialogOpen}
+          mapping={editingMapping}
+          onSave={(updatedMapping) => {
+            setFormData(prev => ({
+              ...prev,
+              theatreMappings: (prev.theatreMappings || []).map(m =>
+                m.id === updatedMapping.id ? updatedMapping : m
+              )
+            }));
+          }}
+          isReadOnly={editingMapping.domain === "cinemadb.io" || editingMapping.domain === "cinemark.com"}
+        />
+      )}
     </>
   );
 };
