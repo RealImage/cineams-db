@@ -1033,23 +1033,50 @@ export const TheatreDialog = ({
               </div>
             </TabsContent>
             
-            {/* Integration Details Tab */}
+            {/* Connectivity Details Tab */}
             <TabsContent value="integration" className="mt-4">
               <div className="space-y-6">
-                <div className="flex items-center space-x-2">
-                  <Network className="h-5 w-5 text-muted-foreground" />
-                  <h3 className="text-lg font-medium">Connectivity Details</h3>
-                </div>
-                
+                {/* Download Restrictions Section */}
                 <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="thirdPartyId">Third-Party ID</Label>
-                    <Input
-                      id="thirdPartyId"
-                      name="thirdPartyId"
-                      value={formData.thirdPartyId || ""}
-                      onChange={handleChange}
-                    />
+                  <div className="flex items-center space-x-2">
+                    <Network className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Download Restrictions</h3>
+                  </div>
+                  <div className="border rounded-md p-4 text-center">
+                    <p className="text-muted-foreground">Download restrictions configuration coming soon</p>
+                  </div>
+                </div>
+
+                {/* ISP Information Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 pt-4 border-t">
+                    <Globe className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">ISP Information</h3>
+                  </div>
+                  <div className="border rounded-md p-4 text-center">
+                    <p className="text-muted-foreground">ISP information configuration coming soon</p>
+                  </div>
+                </div>
+
+                {/* Billing Information Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 pt-4 border-t">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Billing Information</h3>
+                  </div>
+                  <div className="border rounded-md p-4 text-center">
+                    <p className="text-muted-foreground">Billing information configuration coming soon</p>
+                  </div>
+                </div>
+
+                {/* IP Configuration Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 pt-4 border-t">
+                    <Cable className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">IP Configuration</h3>
+                  </div>
+                  <div className="border rounded-md p-4 text-center">
+                    <p className="text-muted-foreground">IP configuration coming soon</p>
                   </div>
                 </div>
               </div>
