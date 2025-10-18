@@ -136,6 +136,16 @@ export type TheatreMapping = {
   theatreId: string;
 };
 
+export type DownloadRestrictions = {
+  sunday: { startTime: string; endTime: string };
+  monday: { startTime: string; endTime: string };
+  tuesday: { startTime: string; endTime: string };
+  wednesday: { startTime: string; endTime: string };
+  thursday: { startTime: string; endTime: string };
+  friday: { startTime: string; endTime: string };
+  saturday: { startTime: string; endTime: string };
+};
+
 export type Theatre = {
   id: string;
   name: string;
@@ -193,6 +203,8 @@ export type Theatre = {
   autoIngestContentTypes?: string[];
   qcnTheatreIPAddressRange?: string;
   wireTAPDevices?: WireTAPDevice[];
+  downloadRestrictionsEnabled?: boolean;
+  downloadRestrictions?: DownloadRestrictions;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
