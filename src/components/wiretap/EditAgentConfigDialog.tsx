@@ -58,8 +58,17 @@ const EditAgentConfigDialog = ({
     ftpContentTypes: [] as string[],
   });
 
+  // Live Wire Agent specific config
+  const [liveWireConfig, setLiveWireConfig] = useState({
+    prodUsername: "",
+    prodPassword: "",
+  });
+
   const handleSave = () => {
-    console.log("Saving configuration for agent:", agent?.agentName, contentIngestConfig);
+    console.log("Saving configuration for agent:", agent?.agentName, {
+      contentIngestConfig,
+      liveWireConfig,
+    });
     onOpenChange(false);
   };
 
@@ -78,6 +87,7 @@ const EditAgentConfigDialog = ({
   if (!agent) return null;
 
   const isContentIngestAgent = agent.agentName === "Content Ingest Agent";
+  const isLiveWireAgent = agent.agentName === "Live Wire";
 
   const ContentTypeSelector = ({ 
     selected, 
@@ -244,6 +254,34 @@ const EditAgentConfigDialog = ({
                       </div>
                     </div>
                   )}
+                </div>
+              </>
+            ) : isLiveWireAgent ? (
+              <>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="prodUsername">PROD Username</Label>
+                    <Input
+                      id="prodUsername"
+                      value={liveWireConfig.prodUsername}
+                      onChange={(e) =>
+                        setLiveWireConfig({ ...liveWireConfig, prodUsername: e.target.value })
+                      }
+                      placeholder="Enter PROD username"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="prodPassword">PROD Password</Label>
+                    <Input
+                      id="prodPassword"
+                      type="password"
+                      value={liveWireConfig.prodPassword}
+                      onChange={(e) =>
+                        setLiveWireConfig({ ...liveWireConfig, prodPassword: e.target.value })
+                      }
+                      placeholder="Enter PROD password"
+                    />
+                  </div>
                 </div>
               </>
             ) : (
