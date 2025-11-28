@@ -205,6 +205,14 @@ export type Theatre = {
   wireTAPDevices?: WireTAPDevice[];
   downloadRestrictionsEnabled?: boolean;
   downloadRestrictions?: DownloadRestrictions;
+  liveWireEnabled?: boolean;
+  liveWireConfig?: {
+    multicastIp: string;
+    port: string;
+    lanIp: string;
+    prodUsername: string;
+    prodPassword: string;
+  };
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
