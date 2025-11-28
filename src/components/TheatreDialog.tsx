@@ -1189,117 +1189,124 @@ export const TheatreDialog = ({
                     </div>
 
                     {formData.liveWireEnabled && (
-                      <div className="space-y-4 border rounded-md p-4">
-                        <div className="space-y-2">
-                          <Label htmlFor="multicastIp">
-                            Multicast IP <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="multicastIp"
-                            value={formData.liveWireConfig?.multicastIp || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                liveWireConfig: {
-                                  multicastIp: e.target.value,
-                                  port: formData.liveWireConfig?.port || "",
-                                  lanIp: formData.liveWireConfig?.lanIp || "",
-                                  prodUsername: formData.liveWireConfig?.prodUsername || "",
-                                  prodPassword: formData.liveWireConfig?.prodPassword || "",
-                                },
-                              })
-                            }
-                            placeholder="Enter multicast IP"
-                          />
+                      <div className="border rounded-md p-4 space-y-4">
+                        {/* Row 1: Multicast IP, Port, LAN IP */}
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="multicastIp">
+                              Multicast IP <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              id="multicastIp"
+                              value={formData.liveWireConfig?.multicastIp || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  liveWireConfig: {
+                                    multicastIp: e.target.value,
+                                    port: formData.liveWireConfig?.port || "",
+                                    lanIp: formData.liveWireConfig?.lanIp || "",
+                                    prodUsername: formData.liveWireConfig?.prodUsername || "",
+                                    prodPassword: formData.liveWireConfig?.prodPassword || "",
+                                  },
+                                })
+                              }
+                              placeholder="Enter multicast IP"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="port">
+                              Port <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              id="port"
+                              value={formData.liveWireConfig?.port || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  liveWireConfig: {
+                                    multicastIp: formData.liveWireConfig?.multicastIp || "",
+                                    port: e.target.value,
+                                    lanIp: formData.liveWireConfig?.lanIp || "",
+                                    prodUsername: formData.liveWireConfig?.prodUsername || "",
+                                    prodPassword: formData.liveWireConfig?.prodPassword || "",
+                                  },
+                                })
+                              }
+                              placeholder="Enter port"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="lanIp">
+                              LAN IP <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              id="lanIp"
+                              value={formData.liveWireConfig?.lanIp || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  liveWireConfig: {
+                                    multicastIp: formData.liveWireConfig?.multicastIp || "",
+                                    port: formData.liveWireConfig?.port || "",
+                                    lanIp: e.target.value,
+                                    prodUsername: formData.liveWireConfig?.prodUsername || "",
+                                    prodPassword: formData.liveWireConfig?.prodPassword || "",
+                                  },
+                                })
+                              }
+                              placeholder="Enter LAN IP"
+                            />
+                          </div>
                         </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="port">
-                            Port <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="port"
-                            value={formData.liveWireConfig?.port || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                liveWireConfig: {
-                                  multicastIp: formData.liveWireConfig?.multicastIp || "",
-                                  port: e.target.value,
-                                  lanIp: formData.liveWireConfig?.lanIp || "",
-                                  prodUsername: formData.liveWireConfig?.prodUsername || "",
-                                  prodPassword: formData.liveWireConfig?.prodPassword || "",
-                                },
-                              })
-                            }
-                            placeholder="Enter port"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lanIp">
-                            LAN IP <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="lanIp"
-                            value={formData.liveWireConfig?.lanIp || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                liveWireConfig: {
-                                  multicastIp: formData.liveWireConfig?.multicastIp || "",
-                                  port: formData.liveWireConfig?.port || "",
-                                  lanIp: e.target.value,
-                                  prodUsername: formData.liveWireConfig?.prodUsername || "",
-                                  prodPassword: formData.liveWireConfig?.prodPassword || "",
-                                },
-                              })
-                            }
-                            placeholder="Enter LAN IP"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lwProdUsername">
-                            PROD Username <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="lwProdUsername"
-                            value={formData.liveWireConfig?.prodUsername || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                liveWireConfig: {
-                                  multicastIp: formData.liveWireConfig?.multicastIp || "",
-                                  port: formData.liveWireConfig?.port || "",
-                                  lanIp: formData.liveWireConfig?.lanIp || "",
-                                  prodUsername: e.target.value,
-                                  prodPassword: formData.liveWireConfig?.prodPassword || "",
-                                },
-                              })
-                            }
-                            placeholder="Enter PROD username"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <Label htmlFor="lwProdPassword">
-                            PROD Password <span className="text-destructive">*</span>
-                          </Label>
-                          <Input
-                            id="lwProdPassword"
-                            type="password"
-                            value={formData.liveWireConfig?.prodPassword || ""}
-                            onChange={(e) =>
-                              setFormData({
-                                ...formData,
-                                liveWireConfig: {
-                                  multicastIp: formData.liveWireConfig?.multicastIp || "",
-                                  port: formData.liveWireConfig?.port || "",
-                                  lanIp: formData.liveWireConfig?.lanIp || "",
-                                  prodUsername: formData.liveWireConfig?.prodUsername || "",
-                                  prodPassword: e.target.value,
-                                },
-                              })
-                            }
-                            placeholder="Enter PROD password"
-                          />
+                        
+                        {/* Row 2: PROD Username, PROD Password */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="lwProdUsername">
+                              PROD Username <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              id="lwProdUsername"
+                              value={formData.liveWireConfig?.prodUsername || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  liveWireConfig: {
+                                    multicastIp: formData.liveWireConfig?.multicastIp || "",
+                                    port: formData.liveWireConfig?.port || "",
+                                    lanIp: formData.liveWireConfig?.lanIp || "",
+                                    prodUsername: e.target.value,
+                                    prodPassword: formData.liveWireConfig?.prodPassword || "",
+                                  },
+                                })
+                              }
+                              placeholder="Enter PROD username"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="lwProdPassword">
+                              PROD Password <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                              id="lwProdPassword"
+                              type="password"
+                              value={formData.liveWireConfig?.prodPassword || ""}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  liveWireConfig: {
+                                    multicastIp: formData.liveWireConfig?.multicastIp || "",
+                                    port: formData.liveWireConfig?.port || "",
+                                    lanIp: formData.liveWireConfig?.lanIp || "",
+                                    prodUsername: formData.liveWireConfig?.prodUsername || "",
+                                    prodPassword: e.target.value,
+                                  },
+                                })
+                              }
+                              placeholder="Enter PROD password"
+                            />
+                          </div>
                         </div>
                       </div>
                     )}
