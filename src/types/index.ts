@@ -213,6 +213,7 @@ export type Theatre = {
     prodUsername: string;
     prodPassword: string;
   };
+  configurationNotes?: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
