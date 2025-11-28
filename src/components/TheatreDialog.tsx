@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
   Screen, 
   Theatre, 
@@ -1310,6 +1311,23 @@ export const TheatreDialog = ({
                         </div>
                       </div>
                     )}
+                  </div>
+                </div>
+
+                {/* Configuration Notes Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2 pt-4 border-t">
+                    <FileText className="h-5 w-5 text-muted-foreground" />
+                    <h3 className="text-lg font-medium">Configuration Notes</h3>
+                  </div>
+                  <div className="space-y-2">
+                    <RichTextEditor
+                      value={formData.configurationNotes || ""}
+                      onChange={(value) =>
+                        setFormData({ ...formData, configurationNotes: value })
+                      }
+                      placeholder="Add configuration notes, instructions, or any important information..."
+                    />
                   </div>
                 </div>
               </div>
