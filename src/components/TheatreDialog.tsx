@@ -1072,6 +1072,13 @@ export const TheatreDialog = ({
 
                     {formData.downloadRestrictionsEnabled && (
                       <div className="space-y-3 pt-2">
+                        {/* Column Headers */}
+                        <div className="grid grid-cols-[120px_1fr_1fr] gap-4 items-center">
+                          <div></div>
+                          <Label className="text-xs text-muted-foreground font-semibold">Start Time</Label>
+                          <Label className="text-xs text-muted-foreground font-semibold">End Time</Label>
+                        </div>
+                        
                         {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((day) => {
                           const dayKey = day.toLowerCase() as keyof DownloadRestrictions;
                           const restrictions = formData.downloadRestrictions || {
@@ -1088,44 +1095,38 @@ export const TheatreDialog = ({
                           return (
                             <div key={day} className="grid grid-cols-[120px_1fr_1fr] gap-4 items-center">
                               <Label className="font-medium">{day}</Label>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">Start Time</Label>
-                                <Input
-                                  type="time"
-                                  value={dayRestriction.startTime}
-                                  onChange={(e) => {
-                                    setFormData({
-                                      ...formData,
-                                      downloadRestrictions: {
-                                        ...restrictions,
-                                        [dayKey]: {
-                                          ...dayRestriction,
-                                          startTime: e.target.value
-                                        }
+                              <Input
+                                type="time"
+                                value={dayRestriction.startTime}
+                                onChange={(e) => {
+                                  setFormData({
+                                    ...formData,
+                                    downloadRestrictions: {
+                                      ...restrictions,
+                                      [dayKey]: {
+                                        ...dayRestriction,
+                                        startTime: e.target.value
                                       }
-                                    });
-                                  }}
-                                />
-                              </div>
-                              <div className="space-y-1">
-                                <Label className="text-xs text-muted-foreground">End Time</Label>
-                                <Input
-                                  type="time"
-                                  value={dayRestriction.endTime}
-                                  onChange={(e) => {
-                                    setFormData({
-                                      ...formData,
-                                      downloadRestrictions: {
-                                        ...restrictions,
-                                        [dayKey]: {
-                                          ...dayRestriction,
-                                          endTime: e.target.value
-                                        }
+                                    }
+                                  });
+                                }}
+                              />
+                              <Input
+                                type="time"
+                                value={dayRestriction.endTime}
+                                onChange={(e) => {
+                                  setFormData({
+                                    ...formData,
+                                    downloadRestrictions: {
+                                      ...restrictions,
+                                      [dayKey]: {
+                                        ...dayRestriction,
+                                        endTime: e.target.value
                                       }
-                                    });
-                                  }}
-                                />
-                              </div>
+                                    }
+                                  });
+                                }}
+                              />
                             </div>
                           );
                         })}
