@@ -77,6 +77,12 @@ export const SidebarNav = ({
       disabled: false 
     },
     { 
+      icon: <Settings size={20} />, 
+      label: "Fleet Management", 
+      path: "/fleet-management",
+      disabled: false 
+    },
+    { 
       icon: <Building size={20} />, 
       label: "Companies", 
       path: "#",
