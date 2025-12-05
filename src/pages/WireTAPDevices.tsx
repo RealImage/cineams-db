@@ -119,7 +119,7 @@ const WireTAPDevices = () => {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">WireTAP Devices</h1>
+          <h1 className="text-2xl font-bold tracking-tight">WireTAP Devices ({devices.length})</h1>
           <p className="text-muted-foreground mt-1">
             Manage your WireTAP devices across all theatres
           </p>
