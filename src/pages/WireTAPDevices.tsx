@@ -142,6 +142,10 @@ const WireTAPDevices = () => {
         actions={getActions}
       />
       
+      <p className="text-sm text-muted-foreground">
+        Displaying {devices.length} device{devices.length !== 1 ? 's' : ''}
+      </p>
+      
       <DeviceLogsDialog
         isOpen={isViewLogsDialogOpen}
         onOpenChange={setIsViewLogsDialogOpen}
