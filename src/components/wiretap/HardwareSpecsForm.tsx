@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { HardDrive, Database, Smartphone, Info, MoreVertical, Eye, Edit } from "lucide-react";
+import { HardDrive, Database, Smartphone, Info, MoreVertical, Eye, Edit, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import EditAgentConfigDialog from "./EditAgentConfigDialog";
@@ -41,21 +41,21 @@ interface HardwareSpecsFormProps {
 const storageOptions = ["512 GB", "1 TB", "2 TB", "3 TB", "4 TB", "8 TB"];
 
 const softwareAgents = [
-  { id: 1, provider: "Qube Wire", agentName: "Kadet (Agent Zero)", version: "", updatedOn: "" },
-  { id: 2, provider: "Qube Wire", agentName: "Agent Redux", version: "", updatedOn: "" },
-  { id: 3, provider: "Qube Wire", agentName: "Manifest Agent", version: "", updatedOn: "" },
-  { id: 4, provider: "Qube Wire", agentName: "Content Ingest Agent", version: "", updatedOn: "" },
-  { id: 5, provider: "Qube Wire", agentName: "KDM Agent", version: "", updatedOn: "" },
-  { id: 6, provider: "Qube Wire", agentName: "Inventory Agent", version: "", updatedOn: "" },
-  { id: 7, provider: "Qube Wire", agentName: "TDL Agent", version: "", updatedOn: "" },
-  { id: 8, provider: "Qube Wire", agentName: "Configuration Agent", version: "", updatedOn: "" },
-  { id: 9, provider: "Qube Wire", agentName: "Live Wire", version: "", updatedOn: "" },
-  { id: 10, provider: "iCount", agentName: "iCount", version: "", updatedOn: "" },
-  { id: 11, provider: "Slate", agentName: "AgentQ", version: "", updatedOn: "" },
-  { id: 12, provider: "Qlog", agentName: "Qlog Agent", version: "", updatedOn: "" },
-  { id: 13, provider: "Scheduler", agentName: "Scheduler Agent", version: "", updatedOn: "" },
-  { id: 14, provider: "Scheduler", agentName: "Content Agent", version: "", updatedOn: "" },
-  { id: 15, provider: "Scheduler", agentName: "AgentQS", version: "", updatedOn: "" },
+  { id: 1, provider: "Qube Wire", agentName: "Kadet (Agent Zero)", configured: true, version: "", updatedOn: "" },
+  { id: 2, provider: "Qube Wire", agentName: "Agent Redux", configured: false, version: "", updatedOn: "" },
+  { id: 3, provider: "Qube Wire", agentName: "Manifest Agent", configured: true, version: "", updatedOn: "" },
+  { id: 4, provider: "Qube Wire", agentName: "Content Ingest Agent", configured: true, version: "", updatedOn: "" },
+  { id: 5, provider: "Qube Wire", agentName: "KDM Agent", configured: false, version: "", updatedOn: "" },
+  { id: 6, provider: "Qube Wire", agentName: "Inventory Agent", configured: true, version: "", updatedOn: "" },
+  { id: 7, provider: "Qube Wire", agentName: "TDL Agent", configured: false, version: "", updatedOn: "" },
+  { id: 8, provider: "Qube Wire", agentName: "Configuration Agent", configured: true, version: "", updatedOn: "" },
+  { id: 9, provider: "Qube Wire", agentName: "Live Wire", configured: true, version: "", updatedOn: "" },
+  { id: 10, provider: "iCount", agentName: "iCount", configured: false, version: "", updatedOn: "" },
+  { id: 11, provider: "Slate", agentName: "AgentQ", configured: true, version: "", updatedOn: "" },
+  { id: 12, provider: "Qlog", agentName: "Qlog Agent", configured: false, version: "", updatedOn: "" },
+  { id: 13, provider: "Scheduler", agentName: "Scheduler Agent", configured: true, version: "", updatedOn: "" },
+  { id: 14, provider: "Scheduler", agentName: "Content Agent", configured: false, version: "", updatedOn: "" },
+  { id: 15, provider: "Scheduler", agentName: "AgentQS", configured: true, version: "", updatedOn: "" },
 ];
 
 const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
@@ -238,6 +238,7 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
               <TableRow>
                 <TableHead className="font-semibold">Provider</TableHead>
                 <TableHead className="font-semibold">Agent Name</TableHead>
+                <TableHead className="font-semibold">Configuration Status</TableHead>
                 <TableHead className="font-semibold">Version</TableHead>
                 <TableHead className="font-semibold">Updated On</TableHead>
                 <TableHead className="font-semibold text-right">Actions</TableHead>
@@ -248,6 +249,16 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
                 <TableRow key={agent.id}>
                   <TableCell className="font-medium">{agent.provider}</TableCell>
                   <TableCell>{agent.agentName}</TableCell>
+                  <TableCell>
+                    {agent.configured ? (
+                      <span className="flex items-center gap-1 text-green-600">
+                        <Check className="h-4 w-4" />
+                        Configured
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{agent.version || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{agent.updatedOn || "—"}</TableCell>
                   <TableCell className="text-right">
