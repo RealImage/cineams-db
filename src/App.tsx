@@ -12,6 +12,7 @@ import TDLDevices from "./pages/TDLDevices";
 import WireTAPDevices from "./pages/WireTAPDevices";
 import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import EditWireTAPDevice from "./pages/EditWireTAPDevice";
+import FleetManagement from "./pages/FleetManagement";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -32,6 +33,7 @@ const App = () => (
             <Route path="/wiretap-devices" element={<WireTAPDevices />} />
             <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
             <Route path="/wiretap-devices/:id/edit" element={<EditWireTAPDevice />} />
+            <Route path="/fleet-management" element={<FleetManagement />} />
             <Route path="/reports" element={<Reports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
