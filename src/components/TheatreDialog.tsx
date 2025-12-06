@@ -491,7 +491,7 @@ export const TheatreDialog = ({
       <div className={isFullPage ? "container mx-auto max-w-5xl py-6" : ""}>
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="w-full justify-start flex-wrap">
+            <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
               <TabsTrigger value="general">General Information</TabsTrigger>
               <TabsTrigger value="location">Location & Systems</TabsTrigger>
               <TabsTrigger value="integration">Connectivity Details</TabsTrigger>
