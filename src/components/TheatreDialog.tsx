@@ -491,10 +491,11 @@ export const TheatreDialog = ({
       <div className={isFullPage ? "container mx-auto max-w-5xl py-6" : ""}>
         <form onSubmit={handleSubmit}>
           <Tabs defaultValue="general" className="w-full">
-            <TabsList className="w-full justify-start">
+            <TabsList className="w-full justify-start flex-wrap">
               <TabsTrigger value="general">General Information</TabsTrigger>
               <TabsTrigger value="location">Location & Systems</TabsTrigger>
               <TabsTrigger value="integration">Connectivity Details</TabsTrigger>
+              <TabsTrigger value="appliances">Qube Appliances</TabsTrigger>
               <TabsTrigger value="delivery">Content & Key Delivery</TabsTrigger>
               <TabsTrigger value="screens">Screen Management</TabsTrigger>
               <TabsTrigger value="ip-suites">IP & Suites</TabsTrigger>
@@ -2015,6 +2016,35 @@ export const TheatreDialog = ({
               </div>
             </TabsContent>
             
+            {/* Qube Appliances Tab */}
+            <TabsContent value="appliances" className="mt-4 space-y-6">
+              {/* WireTAP Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <Server className="h-5 w-5" />
+                  WireTAP
+                </h3>
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <p className="text-sm text-muted-foreground">
+                    No WireTAP devices configured for this theatre.
+                  </p>
+                </div>
+              </div>
+
+              {/* Moviebuff Access Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+                  <Monitor className="h-5 w-5" />
+                  Moviebuff Access
+                </h3>
+                <div className="rounded-lg border p-4 bg-muted/30">
+                  <p className="text-sm text-muted-foreground">
+                    No Moviebuff Access devices configured for this theatre.
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+
             {/* IP & Suites Tab */}
             <TabsContent value="ip-suites" className="mt-4">
               <IPSuitesTabContent 
