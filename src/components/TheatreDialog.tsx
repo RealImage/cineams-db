@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -49,11 +49,113 @@ import {
   Wifi,
   Save
 } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { wireTapDevices } from "@/data/wireTapDevices";
+import { WireTAPDevice as WireTAPDeviceType } from "@/types/wireTAP";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
+// WireTAP Appliances Section Component
+const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
+  const [showPulledOut, setShowPulledOut] = useState(false);
+  
+  // Filter devices mapped to this theatre
+  const theatreDevices = useMemo(() => {
+    if (!theatreId) return [];
+    return wireTapDevices.filter(device => device.theatreId === theatreId);
+  }, [theatreId]);
+  
+  // Separate active and pulled out devices
+  const activeDevices = useMemo(() => 
+    theatreDevices.filter(device => device.pullOutStatus !== "Pulled Out"),
+    [theatreDevices]
+  );
+  
+  const pulledOutDevices = useMemo(() => 
+    theatreDevices.filter(device => device.pullOutStatus === "Pulled Out"),
+    [theatreDevices]
+  );
+
+  const getActivationStatusBadge = (status: string) => {
+    return status === "Active" ? (
+      <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Active</Badge>
+    ) : (
+      <Badge variant="secondary" className="bg-gray-500/10 text-gray-600 border-gray-500/20">Inactive</Badge>
+    );
+  };
+
+  const DeviceTable = ({ devices }: { devices: WireTAPDeviceType[] }) => (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Appliance Serial Number</TableHead>
+            <TableHead>Connectivity Type</TableHead>
+            <TableHead>Storage Capacity</TableHead>
+            <TableHead>Appliance Type</TableHead>
+            <TableHead>Activation Status</TableHead>
+            <TableHead>Updated At</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {devices.map((device) => (
+            <TableRow key={device.id}>
+              <TableCell className="font-medium">{device.applicationSerialNumber}</TableCell>
+              <TableCell>{device.connectivityType}</TableCell>
+              <TableCell>{device.storageCapacity}</TableCell>
+              <TableCell>
+                <Badge variant="outline">{device.wireTapApplianceType}</Badge>
+              </TableCell>
+              <TableCell>{getActivationStatusBadge(device.activationStatus)}</TableCell>
+              <TableCell className="text-muted-foreground">
+                {format(new Date(device.updatedAt), "MMM dd, yyyy hh:mm a")}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4">
+      <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
+        <Server className="h-5 w-5" />
+        WireTAP
+      </h3>
+      
+      {activeDevices.length > 0 ? (
+        <DeviceTable devices={activeDevices} />
+      ) : (
+        <div className="rounded-lg border p-4 bg-muted/30">
+          <p className="text-sm text-muted-foreground">
+            No active WireTAP devices configured for this theatre.
+          </p>
+        </div>
+      )}
+      
+      {pulledOutDevices.length > 0 && (
+        <Collapsible open={showPulledOut} onOpenChange={setShowPulledOut}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground">
+              {showPulledOut ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              Pulled Out Devices ({pulledOutDevices.length})
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="mt-2">
+            <DeviceTable devices={pulledOutDevices} />
+          </CollapsibleContent>
+        </Collapsible>
+      )}
+    </div>
+  );
+};
 
 interface TheatreDialogProps {
   open: boolean;
@@ -2019,17 +2121,7 @@ export const TheatreDialog = ({
             {/* Qube Appliances Tab */}
             <TabsContent value="appliances" className="mt-4 space-y-6">
               {/* WireTAP Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-                  <Server className="h-5 w-5" />
-                  WireTAP
-                </h3>
-                <div className="rounded-lg border p-4 bg-muted/30">
-                  <p className="text-sm text-muted-foreground">
-                    No WireTAP devices configured for this theatre.
-                  </p>
-                </div>
-              </div>
+              <WireTAPAppliancesSection theatreId={formData.id} />
 
               {/* Moviebuff Access Section */}
               <div className="space-y-4">
