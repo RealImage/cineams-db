@@ -125,10 +125,16 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold border-b pb-2 flex items-center gap-2">
-        <Server className="h-5 w-5" />
-        WireTAP
-      </h3>
+      <div className="flex items-center justify-between border-b pb-2">
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Server className="h-5 w-5" />
+          WireTAP
+        </h3>
+        <Button size="sm" className="gap-1">
+          <Plus className="h-4 w-4" />
+          Add WireTAP
+        </Button>
+      </div>
       
       {activeDevices.length > 0 ? (
         <DeviceTable devices={activeDevices} />
