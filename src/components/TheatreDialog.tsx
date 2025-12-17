@@ -61,9 +61,12 @@ import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
+import { AddWireTAPToTheatreDialog } from "./theatres/AddWireTAPToTheatreDialog";
+
 // WireTAP Appliances Section Component
 const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
   const [showPulledOut, setShowPulledOut] = useState(false);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
   
   // Filter devices mapped to this theatre
   const theatreDevices = useMemo(() => {
@@ -88,6 +91,10 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
     ) : (
       <Badge variant="secondary" className="bg-gray-500/10 text-gray-600 border-gray-500/20">Inactive</Badge>
     );
+  };
+
+  const handleAddWireTAP = (device: WireTAPDeviceType) => {
+    toast.success(`WireTAP ${device.applicationSerialNumber} added to theatre successfully`);
   };
 
   const DeviceTable = ({ devices }: { devices: WireTAPDeviceType[] }) => (
@@ -130,11 +137,18 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
           <Server className="h-5 w-5" />
           WireTAP
         </h3>
-        <Button size="sm" className="gap-1">
+        <Button size="sm" className="gap-1" onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Add WireTAP
         </Button>
       </div>
+      
+      <AddWireTAPToTheatreDialog
+        open={addDialogOpen}
+        onOpenChange={setAddDialogOpen}
+        theatreId={theatreId || ""}
+        onConfirm={handleAddWireTAP}
+      />
       
       {activeDevices.length > 0 ? (
         <DeviceTable devices={activeDevices} />
