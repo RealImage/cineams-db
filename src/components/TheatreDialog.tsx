@@ -137,7 +137,7 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
           <Server className="h-5 w-5" />
           WireTAP
         </h3>
-        <Button size="sm" className="gap-1" onClick={() => setAddDialogOpen(true)}>
+        <Button type="button" size="sm" className="gap-1" onClick={() => setAddDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           Add WireTAP
         </Button>
