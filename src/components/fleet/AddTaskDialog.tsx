@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
     e.preventDefault();
     
     if (!formData.taskType || !formData.triggerDate || !formData.triggerTime || !formData.description) {
+      toast.error("Please fill in all required fields");
       return;
     }
 
