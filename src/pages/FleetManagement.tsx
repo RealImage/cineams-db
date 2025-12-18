@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -118,6 +119,7 @@ const getStatusColor = (status: FleetTask["status"]) => {
 };
 
 const FleetManagement = () => {
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState<FleetTask[]>(mockTasks);
   const [filteredTasks, setFilteredTasks] = useState<FleetTask[]>([]);
   const [totalTasks, setTotalTasks] = useState(0);
@@ -214,14 +216,27 @@ const FleetManagement = () => {
         icon: <Eye className="h-4 w-4" />,
         onClick: () => console.log("View task", task.taskId),
       },
+      {
+        label: "Edit Task",
+        icon: <Edit className="h-4 w-4" />,
+        onClick: () => {
+          const triggerDate = new Date(task.triggerDate);
+          navigate("/fleet-management/task/new", {
+            state: {
+              taskType: task.taskType,
+              triggerDate: triggerDate.toISOString().split('T')[0],
+              triggerTime: triggerDate.toTimeString().slice(0, 5),
+              timezone: task.triggerTimezone,
+              description: task.description,
+              taskId: task.taskId,
+              isEditing: true,
+            }
+          });
+        },
+      },
     ];
 
     if (task.status === "Pending") {
-      actions.push({
-        label: "Edit Task",
-        icon: <Edit className="h-4 w-4" />,
-        onClick: () => console.log("Edit task", task.taskId),
-      });
       actions.push({
         label: "Cancel Task",
         icon: <XCircle className="h-4 w-4" />,
