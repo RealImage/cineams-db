@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -26,54 +27,45 @@ interface AddTaskDialogProps {
   onAddTask: (task: Omit<FleetTask, "id">) => void;
 }
 
-const generateTaskId = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "TK";
-  for (let i = 0; i < 4; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
 const timezones = ["PST", "EST", "CST", "MST", "GMT", "UTC", "IST", "AEST"];
 
 export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogProps) => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     taskType: "" as FleetTask["taskType"] | "",
     triggerDate: "",
     triggerTime: "",
     triggerTimezone: "PST",
     description: "",
-    targetAppliances: "",
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.taskType || !formData.triggerDate || !formData.triggerTime || !formData.description || !formData.targetAppliances) {
+    if (!formData.taskType || !formData.triggerDate || !formData.triggerTime || !formData.description) {
       return;
     }
 
-    const task: Omit<FleetTask, "id"> = {
-      taskId: generateTaskId(),
-      taskType: formData.taskType as FleetTask["taskType"],
-      triggerDate: `${formData.triggerDate}T${formData.triggerTime}:00`,
-      triggerTimezone: formData.triggerTimezone,
-      description: formData.description,
-      targetAppliances: parseInt(formData.targetAppliances),
-      status: "Pending",
-      updatedOn: new Date().toISOString(),
-      updatedBy: "John Smith", // Mock current user
-    };
-
-    onAddTask(task);
+    // Navigate to edit task page with form data
+    navigate("/fleet-management/task/new", {
+      state: {
+        taskData: {
+          taskType: formData.taskType,
+          triggerDate: formData.triggerDate,
+          triggerTime: formData.triggerTime,
+          triggerTimezone: formData.triggerTimezone,
+          description: formData.description,
+        }
+      }
+    });
+    
+    onOpenChange(false);
     setFormData({
       taskType: "",
       triggerDate: "",
       triggerTime: "",
       triggerTimezone: "PST",
       description: "",
-      targetAppliances: "",
     });
   };
 
@@ -87,7 +79,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleContinue} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="taskType">Task Type</Label>
             <Select
@@ -154,23 +146,11 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="targetAppliances">Target Appliances Count</Label>
-            <Input
-              id="targetAppliances"
-              type="number"
-              min="1"
-              placeholder="Enter number of appliances"
-              value={formData.targetAppliances}
-              onChange={(e) => setFormData(prev => ({ ...prev, targetAppliances: e.target.value }))}
-            />
-          </div>
-
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">Add Task</Button>
+            <Button type="submit">Continue</Button>
           </DialogFooter>
         </form>
       </DialogContent>
