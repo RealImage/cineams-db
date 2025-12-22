@@ -172,10 +172,10 @@ const FleetTaskEdit = () => {
               <label className="text-sm font-medium text-muted-foreground">Timezone</label>
               <p className="mt-1 font-medium">{taskData.triggerTimezone}</p>
             </div>
-            <div className="col-span-2 md:col-span-3 lg:col-span-1">
-              <label className="text-sm font-medium text-muted-foreground">Description</label>
-              <p className="mt-1 font-medium">{taskData.description}</p>
-            </div>
+          </div>
+          <div className="mt-4">
+            <label className="text-sm font-medium text-muted-foreground">Description</label>
+            <p className="mt-1 font-medium">{taskData.description}</p>
           </div>
         </CardContent>
       </Card>
