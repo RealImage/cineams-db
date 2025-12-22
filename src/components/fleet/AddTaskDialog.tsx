@@ -32,11 +32,33 @@ const timezones = ["PST", "EST", "CST", "MST", "GMT", "UTC", "IST", "AEST"];
 
 export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogProps) => {
   const navigate = useNavigate();
+  
+  // Get current date, time, and timezone
+  const now = new Date();
+  const currentDate = now.toISOString().split('T')[0];
+  const currentTime = now.toTimeString().slice(0, 5);
+  const currentTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  
+  // Map IANA timezone to abbreviated timezone
+  const getAbbreviatedTimezone = () => {
+    const tzMap: Record<string, string> = {
+      "America/Los_Angeles": "PST",
+      "America/New_York": "EST",
+      "America/Chicago": "CST",
+      "America/Denver": "MST",
+      "Europe/London": "GMT",
+      "UTC": "UTC",
+      "Asia/Kolkata": "IST",
+      "Australia/Sydney": "AEST",
+    };
+    return tzMap[currentTimezone] || "PST";
+  };
+
   const [formData, setFormData] = useState({
     taskType: "" as FleetTask["taskType"] | "",
-    triggerDate: "",
-    triggerTime: "",
-    triggerTimezone: "PST",
+    triggerDate: currentDate,
+    triggerTime: currentTime,
+    triggerTimezone: getAbbreviatedTimezone(),
     description: "",
   });
 
