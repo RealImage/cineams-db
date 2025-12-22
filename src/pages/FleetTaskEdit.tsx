@@ -155,11 +155,23 @@ const FleetTaskEdit = () => {
           <CardTitle>Task Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
             <div>
               <label className="text-sm font-medium text-muted-foreground">Task Type</label>
               <p className="mt-1 font-medium">{taskData.taskType}</p>
             </div>
+            {taskData.agentName && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Agent</label>
+                <p className="mt-1 font-medium">{taskData.agentName}</p>
+              </div>
+            )}
+            {(taskData.targetVersion || taskData.agentTargetVersion) && (
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Target Version</label>
+                <p className="mt-1 font-medium">{taskData.targetVersion || taskData.agentTargetVersion}</p>
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium text-muted-foreground">Trigger Date</label>
               <p className="mt-1 font-medium">{taskData.triggerDate}</p>
