@@ -112,7 +112,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
   const handleContinue = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.taskType || !formData.triggerDate || !formData.triggerTime || !formData.description) {
+    if (!formData.taskType || !formData.triggerDate || !formData.triggerTime) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -212,7 +212,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
 
           {/* Agent Update - Agent Selection + Target Version */}
           {formData.taskType === "Agent Update" && (
-            <>
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="agent">Agent</Label>
                 <Select
@@ -230,25 +230,24 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                 </Select>
               </div>
 
-              {formData.selectedAgent && selectedAgentData && (
-                <div className="space-y-2">
-                  <Label htmlFor="agentVersion">Target Version</Label>
-                  <Select
-                    value={formData.agentTargetVersion}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, agentTargetVersion: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select agent version" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedAgentData.versions.map(version => (
-                        <SelectItem key={version} value={version}>{version}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-            </>
+              <div className="space-y-2">
+                <Label htmlFor="agentVersion">Target Version</Label>
+                <Select
+                  value={formData.agentTargetVersion}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, agentTargetVersion: value }))}
+                  disabled={!formData.selectedAgent}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder={formData.selectedAgent ? "Select version" : "Select agent first"} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedAgentData?.versions.map(version => (
+                      <SelectItem key={version} value={version}>{version}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           )}
 
           {/* PartnerOS Update - Target Version */}
