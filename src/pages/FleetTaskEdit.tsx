@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { format, parse } from "date-fns";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,7 +156,7 @@ const FleetTaskEdit = () => {
           <CardTitle>Task Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             <div>
               <label className="text-sm font-medium text-muted-foreground">Task Type</label>
               <p className="mt-1 font-medium">{taskData.taskType}</p>
@@ -173,16 +174,18 @@ const FleetTaskEdit = () => {
               </div>
             )}
             <div>
-              <label className="text-sm font-medium text-muted-foreground">Trigger Date</label>
-              <p className="mt-1 font-medium">{taskData.triggerDate}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Time</label>
-              <p className="mt-1 font-medium">{taskData.triggerTime}</p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-muted-foreground">Timezone</label>
-              <p className="mt-1 font-medium">{taskData.triggerTimezone}</p>
+              <label className="text-sm font-medium text-muted-foreground">Scheduled Time</label>
+              <p className="mt-1 font-medium">
+                {(() => {
+                  try {
+                    const dateObj = parse(taskData.triggerDate, 'yyyy-MM-dd', new Date());
+                    const formattedDate = format(dateObj, 'dd MMM yyyy');
+                    return `${formattedDate} ${taskData.triggerTime} (${taskData.triggerTimezone})`;
+                  } catch {
+                    return `${taskData.triggerDate} ${taskData.triggerTime} (${taskData.triggerTimezone})`;
+                  }
+                })()}
+              </p>
             </div>
           </div>
           <div className="mt-4">
