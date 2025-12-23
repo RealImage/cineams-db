@@ -126,6 +126,10 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
       toast.error("Please select an agent and target version");
       return;
     }
+    if (formData.taskType === "Agent Deactivate" && !formData.selectedAgent) {
+      toast.error("Please select an agent to deactivate");
+      return;
+    }
     if (formData.taskType === "PartnerOS Update" && !formData.targetVersion) {
       toast.error("Please select a target version for PartnerOS");
       return;
@@ -184,6 +188,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
               <SelectContent>
                 <SelectItem value="WireOS Update">WireOS Update</SelectItem>
                 <SelectItem value="Agent Update">Agent Update</SelectItem>
+                <SelectItem value="Agent Deactivate">Agent Deactivate</SelectItem>
                 <SelectItem value="PartnerOS Update">PartnerOS Update</SelectItem>
                 <SelectItem value="Others">Others</SelectItem>
               </SelectContent>
@@ -247,6 +252,26 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+          )}
+
+          {/* Agent Deactivate - Agent Selection */}
+          {formData.taskType === "Agent Deactivate" && (
+            <div className="space-y-2">
+              <Label htmlFor="deactivateAgent">Agent</Label>
+              <Select
+                value={formData.selectedAgent}
+                onValueChange={handleAgentChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select agent to deactivate" />
+                </SelectTrigger>
+                <SelectContent>
+                  {agents.map(agent => (
+                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           )}
 
