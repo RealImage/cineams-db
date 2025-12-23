@@ -10,7 +10,7 @@ import { AddTaskDialog } from "@/components/fleet/AddTaskDialog";
 export interface FleetTask {
   id: string;
   taskId: string;
-  taskType: "WireOS Update" | "Agent Update" | "PartnerOS Update" | "Others";
+  taskType: "WireOS Update" | "Agent Update" | "Agent Deactivate" | "PartnerOS Update" | "Others";
   triggerDate: string;
   triggerTimezone: string;
   description: string;
@@ -146,7 +146,7 @@ const FleetManagement = () => {
       header: "Task Type",
       sortable: true,
       filterable: true,
-      filterOptions: ["WireOS Update", "Agent Update", "PartnerOS Update", "Others"],
+      filterOptions: ["WireOS Update", "Agent Update", "Agent Deactivate", "PartnerOS Update", "Others"],
     },
     {
       accessor: "triggerDate",
