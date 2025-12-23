@@ -62,11 +62,16 @@ import { format } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { AddWireTAPToTheatreDialog } from "./theatres/AddWireTAPToTheatreDialog";
+import { PullOutDeviceDialog } from "./theatres/PullOutDeviceDialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Eye, LogOut } from "lucide-react";
 
 // WireTAP Appliances Section Component
 const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
   const [showPulledOut, setShowPulledOut] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [pullOutDialogOpen, setPullOutDialogOpen] = useState(false);
+  const [selectedDevice, setSelectedDevice] = useState<WireTAPDeviceType | null>(null);
   
   // Filter devices mapped to this theatre
   const theatreDevices = useMemo(() => {
@@ -97,7 +102,26 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
     toast.success(`WireTAP ${device.applicationSerialNumber} added to theatre successfully`);
   };
 
-  const DeviceTable = ({ devices }: { devices: WireTAPDeviceType[] }) => (
+  const handleViewDetails = (device: WireTAPDeviceType) => {
+    window.location.href = `/wiretap/${device.id}`;
+  };
+
+  const handleEditDetails = (device: WireTAPDeviceType) => {
+    window.location.href = `/wiretap/${device.id}/edit`;
+  };
+
+  const handlePullOutClick = (device: WireTAPDeviceType) => {
+    setSelectedDevice(device);
+    setPullOutDialogOpen(true);
+  };
+
+  const handlePullOutConfirm = (device: WireTAPDeviceType, reason: string, comments: string) => {
+    toast.success(`Device ${device.applicationSerialNumber} pulled out successfully. Reason: ${reason}`);
+    setPullOutDialogOpen(false);
+    setSelectedDevice(null);
+  };
+
+  const DeviceTable = ({ devices, showActions = true }: { devices: WireTAPDeviceType[], showActions?: boolean }) => (
     <div className="rounded-md border">
       <Table>
         <TableHeader>
@@ -108,6 +132,7 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
             <TableHead>Appliance Type</TableHead>
             <TableHead>Activation Status</TableHead>
             <TableHead>Updated At</TableHead>
+            {showActions && <TableHead className="w-[50px]"></TableHead>}
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -123,6 +148,32 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
               <TableCell className="text-muted-foreground">
                 {format(new Date(device.updatedAt), "MMM dd, yyyy hh:mm a")}
               </TableCell>
+              {showActions && (
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Open menu</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="bg-background border z-50">
+                      <DropdownMenuItem onClick={() => handleViewDetails(device)}>
+                        <Eye className="h-4 w-4 mr-2" />
+                        View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleEditDetails(device)}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handlePullOutClick(device)}>
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Pull Out Device
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              )}
             </TableRow>
           ))}
         </TableBody>
@@ -149,6 +200,13 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
         theatreId={theatreId || ""}
         onConfirm={handleAddWireTAP}
       />
+
+      <PullOutDeviceDialog
+        open={pullOutDialogOpen}
+        onOpenChange={setPullOutDialogOpen}
+        device={selectedDevice}
+        onConfirm={handlePullOutConfirm}
+      />
       
       {activeDevices.length > 0 ? (
         <DeviceTable devices={activeDevices} />
@@ -169,7 +227,7 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2">
-            <DeviceTable devices={pulledOutDevices} />
+            <DeviceTable devices={pulledOutDevices} showActions={false} />
           </CollapsibleContent>
         </Collapsible>
       )}
