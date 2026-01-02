@@ -6,12 +6,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Button } from "@/components/ui/button";
 import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { NavItem } from "./NavItem";
+import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
 
 import {
   Building2,
   LinkIcon,
-  Film,
   Monitor,
   Building,
   FileText,
@@ -21,6 +21,8 @@ import {
   Bell,
   Settings,
   Map,
+  ClipboardList,
+  HardDrive,
 } from "lucide-react";
 
 export const SidebarNav = ({ 
@@ -76,12 +78,14 @@ export const SidebarNav = ({
       path: "/wiretap-devices",
       disabled: false 
     },
-    { 
-      icon: <Settings size={20} />, 
-      label: "Fleet Management", 
-      path: "/fleet-management",
-      disabled: false 
-    },
+  ];
+
+  const fleetManagementSubItems = [
+    { label: "Task Management", path: "/fleet-management/tasks", icon: ClipboardList },
+    { label: "Image Management", path: "/fleet-management/images", icon: HardDrive },
+  ];
+
+  const bottomNavItems = [
     { 
       icon: <Building size={20} />, 
       label: "Companies", 
@@ -206,6 +210,27 @@ export const SidebarNav = ({
         {navItems.map((item, i) => (
           <NavItem
             key={i}
+            icon={item.icon}
+            label={item.label}
+            path={item.path}
+            isActive={isActive(item.path)}
+            disabled={item.disabled}
+            collapsed={isCollapsed}
+          />
+        ))}
+        
+        {/* Fleet Management with submenu */}
+        <NavItemWithSubmenu
+          icon={Settings}
+          label="Fleet Management"
+          basePath="/fleet-management"
+          subItems={fleetManagementSubItems}
+          isCollapsed={isCollapsed}
+        />
+        
+        {bottomNavItems.map((item, i) => (
+          <NavItem
+            key={`bottom-${i}`}
             icon={item.icon}
             label={item.label}
             path={item.path}

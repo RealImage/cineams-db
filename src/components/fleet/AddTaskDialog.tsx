@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { FleetTask } from "@/pages/FleetManagement";
+import type { FleetTask } from "@/pages/TaskManagement";
 
 interface AddTaskDialogProps {
   open: boolean;
