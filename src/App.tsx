@@ -2,7 +2,7 @@
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import Theatres from "./pages/Theatres";
@@ -12,7 +12,8 @@ import TDLDevices from "./pages/TDLDevices";
 import WireTAPDevices from "./pages/WireTAPDevices";
 import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import EditWireTAPDevice from "./pages/EditWireTAPDevice";
-import FleetManagement from "./pages/FleetManagement";
+import TaskManagement from "./pages/TaskManagement";
+import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
@@ -34,7 +35,10 @@ const App = () => (
             <Route path="/wiretap-devices" element={<WireTAPDevices />} />
             <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
             <Route path="/wiretap-devices/:id/edit" element={<EditWireTAPDevice />} />
-            <Route path="/fleet-management" element={<FleetManagement />} />
+            {/* Fleet Management Routes */}
+            <Route path="/fleet-management" element={<Navigate to="/fleet-management/tasks" replace />} />
+            <Route path="/fleet-management/tasks" element={<TaskManagement />} />
+            <Route path="/fleet-management/images" element={<ImageManagement />} />
             <Route path="/fleet-management/task/new" element={<FleetTaskEdit />} />
             <Route path="/reports" element={<Reports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
