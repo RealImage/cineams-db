@@ -37,6 +37,7 @@ export function AddVersionDialog({
 }: AddVersionDialogProps) {
   const [formData, setFormData] = useState({
     version: "",
+    imageUrl: "",
     releaseNotes: "",
     changelog: "",
   });
@@ -54,12 +55,12 @@ export function AddVersionDialog({
 
     toast.success(`Version ${formData.version} added for ${image?.agentOsName}`);
     onOpenChange(false);
-    setFormData({ version: "", releaseNotes: "", changelog: "" });
+    setFormData({ version: "", imageUrl: "", releaseNotes: "", changelog: "" });
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    setFormData({ version: "", releaseNotes: "", changelog: "" });
+    setFormData({ version: "", imageUrl: "", releaseNotes: "", changelog: "" });
   };
 
   return (
@@ -80,6 +81,16 @@ export function AddVersionDialog({
               placeholder="e.g., v4.2.0"
               value={formData.version}
               onChange={(e) => setFormData({ ...formData, version: e.target.value })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">Image URL / Link</Label>
+            <Input
+              id="imageUrl"
+              placeholder="e.g., s3://bucket-name/path or https://sharepoint.com/..."
+              value={formData.imageUrl}
+              onChange={(e) => setFormData({ ...formData, imageUrl: e.target.value })}
             />
           </div>
 
