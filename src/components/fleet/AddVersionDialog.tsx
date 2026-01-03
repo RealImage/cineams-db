@@ -106,7 +106,7 @@ export function AddVersionDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="changelog">Changelog</Label>
+            <Label htmlFor="changelog">Internal Reference Notes</Label>
             <Textarea
               id="changelog"
               placeholder="Enter changelog details..."
