@@ -85,7 +85,7 @@ function FilterContent<T>({
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="justify-start text-left font-normal">
                             {dateRanges[columnKey.toString()]?.from ? (
-                              format(dateRanges[columnKey.toString()].from!, "MMM dd, yyyy")
+                              format(dateRanges[columnKey.toString()].from!, "dd MMM yyyy")
                             ) : (
                               <span className="text-muted-foreground">Pick a date</span>
                             )}
@@ -118,7 +118,7 @@ function FilterContent<T>({
                         <PopoverTrigger asChild>
                           <Button variant="outline" className="justify-start text-left font-normal">
                             {dateRanges[columnKey.toString()]?.to ? (
-                              format(dateRanges[columnKey.toString()].to!, "MMM dd, yyyy")
+                              format(dateRanges[columnKey.toString()].to!, "dd MMM yyyy")
                             ) : (
                               <span className="text-muted-foreground">Pick a date</span>
                             )}

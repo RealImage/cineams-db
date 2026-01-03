@@ -129,7 +129,7 @@ const WireTAPDevices = () => {
             <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
           </Button>
           <p className="text-sm text-muted-foreground">
-            Last Fetched on: {format(lastFetchedDate, "MMM dd, yyyy hh:mm a")}
+            Last Fetched on: {format(lastFetchedDate, "dd MMM yyyy hh:mm a")}
           </p>
         </div>
       </div>
