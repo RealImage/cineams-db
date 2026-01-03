@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { format, parse } from "date-fns";
 import { useLocation, useNavigate } from "react-router-dom";
+import { formatDateTime } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -263,8 +264,7 @@ const FleetTaskEdit = () => {
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        {new Date(appliance.updatedOn).toLocaleDateString()}{" "}
-                        {new Date(appliance.updatedOn).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        {formatDateTime(appliance.updatedOn)}
                       </TableCell>
                       <TableCell>
                         <Button

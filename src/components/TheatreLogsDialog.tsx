@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar, User } from "lucide-react";
 import { Theatre } from "@/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { formatDateTime } from "@/lib/dateUtils";
 
 interface TheatreLogsDialogProps {
   open: boolean;
@@ -97,14 +98,8 @@ export function TheatreLogsDialog({ open, onOpenChange, theatre }: TheatreLogsDi
 
   const displayedLogs = showAllLogs ? mockLogs : mockLogs.slice(0, 3);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: 'numeric'
-    });
+  const formatDateLocal = (dateString: string) => {
+    return formatDateTime(dateString);
   };
 
   const getActionColor = (action: string) => {
@@ -149,7 +144,8 @@ export function TheatreLogsDialog({ open, onOpenChange, theatre }: TheatreLogsDi
                     <TableCell className="text-sm">
                       <div className="flex items-center">
                         <Calendar className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
-                        {formatDate(log.date)}
+                        {formatDateLocal(log.date)}
+                        
                       </div>
                     </TableCell>
                     <TableCell className="text-sm">

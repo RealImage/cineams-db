@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Search } from "lucide-react";
+import { formatDateTime } from "@/lib/dateUtils";
 
 interface DeviceLog {
   id: string;
@@ -62,8 +63,8 @@ const DeviceLogsTable = ({ deviceId }: DeviceLogsTableProps) => {
     log.date.includes(searchTerm)
   );
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleString();
+  const formatDateLocal = (dateString: string) => {
+    return formatDateTime(dateString);
   };
 
   const getActionColor = (action: string) => {
@@ -145,7 +146,7 @@ const DeviceLogsTable = ({ deviceId }: DeviceLogsTableProps) => {
               filteredLogs.map((log) => (
                 <TableRow key={log.id}>
                   <TableCell className="font-mono text-sm">
-                    {formatDate(log.date)}
+                    {formatDateLocal(log.date)}
                   </TableCell>
                   <TableCell>
                     <Badge variant="secondary" className={getActionColor(log.action)}>

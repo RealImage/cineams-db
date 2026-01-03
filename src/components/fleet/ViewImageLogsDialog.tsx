@@ -15,6 +15,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { formatDateTime } from "@/lib/dateUtils";
 
 interface ImageItem {
   id: string;
@@ -89,7 +90,7 @@ export function ViewImageLogsDialog({
             <TableBody>
               {logs.map((log, index) => (
                 <TableRow key={index}>
-                  <TableCell className="font-mono text-sm">{log.timestamp}</TableCell>
+                  <TableCell className="font-mono text-sm">{formatDateTime(log.timestamp)}</TableCell>
                   <TableCell className="font-medium">{log.action}</TableCell>
                   <TableCell>{log.details}</TableCell>
                   <TableCell>{log.user}</TableCell>

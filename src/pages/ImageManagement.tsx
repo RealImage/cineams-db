@@ -5,7 +5,7 @@ import { Plus, Settings, FileText } from "lucide-react";
 import { AddVersionDialog } from "@/components/fleet/AddVersionDialog";
 import { ManageVersionsDialog } from "@/components/fleet/ManageVersionsDialog";
 import { ViewImageLogsDialog } from "@/components/fleet/ViewImageLogsDialog";
-
+import { formatDate } from "@/lib/dateUtils";
 export interface ImageItem {
   id: string;
   provider: string;
@@ -82,6 +82,7 @@ const ImageManagement = () => {
       accessor: "updatedOn",
       header: "Updated On",
       sortable: true,
+      cell: (row) => formatDate(row.updatedOn),
     },
     {
       accessor: "updatedBy",

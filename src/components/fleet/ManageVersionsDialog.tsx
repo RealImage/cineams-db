@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/table";
 import { Trash2, Download, Star } from "lucide-react";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 interface ImageItem {
   id: string;
@@ -99,7 +100,7 @@ export function ManageVersionsDialog({
               {versions.map((v) => (
                 <TableRow key={v.version}>
                   <TableCell className="font-medium">{v.version}</TableCell>
-                  <TableCell>{v.releaseDate}</TableCell>
+                  <TableCell>{formatDate(v.releaseDate)}</TableCell>
                   <TableCell>{getStatusBadge(v.status)}</TableCell>
                   <TableCell>{v.downloads.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
