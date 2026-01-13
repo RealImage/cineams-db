@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Table } from "@/components/ui/table";
 import { DataTableHeader } from "./table-header";
 import { DataTableBody } from "./table-body";
@@ -32,18 +32,30 @@ export function DataTable<T extends { id: string }>({
   const [showFilters, setShowFilters] = useState(false);
   const [useSheetFilter, setUseSheetFilter] = useState(window.innerWidth < 768);
   
+  // Keep the latest onSearchChange without recreating the debounced function
+  const onSearchChangeRef = useRef<typeof onSearchChange>(onSearchChange);
+  useEffect(() => {
+    onSearchChangeRef.current = onSearchChange;
+  }, [onSearchChange]);
+
   // Debounce search changes to minimize unnecessary filtering operations
-  const debouncedSearch = useCallback(
-    debounce((term: string) => {
-      if (onSearchChange) {
-        onSearchChange(term);
-      }
-      // Reset to first page when searching
-      setCurrentPage(1);
-    }, 300),
-    [onSearchChange]
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((term: string) => {
+        onSearchChangeRef.current?.(term);
+        // Reset to first page when searching
+        setCurrentPage(1);
+      }, 300),
+    []
   );
-  
+
+  // Cleanup any pending debounced calls on unmount
+  useEffect(() => {
+    return () => {
+      debouncedSearch.cancel();
+    };
+  }, [debouncedSearch]);
+
   // Handle search changes
   useEffect(() => {
     if (serverSide) {
@@ -141,6 +153,11 @@ export function DataTable<T extends { id: string }>({
   
   // Handle page change
   const handlePageChange = (newPage: number) => {
+    // Prevent a pending debounced search from snapping back to page 1
+    if (serverSide) {
+      debouncedSearch.cancel();
+    }
+
     const validatedPage = Math.max(1, Math.min(newPage, totalPages));
     setCurrentPage(validatedPage);
     
@@ -151,6 +168,10 @@ export function DataTable<T extends { id: string }>({
 
   // Handle rows per page change
   const handleRowsPerPageChange = (newPageSize: number) => {
+    if (serverSide) {
+      debouncedSearch.cancel();
+    }
+
     setRowsPerPage(newPageSize);
     setCurrentPage(1); // Reset to first page
     
