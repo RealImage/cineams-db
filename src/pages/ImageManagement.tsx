@@ -1,9 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, SortConfig, Filter, Action } from "@/components/ui/data-table/types";
 import { Plus, Settings, FileText } from "lucide-react";
 import { AddVersionDialog } from "@/components/fleet/AddVersionDialog";
-import { ManageVersionsDialog } from "@/components/fleet/ManageVersionsDialog";
 import { ViewImageLogsDialog } from "@/components/fleet/ViewImageLogsDialog";
 import { formatDate } from "@/lib/dateUtils";
 export interface ImageItem {
@@ -38,12 +38,12 @@ const mockImageData: ImageItem[] = [
 ];
 
 const ImageManagement = () => {
+  const navigate = useNavigate();
   const [images, setImages] = useState<ImageItem[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   
   // Dialog states
   const [addVersionOpen, setAddVersionOpen] = useState(false);
-  const [manageVersionsOpen, setManageVersionsOpen] = useState(false);
   const [viewLogsOpen, setViewLogsOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<ImageItem | null>(null);
 
@@ -105,8 +105,7 @@ const ImageManagement = () => {
         label: "Manage Versions",
         icon: <Settings className="h-4 w-4" />,
         onClick: (row) => {
-          setSelectedImage(row);
-          setManageVersionsOpen(true);
+          navigate(`/fleet-management/images/${row.id}/versions`);
         },
       },
       {
@@ -225,12 +224,6 @@ const ImageManagement = () => {
         onOpenChange={setAddVersionOpen}
         image={selectedImage}
         onSubmit={handleAddVersion}
-      />
-
-      <ManageVersionsDialog
-        open={manageVersionsOpen}
-        onOpenChange={setManageVersionsOpen}
-        image={selectedImage}
       />
 
       <ViewImageLogsDialog
