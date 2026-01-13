@@ -15,6 +15,7 @@ import EditWireTAPDevice from "./pages/EditWireTAPDevice";
 import TaskManagement from "./pages/TaskManagement";
 import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
+import ManageVersions from "./pages/ManageVersions";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/fleet-management" element={<Navigate to="/fleet-management/tasks" replace />} />
             <Route path="/fleet-management/tasks" element={<TaskManagement />} />
             <Route path="/fleet-management/images" element={<ImageManagement />} />
+            <Route path="/fleet-management/images/:imageId/versions" element={<ManageVersions />} />
             <Route path="/fleet-management/task/new" element={<FleetTaskEdit />} />
             <Route path="/reports" element={<Reports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
