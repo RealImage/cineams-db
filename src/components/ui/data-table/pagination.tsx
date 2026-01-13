@@ -122,7 +122,11 @@ export function PaginationControls({
                 <PaginationItem key={`page-${page}`}>
                   <PaginationLink 
                     isActive={currentPage === page}
-                    onClick={() => handlePageChange(page as number)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handlePageChange(page as number);
+                    }}
+                    href="#"
                   >
                     {page}
                   </PaginationLink>
