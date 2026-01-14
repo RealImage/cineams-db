@@ -3,7 +3,6 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, MoreHorizontal, Eye, XCircle } from "lucide-react";
 import {
   DropdownMenu,
@@ -25,6 +24,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { Column, Action } from "@/components/ui/data-table/types";
 import { FleetTask } from "./TaskManagement";
 
 interface TaskAppliance {
@@ -182,6 +183,68 @@ const FleetTaskView = () => {
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
   const [selectedAppliance, setSelectedAppliance] = useState<TaskAppliance | null>(null);
   const [showAllLogs, setShowAllLogs] = useState(false);
+
+  // Get unique values for filters
+  const clusterIds = [...new Set(appliances.map(a => a.clusterId))];
+  const chainNames = [...new Set(appliances.map(a => a.chainName))];
+  const statusOptions = ["Pending", "In Progress", "Completed", "Failed"];
+
+  // Define columns for the DataTable
+  const deviceColumns: Column<TaskAppliance>[] = [
+    {
+      accessor: "applianceSerialNumber",
+      header: "Appliance Serial Number",
+      cell: (appliance) => (
+        <div>
+          <p className="font-medium">{appliance.applianceSerialNumber}</p>
+          <p className="text-xs text-muted-foreground">{appliance.hardwareSerialNumber}</p>
+        </div>
+      ),
+    },
+    {
+      accessor: "nodeId",
+      header: "Node ID",
+      cell: (appliance) => (
+        <div>
+          <p className="font-medium">{appliance.nodeId}</p>
+          <p className="text-xs text-muted-foreground">{appliance.clusterId}</p>
+        </div>
+      ),
+    },
+    {
+      accessor: "theatreName",
+      header: "Theatre Name",
+    },
+    {
+      accessor: "chainName",
+      header: "Chain Name",
+      filterable: true,
+      filterOptions: chainNames,
+    },
+    {
+      accessor: "clusterId",
+      header: "Cluster",
+      filterable: true,
+      filterOptions: clusterIds,
+      cell: () => null, // Hidden but used for filtering
+    },
+    {
+      accessor: "updateStatus",
+      header: "Update Status",
+      filterable: true,
+      filterOptions: statusOptions,
+      cell: (appliance) => (
+        <Badge className={getStatusColor(appliance.updateStatus)} variant="outline">
+          {appliance.updateStatus}
+        </Badge>
+      ),
+    },
+    {
+      accessor: "updatedOn",
+      header: "Updated On",
+      cell: (appliance) => appliance.updatedOn || "-",
+    },
+  ];
 
   // Calculate progress stats
   const totalDevices = appliances.length;
@@ -350,68 +413,30 @@ const FleetTaskView = () => {
           <CardTitle>Device Status</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Appliance Serial Number</TableHead>
-                  <TableHead>Node ID</TableHead>
-                  <TableHead>Theatre Name</TableHead>
-                  <TableHead>Chain Name</TableHead>
-                  <TableHead>Update Status</TableHead>
-                  <TableHead>Updated On</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appliances.map((appliance) => (
-                  <TableRow key={appliance.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{appliance.applianceSerialNumber}</p>
-                        <p className="text-xs text-muted-foreground">{appliance.hardwareSerialNumber}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{appliance.nodeId}</p>
-                        <p className="text-xs text-muted-foreground">{appliance.clusterId}</p>
-                      </div>
-                    </TableCell>
-                    <TableCell>{appliance.theatreName}</TableCell>
-                    <TableCell>{appliance.chainName}</TableCell>
-                    <TableCell>
-                      <Badge className={getStatusColor(appliance.updateStatus)} variant="outline">
-                        {appliance.updateStatus}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{appliance.updatedOn || "-"}</TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewLogs(appliance)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Details
-                          </DropdownMenuItem>
-                          {appliance.updateStatus === "Pending" && (
-                            <DropdownMenuItem onClick={() => handleCancelDevice(appliance)}>
-                              <XCircle className="mr-2 h-4 w-4" />
-                              Cancel
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
+          <DataTable
+            data={appliances}
+            columns={deviceColumns}
+            searchPlaceholder="Search by serial number, node ID, or theatre..."
+            searchable={true}
+            pageSize={25}
+            actions={(appliance) => {
+              const actions: Action<TaskAppliance>[] = [
+                {
+                  label: "View Details",
+                  icon: <Eye className="h-4 w-4" />,
+                  onClick: () => handleViewLogs(appliance),
+                },
+              ];
+              if (appliance.updateStatus === "Pending") {
+                actions.push({
+                  label: "Cancel",
+                  icon: <XCircle className="h-4 w-4" />,
+                  onClick: () => handleCancelDevice(appliance),
+                });
+              }
+              return actions;
+            }}
+          />
         </CardContent>
       </Card>
 
