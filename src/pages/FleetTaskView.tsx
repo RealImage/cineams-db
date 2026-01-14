@@ -208,8 +208,8 @@ const FleetTaskView = () => {
 
   const displayedLogs = selectedAppliance
     ? showAllLogs
-      ? selectedAppliance.attemptLogs
-      : selectedAppliance.attemptLogs.slice(-5)
+      ? [...selectedAppliance.attemptLogs].reverse()
+      : [...selectedAppliance.attemptLogs].slice(-5).reverse()
     : [];
 
   // Fallback task data if not passed via state
