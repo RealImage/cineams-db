@@ -207,7 +207,7 @@ const TaskManagement = () => {
       {
         label: "View",
         icon: <Eye className="h-4 w-4" />,
-        onClick: (row) => console.log("View task:", row.taskId),
+        onClick: (row) => navigate(`/fleet-management/task/${row.id}/view`, { state: { task: row } }),
       },
       {
         label: "Edit",
