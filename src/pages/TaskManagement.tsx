@@ -171,6 +171,14 @@ const TaskManagement = () => {
       ),
     },
     {
+      accessor: "affectedDevices",
+      header: "Targeted Devices",
+      sortable: true,
+      cell: (row) => (
+        <span>{row.affectedDevices ?? 0}</span>
+      ),
+    },
+    {
       accessor: "createdBy",
       header: "Created By",
       sortable: true,
