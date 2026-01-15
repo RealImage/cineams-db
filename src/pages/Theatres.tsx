@@ -70,12 +70,9 @@ const Theatres = () => {
       className="space-y-6"
     >
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Theatres</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage all theatres in the CinemasDB system
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Manage all theatres in the CinemasDB system
+        </p>
         <Button onClick={handleCreateTheatre}>
           <Plus className="h-4 w-4 mr-2" /> Add Theatre
         </Button>
