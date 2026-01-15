@@ -319,12 +319,9 @@ const ManageVersions = () => {
       </Breadcrumb>
 
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold">Manage Versions</h1>
-        <p className="text-muted-foreground">
-          View and manage versions for {imageData.agentOsName} ({imageData.provider})
-        </p>
-      </div>
+      <p className="text-muted-foreground">
+        View and manage versions for {imageData.agentOsName} ({imageData.provider})
+      </p>
 
       {/* Table */}
       <div className="rounded-md border">

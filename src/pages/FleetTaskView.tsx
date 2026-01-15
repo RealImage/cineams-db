@@ -297,12 +297,9 @@ const FleetTaskView = () => {
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <div>
-          <h1 className="text-3xl font-bold">Task View: {task.taskId}</h1>
-          <p className="text-muted-foreground mt-1">
-            View task details and device update status
-          </p>
-        </div>
+        <p className="text-muted-foreground">
+          Task {task.taskId} - View task details and device update status
+        </p>
       </div>
 
       {/* Task Details */}
