@@ -109,7 +109,7 @@ const FleetTaskEdit = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/fleet-management")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-2xl font-bold tracking-tight">Edit Task</h1>
+          <span className="text-muted-foreground">Back to Task Management</span>
         </div>
         <p className="text-muted-foreground">No task data found. Please start from Fleet Management.</p>
       </div>
@@ -143,10 +143,7 @@ const FleetTaskEdit = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/fleet-management")}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">Edit Task</h1>
-            <p className="text-muted-foreground">Configure task details and target appliances</p>
-          </div>
+          <span className="text-muted-foreground">Back to Task Management</span>
         </div>
         <Button onClick={handleSaveTask}>Save Task</Button>
       </div>

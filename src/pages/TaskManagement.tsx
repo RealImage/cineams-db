@@ -316,13 +316,7 @@ const TaskManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">Task Management</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage and monitor fleet update tasks
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={() => setAddTaskOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           Add Task
