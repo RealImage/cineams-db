@@ -77,13 +77,7 @@ const Chains = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Theatre Chains</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage theatre chains and their associated theatres
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button onClick={handleCreateChain}>
           <Plus className="h-4 w-4 mr-2" /> Add Chain
         </Button>
