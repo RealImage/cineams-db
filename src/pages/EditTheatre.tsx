@@ -55,7 +55,14 @@ const EditTheatre = () => {
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <span className="text-muted-foreground">Back to Theatres</span>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {theatre ? `Edit ${theatre.name}` : 'Edit Theatre'}
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Update theatre details and configuration
+            </p>
+          </div>
         </div>
       </div>
       

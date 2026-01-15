@@ -112,7 +112,13 @@ const TDLDevices = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">TDL Devices</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage Trusted Device List (TDL) devices across all theatres
+          </p>
+        </div>
         <Button onClick={handleCreateDevice}>
           <Plus className="h-4 w-4 mr-2" /> Add Device
         </Button>

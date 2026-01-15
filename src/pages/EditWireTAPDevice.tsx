@@ -243,7 +243,15 @@ const EditWireTAPDevice = () => {
   }} transition={{
     duration: 0.3
   }} className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">
+            {isNewDevice ? "Add WireTAP Device" : "Edit WireTAP Device"}
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            {isNewDevice ? `Complete registration for ${device.hardwareSerialNumber}` : `Update details for ${device.hardwareSerialNumber}`}
+          </p>
+        </div>
         <Button variant="outline" onClick={() => navigate("/wiretap-devices")}>
           <ArrowLeft className="h-4 w-4 mr-2" /> Back to Devices
         </Button>

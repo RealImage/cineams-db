@@ -83,6 +83,8 @@ export default function Reports() {
   
   return (
     <div className="flex flex-col gap-6">
+      <h1 className="text-2xl font-bold tracking-tight">Reports</h1>
+      
       <div className="relative">
         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
         <Input

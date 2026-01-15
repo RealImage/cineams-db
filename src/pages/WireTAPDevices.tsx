@@ -117,7 +117,13 @@ const WireTAPDevices = () => {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">WireTAP Devices ({devices.length})</h1>
+          <p className="text-muted-foreground mt-1">
+            Manage your WireTAP devices across all theatres
+          </p>
+        </div>
         <div className="flex flex-col items-end gap-2">
           <Button onClick={handleFetchNewDevices} variant="outline">
             <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices

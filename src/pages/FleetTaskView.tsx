@@ -292,12 +292,17 @@ const FleetTaskView = () => {
 
   return (
     <div className="space-y-6">
-      {/* Back Button */}
+      {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <span className="text-muted-foreground">Back to Task Management</span>
+        <div>
+          <h1 className="text-3xl font-bold">Task View: {task.taskId}</h1>
+          <p className="text-muted-foreground mt-1">
+            View task details and device update status
+          </p>
+        </div>
       </div>
 
       {/* Task Details */}
