@@ -158,12 +158,27 @@ const getMockVersions = (imageId: string): VersionItem[] => [
   },
 ];
 
-// Mock image data
+// Mock image data - matches ImageManagement.tsx
 const getMockImageData = (imageId: string) => {
   const images: Record<string, { provider: string; agentOsName: string }> = {
-    "1": { provider: "Qlog", agentOsName: "Qlog Agent" },
-    "2": { provider: "AAM", agentOsName: "AAM OS" },
-    "3": { provider: "RealD", agentOsName: "RealD Agent" },
+    "1": { provider: "Appliance OS", agentOsName: "WireOS" },
+    "2": { provider: "Appliance OS", agentOsName: "QWA-OS" },
+    "3": { provider: "Appliance OS", agentOsName: "PartnerOS" },
+    "4": { provider: "iCount", agentOsName: "iCount" },
+    "5": { provider: "Qlog", agentOsName: "Qlog Agent" },
+    "6": { provider: "Qube Wire", agentOsName: "Kadet (Agent Zero)" },
+    "7": { provider: "Qube Wire", agentOsName: "Agent Redux" },
+    "8": { provider: "Qube Wire", agentOsName: "Manifest Agent" },
+    "9": { provider: "Qube Wire", agentOsName: "Content Ingest Agent" },
+    "10": { provider: "Qube Wire", agentOsName: "KDM Agent" },
+    "11": { provider: "Qube Wire", agentOsName: "Inventory Agent" },
+    "12": { provider: "Qube Wire", agentOsName: "TDL Agent" },
+    "13": { provider: "Qube Wire", agentOsName: "Configuration Agent" },
+    "14": { provider: "Qube Wire", agentOsName: "Live Wire" },
+    "15": { provider: "Scheduler", agentOsName: "Scheduler Agent" },
+    "16": { provider: "Scheduler", agentOsName: "Content Agent" },
+    "17": { provider: "Scheduler", agentOsName: "AgentQS" },
+    "18": { provider: "Slate", agentOsName: "AgentQ" },
   };
   return images[imageId] || { provider: "Unknown", agentOsName: "Unknown Image" };
 };
