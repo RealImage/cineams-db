@@ -294,30 +294,30 @@ const FleetStatus = () => {
               {/* Geography */}
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Country</Label>
-                <Select value={countryFilter} onValueChange={setCountryFilter}>
+                <Select value={countryFilter || "all"} onValueChange={(v) => setCountryFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     {uniqueValues.countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">State</Label>
-                <Select value={stateFilter} onValueChange={setStateFilter}>
+                <Select value={stateFilter || "all"} onValueChange={(v) => setStateFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     {uniqueValues.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">City</Label>
-                <Select value={cityFilter} onValueChange={setCityFilter}>
+                <Select value={cityFilter || "all"} onValueChange={(v) => setCityFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     {uniqueValues.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
@@ -326,10 +326,10 @@ const FleetStatus = () => {
               {/* Theatre Hierarchy */}
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Theatre Chain</Label>
-                <Select value={chainFilter} onValueChange={setChainFilter}>
+                <Select value={chainFilter || "all"} onValueChange={(v) => setChainFilter(v === "all" ? "" : v)}>
                   <SelectTrigger className="w-40"><SelectValue placeholder="All" /></SelectTrigger>
                   <SelectContent className="bg-popover z-50">
-                    <SelectItem value="">All</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
                     {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
