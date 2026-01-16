@@ -81,6 +81,7 @@ export const SidebarNav = ({
   ];
 
   const fleetManagementSubItems = [
+    { label: "Fleet Status", path: "/fleet-management/status", icon: LayoutDashboard },
     { label: "Task Management", path: "/fleet-management/tasks", icon: ClipboardList },
     { label: "Image Management", path: "/fleet-management/images", icon: HardDrive },
   ];

@@ -17,6 +17,7 @@ import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
 import FleetTaskView from "./pages/FleetTaskView";
 import ManageVersions from "./pages/ManageVersions";
+import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
 import NotFound from "./pages/NotFound";
 
@@ -38,7 +39,9 @@ const App = () => (
             <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
             <Route path="/wiretap-devices/:id/edit" element={<EditWireTAPDevice />} />
             {/* Fleet Management Routes */}
-            <Route path="/fleet-management" element={<Navigate to="/fleet-management/tasks" replace />} />
+            <Route path="/fleet-management" element={<Navigate to="/fleet-management/status" replace />} />
+            <Route path="/fleet-management/status" element={<FleetStatus />} />
+            <Route path="/fleet-management/tasks" element={<TaskManagement />} />
             <Route path="/fleet-management/tasks" element={<TaskManagement />} />
             <Route path="/fleet-management/images" element={<ImageManagement />} />
             <Route path="/fleet-management/images/:imageId/versions" element={<ManageVersions />} />
