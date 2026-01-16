@@ -1,0 +1,663 @@
+import { useState, useMemo } from "react";
+import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { DataTable } from "@/components/ui/data-table/data-table";
+import { Column, Action } from "@/components/ui/data-table/types";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { formatDate, formatDateTime } from "@/lib/dateUtils";
+
+// Types
+interface FleetNode {
+  id: string;
+  nodeId: string;
+  theatreChain: string;
+  theatreName: string;
+  theatreId: string;
+  city: string;
+  state: string;
+  country: string;
+  version: string;
+  status: "Active" | "Inactive" | "Unresponsive";
+  deprecated: boolean;
+  lastHeartbeat: string;
+  lastUpdateTask: string | null;
+}
+
+interface VersionData {
+  version: string;
+  active: number;
+  inactive: number;
+  unresponsive: number;
+  deprecated: boolean;
+  recommended: boolean;
+}
+
+// Mock images data
+const mockImages = [
+  { id: "1", name: "WireOS", provider: "Appliance OS" },
+  { id: "2", name: "QWA-OS", provider: "Appliance OS" },
+  { id: "3", name: "PartnerOS", provider: "Appliance OS" },
+  { id: "4", name: "iCount", provider: "iCount" },
+  { id: "5", name: "Qlog Agent", provider: "Qlog" },
+  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire" },
+  { id: "7", name: "Agent Redux", provider: "Qube Wire" },
+  { id: "8", name: "Manifest Agent", provider: "Qube Wire" },
+  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire" },
+  { id: "10", name: "KDM Agent", provider: "Qube Wire" },
+];
+
+// Mock fleet data generator
+const generateMockFleetData = (imageId: string): FleetNode[] => {
+  const chains = ["AMC Theatres", "Regal Cinemas", "Cinemark", "Marcus Theatres", "Harkins Theatres"];
+  const countries = ["USA", "Canada", "Mexico", "Brazil", "UK"];
+  const states = ["California", "Texas", "New York", "Florida", "Ontario", "London"];
+  const cities = ["Los Angeles", "Dallas", "New York City", "Miami", "Toronto", "London"];
+  const versions = ["v4.1.9", "v4.1.8", "v4.1.7", "v4.0.5", "v3.9.2", "v3.8.1"];
+  const statuses: ("Active" | "Inactive" | "Unresponsive")[] = ["Active", "Inactive", "Unresponsive"];
+
+  return Array.from({ length: 250 }, (_, i) => {
+    const status = statuses[Math.floor(Math.random() * (i < 200 ? 1 : 3))];
+    const version = versions[Math.floor(Math.random() * versions.length)];
+    const deprecated = version === "v3.9.2" || version === "v3.8.1";
+    
+    return {
+      id: `node-${imageId}-${i}`,
+      nodeId: `NODE-${String(i + 1000).padStart(6, '0')}`,
+      theatreChain: chains[Math.floor(Math.random() * chains.length)],
+      theatreName: `Theatre ${i + 1}`,
+      theatreId: `TH-${String(i + 1).padStart(4, '0')}`,
+      city: cities[Math.floor(Math.random() * cities.length)],
+      state: states[Math.floor(Math.random() * states.length)],
+      country: countries[Math.floor(Math.random() * countries.length)],
+      version,
+      status,
+      deprecated,
+      lastHeartbeat: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
+      lastUpdateTask: Math.random() > 0.5 ? `TASK-${Math.floor(Math.random() * 1000)}` : null,
+    };
+  });
+};
+
+// Generate version chart data
+const generateVersionChartData = (nodes: FleetNode[]): VersionData[] => {
+  const versionMap = new Map<string, VersionData>();
+  
+  nodes.forEach(node => {
+    if (!versionMap.has(node.version)) {
+      versionMap.set(node.version, {
+        version: node.version,
+        active: 0,
+        inactive: 0,
+        unresponsive: 0,
+        deprecated: node.deprecated,
+        recommended: node.version === "v4.1.9",
+      });
+    }
+    const data = versionMap.get(node.version)!;
+    if (node.status === "Active") data.active++;
+    else if (node.status === "Inactive") data.inactive++;
+    else data.unresponsive++;
+  });
+
+  return Array.from(versionMap.values()).sort((a, b) => a.version.localeCompare(b.version));
+};
+
+const chartConfig: ChartConfig = {
+  active: { label: "Active", color: "hsl(var(--chart-1))" },
+  inactive: { label: "Inactive", color: "hsl(var(--chart-2))" },
+  unresponsive: { label: "Unresponsive", color: "hsl(var(--chart-3))" },
+};
+
+const FleetStatus = () => {
+  // Global Context State
+  const [selectedImage, setSelectedImage] = useState<string>("");
+  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Filter State
+  const [countryFilter, setCountryFilter] = useState<string>("");
+  const [stateFilter, setStateFilter] = useState<string>("");
+  const [cityFilter, setCityFilter] = useState<string>("");
+  const [chainFilter, setChainFilter] = useState<string>("");
+  const [theatreNameFilter, setTheatreNameFilter] = useState<string>("");
+  const [theatreIdFilter, setTheatreIdFilter] = useState<string>("");
+  const [statusFilters, setStatusFilters] = useState<string[]>([]);
+  const [versionFilters, setVersionFilters] = useState<string[]>([]);
+  const [deprecatedOnly, setDeprecatedOnly] = useState(false);
+
+  // View State
+  const [viewMode, setViewMode] = useState<"visual" | "table" | "list">("table");
+  const [activeKPI, setActiveKPI] = useState<string | null>(null);
+
+  // Data
+  const fleetData = useMemo(() => {
+    if (!selectedImage) return [];
+    return generateMockFleetData(selectedImage);
+  }, [selectedImage]);
+
+  const filteredData = useMemo(() => {
+    let data = [...fleetData];
+
+    if (countryFilter) data = data.filter(n => n.country === countryFilter);
+    if (stateFilter) data = data.filter(n => n.state === stateFilter);
+    if (cityFilter) data = data.filter(n => n.city === cityFilter);
+    if (chainFilter) data = data.filter(n => n.theatreChain === chainFilter);
+    if (theatreNameFilter) data = data.filter(n => n.theatreName.toLowerCase().includes(theatreNameFilter.toLowerCase()));
+    if (theatreIdFilter) data = data.filter(n => n.theatreId.toLowerCase().includes(theatreIdFilter.toLowerCase()));
+    if (statusFilters.length > 0) data = data.filter(n => statusFilters.includes(n.status));
+    if (versionFilters.length > 0) data = data.filter(n => versionFilters.includes(n.version));
+    if (deprecatedOnly) data = data.filter(n => n.deprecated);
+    
+    // KPI filter
+    if (activeKPI === "active") data = data.filter(n => n.status === "Active");
+    if (activeKPI === "inactive") data = data.filter(n => n.status === "Inactive");
+    if (activeKPI === "unresponsive") data = data.filter(n => n.status === "Unresponsive");
+    if (activeKPI === "deprecated") data = data.filter(n => n.deprecated);
+
+    return data;
+  }, [fleetData, countryFilter, stateFilter, cityFilter, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly, activeKPI]);
+
+  const versionChartData = useMemo(() => generateVersionChartData(filteredData), [filteredData]);
+
+  // KPIs
+  const kpis = useMemo(() => ({
+    total: filteredData.length,
+    active: filteredData.filter(n => n.status === "Active").length,
+    inactive: filteredData.filter(n => n.status === "Inactive").length,
+    unresponsive: filteredData.filter(n => n.status === "Unresponsive").length,
+    deprecated: filteredData.filter(n => n.deprecated).length,
+  }), [filteredData]);
+
+  // Risk spotlight
+  const riskSpotlight = useMemo(() => {
+    const deprecatedUnresponsive = fleetData.filter(n => n.deprecated && n.status === "Unresponsive").length;
+    const risks = [];
+    if (deprecatedUnresponsive > 0) {
+      risks.push({ message: `${deprecatedUnresponsive} unresponsive nodes on deprecated versions`, type: "critical" });
+    }
+    const brazilInactive = fleetData.filter(n => n.country === "Brazil" && n.status === "Inactive").length;
+    if (brazilInactive > 20) {
+      risks.push({ message: `Highest inactive rate detected in Brazil (${brazilInactive} nodes)`, type: "warning" });
+    }
+    return risks;
+  }, [fleetData]);
+
+  // Unique values for filters
+  const uniqueValues = useMemo(() => ({
+    countries: [...new Set(fleetData.map(n => n.country))],
+    states: [...new Set(fleetData.map(n => n.state))],
+    cities: [...new Set(fleetData.map(n => n.city))],
+    chains: [...new Set(fleetData.map(n => n.theatreChain))],
+    versions: [...new Set(fleetData.map(n => n.version))],
+  }), [fleetData]);
+
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setLastRefreshed(new Date());
+      setIsRefreshing(false);
+    }, 1000);
+  };
+
+  const handleResetFilters = () => {
+    setCountryFilter("");
+    setStateFilter("");
+    setCityFilter("");
+    setChainFilter("");
+    setTheatreNameFilter("");
+    setTheatreIdFilter("");
+    setStatusFilters([]);
+    setVersionFilters([]);
+    setDeprecatedOnly(false);
+    setActiveKPI(null);
+  };
+
+  const toggleKPI = (kpi: string) => {
+    setActiveKPI(activeKPI === kpi ? null : kpi);
+  };
+
+  // Table columns
+  const columns: Column<FleetNode>[] = [
+    { accessor: "nodeId", header: "Node ID", sortable: true },
+    { accessor: "theatreChain", header: "Theatre Chain", sortable: true, filterable: true, filterOptions: uniqueValues.chains },
+    { accessor: "theatreName", header: "Theatre Name", sortable: true },
+    { accessor: "city", header: "City", sortable: true },
+    { accessor: "state", header: "State", sortable: true },
+    { accessor: "country", header: "Country", sortable: true, filterable: true, filterOptions: uniqueValues.countries },
+    { accessor: "version", header: "Version", sortable: true, cell: (row) => (
+      <div className="flex items-center gap-2">
+        <span>{row.version}</span>
+        {row.deprecated && <Badge variant="destructive" className="text-xs">Deprecated</Badge>}
+        {row.version === "v4.1.9" && <Badge variant="default" className="text-xs bg-green-600">Recommended</Badge>}
+      </div>
+    )},
+    { accessor: "status", header: "Status", sortable: true, filterable: true, filterOptions: ["Active", "Inactive", "Unresponsive"], cell: (row) => (
+      <Badge variant={row.status === "Active" ? "default" : row.status === "Inactive" ? "secondary" : "destructive"}>
+        {row.status}
+      </Badge>
+    )},
+    { accessor: "lastHeartbeat", header: "Last Heartbeat", sortable: true, cell: (row) => formatDateTime(row.lastHeartbeat) },
+    { accessor: "lastUpdateTask", header: "Last Update Task", sortable: true, cell: (row) => row.lastUpdateTask || "-" },
+  ];
+
+  const tableActions: Action<FleetNode>[] = [
+    { label: "View Details", onClick: (row) => console.log("View", row) },
+    { label: "Create Task", onClick: (row) => console.log("Create task for", row) },
+  ];
+
+  return (
+    <div className="space-y-4">
+      {/* A1. Global Context Bar */}
+      <div className="sticky top-0 z-10 bg-background border-b pb-4">
+        <div className="flex items-center justify-between">
+          <div className="flex-1 max-w-md">
+            <Label className="text-sm text-muted-foreground mb-1 block">Select OS / Agent / App</Label>
+            <Select value={selectedImage} onValueChange={setSelectedImage}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select App ▾" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover z-50">
+                {mockImages.map(img => (
+                  <SelectItem key={img.id} value={img.id}>
+                    {img.name} ({img.provider})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-sm text-muted-foreground">
+              Last refreshed: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </span>
+            <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing || !selectedImage}>
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+              Refresh now
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {selectedImage && (
+        <>
+          {/* A2. Filter Panel */}
+          <div id="fleet-filter-panel" className="sticky top-16 z-10 bg-background border rounded-lg p-4">
+            <div className="flex flex-wrap gap-4 items-end">
+              {/* Geography */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Country</Label>
+                <Select value={countryFilter} onValueChange={setCountryFilter}>
+                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="">All</SelectItem>
+                    {uniqueValues.countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">State</Label>
+                <Select value={stateFilter} onValueChange={setStateFilter}>
+                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="">All</SelectItem>
+                    {uniqueValues.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">City</Label>
+                <Select value={cityFilter} onValueChange={setCityFilter}>
+                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="">All</SelectItem>
+                    {uniqueValues.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Theatre Hierarchy */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Theatre Chain</Label>
+                <Select value={chainFilter} onValueChange={setChainFilter}>
+                  <SelectTrigger className="w-40"><SelectValue placeholder="All" /></SelectTrigger>
+                  <SelectContent className="bg-popover z-50">
+                    <SelectItem value="">All</SelectItem>
+                    {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Theatre Name</Label>
+                <Input 
+                  placeholder="Search..." 
+                  value={theatreNameFilter} 
+                  onChange={(e) => setTheatreNameFilter(e.target.value)}
+                  className="w-32"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Theatre ID</Label>
+                <Input 
+                  placeholder="Search..." 
+                  value={theatreIdFilter} 
+                  onChange={(e) => setTheatreIdFilter(e.target.value)}
+                  className="w-28"
+                />
+              </div>
+
+              {/* Status Multi-select */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-32 justify-start">
+                      {statusFilters.length > 0 ? `${statusFilters.length} selected` : "All"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-40 bg-popover z-50">
+                    {["Active", "Inactive", "Unresponsive"].map(status => (
+                      <div key={status} className="flex items-center gap-2 py-1">
+                        <Checkbox 
+                          checked={statusFilters.includes(status)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setStatusFilters([...statusFilters, status]);
+                            else setStatusFilters(statusFilters.filter(s => s !== status));
+                          }}
+                        />
+                        <Label className="text-sm">{status}</Label>
+                      </div>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Version Multi-select */}
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Version</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm" className="w-32 justify-start">
+                      {versionFilters.length > 0 ? `${versionFilters.length} selected` : "All"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 bg-popover z-50 max-h-60 overflow-y-auto">
+                    {uniqueValues.versions.map(version => (
+                      <div key={version} className="flex items-center gap-2 py-1">
+                        <Checkbox 
+                          checked={versionFilters.includes(version)}
+                          onCheckedChange={(checked) => {
+                            if (checked) setVersionFilters([...versionFilters, version]);
+                            else setVersionFilters(versionFilters.filter(v => v !== version));
+                          }}
+                        />
+                        <Label className="text-sm flex items-center gap-1">
+                          {version}
+                          {(version === "v3.9.2" || version === "v3.8.1") && <Badge variant="destructive" className="text-xs">Deprecated</Badge>}
+                        </Label>
+                      </div>
+                    ))}
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Deprecated Toggle */}
+              <div className="flex items-center gap-2">
+                <Checkbox checked={deprecatedOnly} onCheckedChange={(checked) => setDeprecatedOnly(!!checked)} />
+                <Label className="text-sm">Deprecated only</Label>
+              </div>
+
+              {/* Actions */}
+              <Button variant="ghost" size="sm" onClick={handleResetFilters}>Reset Filters</Button>
+              <Button variant="outline" size="sm">Save View</Button>
+            </div>
+          </div>
+
+          {/* A3. Fleet Summary KPI Strip */}
+          <div id="fleet-kpi-strip" className="grid grid-cols-5 gap-4">
+            <Card 
+              className={`cursor-pointer transition-all ${activeKPI === 'total' ? 'ring-2 ring-primary' : ''}`}
+              onClick={() => toggleKPI('total')}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nodes in Scope</p>
+                    <p className="text-3xl font-bold">{kpis.total}</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-muted-foreground" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card 
+              className={`cursor-pointer transition-all ${activeKPI === 'active' ? 'ring-2 ring-green-500' : ''}`}
+              onClick={() => toggleKPI('active')}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Active</p>
+                    <p className="text-3xl font-bold text-green-600">{kpis.active}</p>
+                  </div>
+                  <Activity className="h-8 w-8 text-green-600" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card 
+              className={`cursor-pointer transition-all ${activeKPI === 'inactive' ? 'ring-2 ring-yellow-500' : ''}`}
+              onClick={() => toggleKPI('inactive')}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Inactive</p>
+                    <p className="text-3xl font-bold text-yellow-600">{kpis.inactive}</p>
+                  </div>
+                  <Clock className="h-8 w-8 text-yellow-600" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card 
+              className={`cursor-pointer transition-all ${activeKPI === 'unresponsive' ? 'ring-2 ring-red-500' : ''}`}
+              onClick={() => toggleKPI('unresponsive')}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Unresponsive</p>
+                    <p className="text-3xl font-bold text-red-600">{kpis.unresponsive}</p>
+                  </div>
+                  <XCircle className="h-8 w-8 text-red-600" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card 
+              className={`cursor-pointer transition-all ${activeKPI === 'deprecated' ? 'ring-2 ring-orange-500' : ''}`}
+              onClick={() => toggleKPI('deprecated')}
+            >
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Deprecated Versions</p>
+                    <p className="text-3xl font-bold text-orange-600">{kpis.deprecated}</p>
+                  </div>
+                  <AlertOctagon className="h-8 w-8 text-orange-600" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* A4. Version × Status Distribution Chart */}
+          <Card id="version-status-chart">
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Version × Status Distribution</h3>
+              <ChartContainer config={chartConfig} className="h-[400px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={versionChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis 
+                      dataKey="version" 
+                      tick={({ x, y, payload }) => {
+                        const data = versionChartData.find(d => d.version === payload.value);
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text x={0} y={0} dy={16} textAnchor="middle" fill="currentColor" fontSize={12}>
+                              {payload.value}
+                            </text>
+                            {data?.deprecated && (
+                              <text x={0} y={0} dy={30} textAnchor="middle" fill="hsl(var(--destructive))" fontSize={10}>
+                                Deprecated
+                              </text>
+                            )}
+                            {data?.recommended && (
+                              <text x={0} y={0} dy={30} textAnchor="middle" fill="hsl(142 76% 36%)" fontSize={10}>
+                                ★ Recommended
+                              </text>
+                            )}
+                          </g>
+                        );
+                      }}
+                    />
+                    <YAxis />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Legend />
+                    <Bar dataKey="active" stackId="a" fill="hsl(var(--chart-1))" name="Active" />
+                    <Bar dataKey="inactive" stackId="a" fill="hsl(var(--chart-2))" name="Inactive" />
+                    <Bar dataKey="unresponsive" stackId="a" fill="hsl(var(--chart-3))" name="Unresponsive" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </ChartContainer>
+            </CardContent>
+          </Card>
+
+          {/* A5. Risk Spotlight Strip (Conditional) */}
+          {riskSpotlight.length > 0 && (
+            <div id="risk-spotlight" className="space-y-2">
+              {riskSpotlight.map((risk, i) => (
+                <Card key={i} className={`border-l-4 ${risk.type === 'critical' ? 'border-l-red-500 bg-red-50 dark:bg-red-950/20' : 'border-l-yellow-500 bg-yellow-50 dark:bg-yellow-950/20'}`}>
+                  <CardContent className="py-3 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className={`h-5 w-5 ${risk.type === 'critical' ? 'text-red-500' : 'text-yellow-500'}`} />
+                      <span className="font-medium">{risk.message}</span>
+                    </div>
+                    <Button size="sm" variant="outline">
+                      <Plus className="h-4 w-4 mr-1" />
+                      Create Task
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* A6. View Toggle + Action Bar */}
+          <div id="view-action-bar" className="flex items-center justify-between py-2">
+            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as any)}>
+              <ToggleGroupItem value="visual" aria-label="Visual view">
+                <LayoutGrid className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="table" aria-label="Table view">
+                <TableIcon className="h-4 w-4" />
+              </ToggleGroupItem>
+              <ToggleGroupItem value="list" aria-label="List view">
+                <List className="h-4 w-4" />
+              </ToggleGroupItem>
+            </ToggleGroup>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Create Update Task
+              </Button>
+            </div>
+          </div>
+
+          {/* A7. Data View Area */}
+          <div id="fleet-data-view">
+            {viewMode === "visual" && (
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{((kpis.active / kpis.total) * 100).toFixed(1)}%</p>
+                      <p className="text-sm text-muted-foreground">Active Rate</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{uniqueValues.versions.length}</p>
+                      <p className="text-sm text-muted-foreground">Versions in Use</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{uniqueValues.chains.length}</p>
+                      <p className="text-sm text-muted-foreground">Theatre Chains</p>
+                    </div>
+                    <div className="text-center p-4 bg-muted rounded-lg">
+                      <p className="text-2xl font-bold">{uniqueValues.countries.length}</p>
+                      <p className="text-sm text-muted-foreground">Countries</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {viewMode === "table" && (
+              <DataTable
+                data={filteredData}
+                columns={columns}
+                searchable
+                searchPlaceholder="Search by Node ID, Theatre..."
+                actions={() => tableActions}
+              />
+            )}
+
+            {viewMode === "list" && (
+              <Card>
+                <CardContent className="pt-4 divide-y">
+                  {filteredData.slice(0, 50).map(node => (
+                    <div key={node.id} id="fleet-list" className="py-2 flex items-center gap-4 font-mono text-sm">
+                      <span className={`w-3 h-3 rounded-full ${
+                        node.status === 'Active' ? 'bg-green-500' : 
+                        node.status === 'Inactive' ? 'bg-yellow-500' : 'bg-red-500'
+                      }`} />
+                      <span className="font-medium w-32">{node.nodeId}</span>
+                      <span className="text-muted-foreground w-20">{node.version}</span>
+                      <Badge variant={node.status === "Active" ? "default" : node.status === "Inactive" ? "secondary" : "destructive"} className="w-24 justify-center">
+                        {node.status}
+                      </Badge>
+                      <span className="text-muted-foreground flex-1">{node.city}, {node.state}, {node.country}</span>
+                      <span className="text-muted-foreground text-xs">{formatDateTime(node.lastHeartbeat)}</span>
+                    </div>
+                  ))}
+                  {filteredData.length > 50 && (
+                    <div className="py-4 text-center text-muted-foreground">
+                      Showing 50 of {filteredData.length} nodes. Use filters to narrow results.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        </>
+      )}
+
+      {!selectedImage && (
+        <Card className="p-12 text-center">
+          <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Select an OS / Agent / App</h3>
+          <p className="text-muted-foreground">Choose an application from the dropdown above to view fleet status</p>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default FleetStatus;
