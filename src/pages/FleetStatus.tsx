@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon } from "lucide-react";
+import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ import { Column, Action } from "@/components/ui/data-table/types";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { formatDate, formatDateTime } from "@/lib/dateUtils";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 // Types
 interface FleetNode {
@@ -124,15 +126,15 @@ const FleetStatus = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Filter State
-  const [countryFilter, setCountryFilter] = useState<string>("");
-  const [stateFilter, setStateFilter] = useState<string>("");
-  const [cityFilter, setCityFilter] = useState<string>("");
+  const [locationSearch, setLocationSearch] = useState<string>("");
+  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
   const [chainFilter, setChainFilter] = useState<string>("");
   const [theatreNameFilter, setTheatreNameFilter] = useState<string>("");
   const [theatreIdFilter, setTheatreIdFilter] = useState<string>("");
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
   const [versionFilters, setVersionFilters] = useState<string[]>([]);
   const [deprecatedOnly, setDeprecatedOnly] = useState(false);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   // View State
   const [viewMode, setViewMode] = useState<"visual" | "table" | "list">("table");
@@ -147,9 +149,14 @@ const FleetStatus = () => {
   const filteredData = useMemo(() => {
     let data = [...fleetData];
 
-    if (countryFilter) data = data.filter(n => n.country === countryFilter);
-    if (stateFilter) data = data.filter(n => n.state === stateFilter);
-    if (cityFilter) data = data.filter(n => n.city === cityFilter);
+    // Location filter - matches city, state, or country
+    if (selectedLocations.length > 0) {
+      data = data.filter(n => 
+        selectedLocations.some(loc => 
+          n.city === loc || n.state === loc || n.country === loc
+        )
+      );
+    }
     if (chainFilter) data = data.filter(n => n.theatreChain === chainFilter);
     if (theatreNameFilter) data = data.filter(n => n.theatreName.toLowerCase().includes(theatreNameFilter.toLowerCase()));
     if (theatreIdFilter) data = data.filter(n => n.theatreId.toLowerCase().includes(theatreIdFilter.toLowerCase()));
@@ -164,7 +171,7 @@ const FleetStatus = () => {
     if (activeKPI === "deprecated") data = data.filter(n => n.deprecated);
 
     return data;
-  }, [fleetData, countryFilter, stateFilter, cityFilter, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly, activeKPI]);
+  }, [fleetData, selectedLocations, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly, activeKPI]);
 
   const versionChartData = useMemo(() => generateVersionChartData(filteredData), [filteredData]);
 
@@ -200,6 +207,74 @@ const FleetStatus = () => {
     versions: [...new Set(fleetData.map(n => n.version))],
   }), [fleetData]);
 
+  // All locations combined for smart search
+  const allLocations = useMemo(() => {
+    const locs = new Set<string>();
+    fleetData.forEach(n => {
+      locs.add(n.city);
+      locs.add(n.state);
+      locs.add(n.country);
+    });
+    return [...locs].sort();
+  }, [fleetData]);
+
+  const filteredLocations = useMemo(() => {
+    if (!locationSearch) return allLocations.filter(loc => !selectedLocations.includes(loc));
+    return allLocations.filter(loc => 
+      loc.toLowerCase().includes(locationSearch.toLowerCase()) && !selectedLocations.includes(loc)
+    );
+  }, [allLocations, locationSearch, selectedLocations]);
+
+  // Active filters for pill display
+  const activeFilters = useMemo(() => {
+    const filters: { key: string; label: string; value: string }[] = [];
+    
+    selectedLocations.forEach(loc => {
+      filters.push({ key: `location-${loc}`, label: "Location", value: loc });
+    });
+    if (chainFilter) {
+      filters.push({ key: "chain", label: "Chain", value: chainFilter });
+    }
+    if (theatreNameFilter) {
+      filters.push({ key: "theatreName", label: "Theatre Name", value: theatreNameFilter });
+    }
+    if (theatreIdFilter) {
+      filters.push({ key: "theatreId", label: "Theatre ID", value: theatreIdFilter });
+    }
+    statusFilters.forEach(status => {
+      filters.push({ key: `status-${status}`, label: "Agent / OS Status", value: status });
+    });
+    versionFilters.forEach(version => {
+      filters.push({ key: `version-${version}`, label: "Version", value: version });
+    });
+    if (deprecatedOnly) {
+      filters.push({ key: "deprecated", label: "Deprecated", value: "Only" });
+    }
+    
+    return filters;
+  }, [selectedLocations, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly]);
+
+  const removeFilter = (key: string) => {
+    if (key.startsWith("location-")) {
+      const loc = key.replace("location-", "");
+      setSelectedLocations(prev => prev.filter(l => l !== loc));
+    } else if (key === "chain") {
+      setChainFilter("");
+    } else if (key === "theatreName") {
+      setTheatreNameFilter("");
+    } else if (key === "theatreId") {
+      setTheatreIdFilter("");
+    } else if (key.startsWith("status-")) {
+      const status = key.replace("status-", "");
+      setStatusFilters(prev => prev.filter(s => s !== status));
+    } else if (key.startsWith("version-")) {
+      const version = key.replace("version-", "");
+      setVersionFilters(prev => prev.filter(v => v !== version));
+    } else if (key === "deprecated") {
+      setDeprecatedOnly(false);
+    }
+  };
+
   const handleRefresh = () => {
     setIsRefreshing(true);
     setTimeout(() => {
@@ -209,9 +284,8 @@ const FleetStatus = () => {
   };
 
   const handleResetFilters = () => {
-    setCountryFilter("");
-    setStateFilter("");
-    setCityFilter("");
+    setLocationSearch("");
+    setSelectedLocations([]);
     setChainFilter("");
     setTheatreNameFilter("");
     setTheatreIdFilter("");
@@ -288,135 +362,206 @@ const FleetStatus = () => {
 
       {selectedImage && (
         <>
-          {/* A2. Filter Panel */}
+          {/* A2. Filter Bar with Applied Filters Pills */}
           <div id="fleet-filter-panel" className="sticky top-16 z-10 bg-background border rounded-lg p-4">
-            <div className="flex flex-wrap gap-4 items-end">
-              {/* Geography */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Country</Label>
-                <Select value={countryFilter || "all"} onValueChange={(v) => setCountryFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    <SelectItem value="all">All</SelectItem>
-                    {uniqueValues.countries.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">State</Label>
-                <Select value={stateFilter || "all"} onValueChange={(v) => setStateFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    <SelectItem value="all">All</SelectItem>
-                    {uniqueValues.states.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">City</Label>
-                <Select value={cityFilter || "all"} onValueChange={(v) => setCityFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-32"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    <SelectItem value="all">All</SelectItem>
-                    {uniqueValues.cities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Theatre Hierarchy */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Theatre Chain</Label>
-                <Select value={chainFilter || "all"} onValueChange={(v) => setChainFilter(v === "all" ? "" : v)}>
-                  <SelectTrigger className="w-40"><SelectValue placeholder="All" /></SelectTrigger>
-                  <SelectContent className="bg-popover z-50">
-                    <SelectItem value="all">All</SelectItem>
-                    {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Theatre Name</Label>
-                <Input 
-                  placeholder="Search..." 
-                  value={theatreNameFilter} 
-                  onChange={(e) => setTheatreNameFilter(e.target.value)}
-                  className="w-32"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Theatre ID</Label>
-                <Input 
-                  placeholder="Search..." 
-                  value={theatreIdFilter} 
-                  onChange={(e) => setTheatreIdFilter(e.target.value)}
-                  className="w-28"
-                />
-              </div>
-
-              {/* Status Multi-select */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Status</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-32 justify-start">
-                      {statusFilters.length > 0 ? `${statusFilters.length} selected` : "All"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-40 bg-popover z-50">
-                    {["Active", "Inactive", "Unresponsive"].map(status => (
-                      <div key={status} className="flex items-center gap-2 py-1">
-                        <Checkbox 
-                          checked={statusFilters.includes(status)}
-                          onCheckedChange={(checked) => {
-                            if (checked) setStatusFilters([...statusFilters, status]);
-                            else setStatusFilters(statusFilters.filter(s => s !== status));
-                          }}
-                        />
-                        <Label className="text-sm">{status}</Label>
-                      </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex-1 flex items-center gap-2 flex-wrap">
+                {activeFilters.length > 0 ? (
+                  <>
+                    {activeFilters.map(filter => (
+                      <Badge 
+                        key={filter.key} 
+                        variant="secondary" 
+                        className="flex items-center gap-1 pl-2 pr-1 py-1"
+                      >
+                        <span className="text-xs text-muted-foreground">{filter.label}:</span>
+                        <span className="text-xs font-medium">{filter.value}</span>
+                        <button 
+                          onClick={() => removeFilter(filter.key)}
+                          className="ml-1 hover:bg-muted rounded p-0.5"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
                     ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Version Multi-select */}
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Version</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="w-32 justify-start">
-                      {versionFilters.length > 0 ? `${versionFilters.length} selected` : "All"}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleResetFilters}
+                      className="text-xs text-muted-foreground"
+                    >
+                      Clear All
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 bg-popover z-50 max-h-60 overflow-y-auto">
-                    {uniqueValues.versions.map(version => (
-                      <div key={version} className="flex items-center gap-2 py-1">
-                        <Checkbox 
-                          checked={versionFilters.includes(version)}
-                          onCheckedChange={(checked) => {
-                            if (checked) setVersionFilters([...versionFilters, version]);
-                            else setVersionFilters(versionFilters.filter(v => v !== version));
-                          }}
-                        />
-                        <Label className="text-sm flex items-center gap-1">
-                          {version}
-                          {(version === "v3.9.2" || version === "v3.8.1") && <Badge variant="destructive" className="text-xs">Deprecated</Badge>}
-                        </Label>
+                  </>
+                ) : (
+                  <span className="text-sm text-muted-foreground">No filters applied</span>
+                )}
+              </div>
+              
+              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <Filter className="h-4 w-4 mr-2" />
+                    Filters
+                    {activeFilters.length > 0 && (
+                      <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">
+                        {activeFilters.length}
+                      </Badge>
+                    )}
+                  </Button>
+                </SheetTrigger>
+                <SheetContent className="w-[400px] sm:w-[450px]">
+                  <SheetHeader>
+                    <SheetTitle>Filters</SheetTitle>
+                  </SheetHeader>
+                  <ScrollArea className="h-[calc(100vh-120px)] mt-6 pr-4">
+                    <div className="space-y-6">
+                      {/* Theatre Location - Smart Search */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Theatre Location</Label>
+                        <div className="space-y-2">
+                          <Input 
+                            placeholder="Search city, state, or country..." 
+                            value={locationSearch}
+                            onChange={(e) => setLocationSearch(e.target.value)}
+                          />
+                          {selectedLocations.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {selectedLocations.map(loc => (
+                                <Badge key={loc} variant="secondary" className="flex items-center gap-1">
+                                  {loc}
+                                  <button 
+                                    onClick={() => setSelectedLocations(prev => prev.filter(l => l !== loc))}
+                                    className="hover:bg-muted rounded p-0.5"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </Badge>
+                              ))}
+                            </div>
+                          )}
+                          {locationSearch && filteredLocations.length > 0 && (
+                            <div className="border rounded-md max-h-40 overflow-y-auto">
+                              {filteredLocations.slice(0, 10).map(loc => (
+                                <button
+                                  key={loc}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                                  onClick={() => {
+                                    setSelectedLocations(prev => [...prev, loc]);
+                                    setLocationSearch("");
+                                  }}
+                                >
+                                  {loc}
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    ))}
-                  </PopoverContent>
-                </Popover>
-              </div>
 
-              {/* Deprecated Toggle */}
-              <div className="flex items-center gap-2">
-                <Checkbox checked={deprecatedOnly} onCheckedChange={(checked) => setDeprecatedOnly(!!checked)} />
-                <Label className="text-sm">Deprecated only</Label>
-              </div>
+                      {/* Theatre Hierarchy */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Theatre Hierarchy</Label>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Theatre Chain</Label>
+                            <Select value={chainFilter || "all"} onValueChange={(v) => setChainFilter(v === "all" ? "" : v)}>
+                              <SelectTrigger><SelectValue placeholder="All Chains" /></SelectTrigger>
+                              <SelectContent className="bg-popover z-50">
+                                <SelectItem value="all">All Chains</SelectItem>
+                                {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Theatre Name</Label>
+                            <Input 
+                              placeholder="Search theatre name..." 
+                              value={theatreNameFilter} 
+                              onChange={(e) => setTheatreNameFilter(e.target.value)}
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <Label className="text-xs text-muted-foreground">Theatre ID</Label>
+                            <Input 
+                              placeholder="Search theatre ID..." 
+                              value={theatreIdFilter} 
+                              onChange={(e) => setTheatreIdFilter(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                      </div>
 
-              {/* Actions */}
-              <Button variant="ghost" size="sm" onClick={handleResetFilters}>Reset Filters</Button>
-              <Button variant="outline" size="sm">Save View</Button>
+                      {/* Agent / OS Status Multi-select */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Agent / OS Status</Label>
+                        <div className="space-y-2">
+                          {["Active", "Inactive", "Unresponsive"].map(status => (
+                            <div key={status} className="flex items-center gap-2">
+                              <Checkbox 
+                                id={`status-${status}`}
+                                checked={statusFilters.includes(status)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) setStatusFilters([...statusFilters, status]);
+                                  else setStatusFilters(statusFilters.filter(s => s !== status));
+                                }}
+                              />
+                              <Label htmlFor={`status-${status}`} className="text-sm cursor-pointer">{status}</Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Version Multi-select */}
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium">Version</Label>
+                        <div className="space-y-2">
+                          {uniqueValues.versions.map(version => (
+                            <div key={version} className="flex items-center gap-2">
+                              <Checkbox 
+                                id={`version-${version}`}
+                                checked={versionFilters.includes(version)}
+                                onCheckedChange={(checked) => {
+                                  if (checked) setVersionFilters([...versionFilters, version]);
+                                  else setVersionFilters(versionFilters.filter(v => v !== version));
+                                }}
+                              />
+                              <Label htmlFor={`version-${version}`} className="text-sm cursor-pointer flex items-center gap-1">
+                                {version}
+                                {(version === "v3.9.2" || version === "v3.8.1") && (
+                                  <Badge variant="destructive" className="text-xs">Deprecated</Badge>
+                                )}
+                              </Label>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Deprecated Toggle */}
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <Checkbox 
+                            id="deprecated-only"
+                            checked={deprecatedOnly} 
+                            onCheckedChange={(checked) => setDeprecatedOnly(!!checked)} 
+                          />
+                          <Label htmlFor="deprecated-only" className="text-sm cursor-pointer">Deprecated only</Label>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="flex gap-2 pt-4 border-t">
+                        <Button variant="outline" className="flex-1" onClick={handleResetFilters}>
+                          Reset All
+                        </Button>
+                        <Button className="flex-1" onClick={() => setIsFilterOpen(false)}>
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </div>
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
 
