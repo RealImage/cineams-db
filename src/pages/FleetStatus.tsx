@@ -528,9 +528,9 @@ const FleetStatus = () => {
                     <YAxis />
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Legend />
-                    <Bar dataKey="active" stackId="a" fill="hsl(var(--chart-1))" name="Active" />
-                    <Bar dataKey="inactive" stackId="a" fill="hsl(var(--chart-2))" name="Inactive" />
-                    <Bar dataKey="unresponsive" stackId="a" fill="hsl(var(--chart-3))" name="Unresponsive" />
+                    <Bar dataKey="active" stackId="a" fill="hsl(142 76% 36%)" name="Active" />
+                    <Bar dataKey="inactive" stackId="a" fill="hsl(25 95% 53%)" name="Inactive" />
+                    <Bar dataKey="unresponsive" stackId="a" fill="hsl(0 84% 60%)" name="Unresponsive" />
                   </BarChart>
                 </ResponsiveContainer>
               </ChartContainer>
