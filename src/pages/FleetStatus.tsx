@@ -16,6 +16,7 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { formatDate, formatDateTime } from "@/lib/dateUtils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 // Types
 interface FleetNode {
@@ -32,6 +33,9 @@ interface FleetNode {
   deprecated: boolean;
   lastHeartbeat: string;
   lastUpdateTask: string | null;
+  alternateNames: string[];
+  uuid: string;
+  address: string;
 }
 
 interface VersionData {
@@ -66,10 +70,22 @@ const generateMockFleetData = (imageId: string): FleetNode[] => {
   const versions = ["v4.1.9", "v4.1.8", "v4.1.7", "v4.0.5", "v3.9.2", "v3.8.1"];
   const statuses: ("Active" | "Inactive" | "Unresponsive")[] = ["Active", "Inactive", "Unresponsive"];
 
+  const alternateNamesOptions = [
+    ["GA Cinema", "Grand Theatre"],
+    ["Metro Movies", "City Cinema"],
+    ["Star Cinema", "Premium Theatre"],
+    ["Galaxy Films", "Space Cinema"],
+  ];
+  const streetNames = ["Grand Ave", "Main St", "Broadway", "Cinema Blvd", "Theatre Way"];
+  const zipCodes = ["90012", "10001", "75201", "33101", "M5V 1J1", "SW1A 1AA"];
+
   return Array.from({ length: 250 }, (_, i) => {
     const status = statuses[Math.floor(Math.random() * (i < 200 ? 1 : 3))];
     const version = versions[Math.floor(Math.random() * versions.length)];
     const deprecated = version === "v3.9.2" || version === "v3.8.1";
+    const city = cities[Math.floor(Math.random() * cities.length)];
+    const state = states[Math.floor(Math.random() * states.length)];
+    const country = countries[Math.floor(Math.random() * countries.length)];
     
     return {
       id: `node-${imageId}-${i}`,
@@ -77,14 +93,17 @@ const generateMockFleetData = (imageId: string): FleetNode[] => {
       theatreChain: chains[Math.floor(Math.random() * chains.length)],
       theatreName: `Theatre ${i + 1}`,
       theatreId: `TH-${String(i + 1).padStart(4, '0')}`,
-      city: cities[Math.floor(Math.random() * cities.length)],
-      state: states[Math.floor(Math.random() * states.length)],
-      country: countries[Math.floor(Math.random() * countries.length)],
+      city,
+      state,
+      country,
       version,
       status,
       deprecated,
       lastHeartbeat: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
       lastUpdateTask: Math.random() > 0.5 ? `TASK-${Math.floor(Math.random() * 1000)}` : null,
+      alternateNames: alternateNamesOptions[Math.floor(Math.random() * alternateNamesOptions.length)],
+      uuid: `${Math.random().toString(36).substring(2, 10)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 14)}`,
+      address: `${Math.floor(Math.random() * 999) + 1} ${streetNames[Math.floor(Math.random() * streetNames.length)]}, ${city}, ${state} ${zipCodes[Math.floor(Math.random() * zipCodes.length)]}`,
     };
   });
 };
@@ -303,10 +322,32 @@ const FleetStatus = () => {
   const columns: Column<FleetNode>[] = [
     { accessor: "nodeId", header: "Node ID", sortable: true },
     { accessor: "theatreChain", header: "Theatre Chain", sortable: true, filterable: true, filterOptions: uniqueValues.chains },
-    { accessor: "theatreName", header: "Theatre Name", sortable: true },
-    { accessor: "city", header: "City", sortable: true },
-    { accessor: "state", header: "State", sortable: true },
-    { accessor: "country", header: "Country", sortable: true, filterable: true, filterOptions: uniqueValues.countries },
+    { accessor: "theatreName", header: "Theatre Name", sortable: true, cell: (row) => (
+      <HoverCard>
+        <HoverCardTrigger asChild>
+          <div className="cursor-pointer">
+            <div className="font-medium">{row.theatreName}</div>
+            <div className="text-xs text-muted-foreground">{row.city}, {row.state}, {row.country}</div>
+          </div>
+        </HoverCardTrigger>
+        <HoverCardContent className="w-80">
+          <div className="space-y-2">
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">Alternate Names: </span>
+              <span className="text-sm">{row.alternateNames.join(", ")}</span>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">UUID: </span>
+              <span className="text-sm font-mono">{row.uuid}</span>
+            </div>
+            <div>
+              <span className="text-sm font-medium text-muted-foreground">Address: </span>
+              <span className="text-sm">{row.address}</span>
+            </div>
+          </div>
+        </HoverCardContent>
+      </HoverCard>
+    )},
     { accessor: "version", header: "Version", sortable: true, cell: (row) => (
       <div className="flex items-center gap-2">
         <span>{row.version}</span>
