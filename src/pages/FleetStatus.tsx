@@ -713,7 +713,7 @@ const FleetStatus = () => {
                     />
                     <YAxis />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
+                    <Legend wrapperStyle={{ paddingTop: '10px' }} />
                     <Bar dataKey="active" stackId="a" fill="hsl(142 76% 36%)" name="Active" />
                     <Bar dataKey="inactive" stackId="a" fill="hsl(25 95% 53%)" name="Inactive" />
                     <Bar dataKey="unresponsive" stackId="a" fill="hsl(0 84% 60%)" name="Unresponsive" />
