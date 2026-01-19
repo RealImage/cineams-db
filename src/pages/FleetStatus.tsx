@@ -789,8 +789,8 @@ const FleetStatus = () => {
                       <p className="text-sm text-muted-foreground">Versions in Use</p>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
-                      <p className="text-2xl font-bold">{uniqueValues.chains.length}</p>
-                      <p className="text-sm text-muted-foreground">Theatre Chains</p>
+                      <p className="text-2xl font-bold">{filteredData.length}</p>
+                      <p className="text-sm text-muted-foreground">Theatres</p>
                     </div>
                     <div className="text-center p-4 bg-muted rounded-lg">
                       <p className="text-2xl font-bold">{uniqueValues.countries.length}</p>
