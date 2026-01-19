@@ -47,18 +47,18 @@ interface VersionData {
   isDefault: boolean;
 }
 
-// Mock images data
+// Mock images data with specific versions per OS/Agent
 const mockImages = [
-  { id: "1", name: "WireOS", provider: "Appliance OS", defaultVersion: "v4.1.9" },
-  { id: "2", name: "QWA-OS", provider: "Appliance OS", defaultVersion: "v4.1.8" },
-  { id: "3", name: "PartnerOS", provider: "Appliance OS", defaultVersion: "v4.1.7" },
-  { id: "4", name: "iCount", provider: "iCount", defaultVersion: "v4.1.9" },
-  { id: "5", name: "Qlog Agent", provider: "Qlog", defaultVersion: "v4.0.5" },
-  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire", defaultVersion: "v4.1.9" },
-  { id: "7", name: "Agent Redux", provider: "Qube Wire", defaultVersion: "v4.1.8" },
-  { id: "8", name: "Manifest Agent", provider: "Qube Wire", defaultVersion: "v4.1.7" },
-  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire", defaultVersion: "v4.1.9" },
-  { id: "10", name: "KDM Agent", provider: "Qube Wire", defaultVersion: "v4.0.5" },
+  { id: "1", name: "WireOS", provider: "Appliance OS", defaultVersion: "v2.4.1", versions: ["v2.4.1", "v2.4.0", "v2.3.5", "v2.3.0", "v2.2.1", "v2.1.0"] },
+  { id: "2", name: "QWA-OS", provider: "Appliance OS", defaultVersion: "v3.1.2", versions: ["v3.1.2", "v3.1.0", "v3.0.8", "v3.0.5", "v2.9.1", "v2.8.0"] },
+  { id: "3", name: "PartnerOS", provider: "Appliance OS", defaultVersion: "v1.8.0", versions: ["v1.8.0", "v1.7.5", "v1.7.0", "v1.6.2", "v1.5.0", "v1.4.3"] },
+  { id: "4", name: "iCount", provider: "iCount", defaultVersion: "v5.2.0", versions: ["v5.2.0", "v5.1.3", "v5.1.0", "v5.0.2", "v4.9.1", "v4.8.0"] },
+  { id: "5", name: "Qlog Agent", provider: "Qlog", defaultVersion: "v2.1.4", versions: ["v2.1.4", "v2.1.0", "v2.0.5", "v2.0.0", "v1.9.2", "v1.8.1"] },
+  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire", defaultVersion: "v1.3.0", versions: ["v1.3.0", "v1.2.5", "v1.2.0", "v1.1.3", "v1.0.5", "v1.0.0"] },
+  { id: "7", name: "Agent Redux", provider: "Qube Wire", defaultVersion: "v4.0.2", versions: ["v4.0.2", "v4.0.0", "v3.9.5", "v3.9.0", "v3.8.2", "v3.7.0"] },
+  { id: "8", name: "Manifest Agent", provider: "Qube Wire", defaultVersion: "v2.5.1", versions: ["v2.5.1", "v2.5.0", "v2.4.3", "v2.4.0", "v2.3.1", "v2.2.0"] },
+  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire", defaultVersion: "v3.2.0", versions: ["v3.2.0", "v3.1.5", "v3.1.0", "v3.0.3", "v2.9.0", "v2.8.2"] },
+  { id: "10", name: "KDM Agent", provider: "Qube Wire", defaultVersion: "v1.6.2", versions: ["v1.6.2", "v1.6.0", "v1.5.4", "v1.5.0", "v1.4.1", "v1.3.0"] },
 ];
 
 // Mock fleet data generator
@@ -67,7 +67,12 @@ const generateMockFleetData = (imageId: string): FleetNode[] => {
   const countries = ["USA", "Canada", "Mexico", "Brazil", "UK"];
   const states = ["California", "Texas", "New York", "Florida", "Ontario", "London"];
   const cities = ["Los Angeles", "Dallas", "New York City", "Miami", "Toronto", "London"];
-  const versions = ["v4.1.9", "v4.1.8", "v4.1.7", "v4.0.5", "v3.9.2", "v3.8.1"];
+  
+  // Get versions specific to the selected image
+  const selectedImage = mockImages.find(img => img.id === imageId);
+  const versions = selectedImage?.versions || ["v1.0.0", "v1.0.1", "v1.0.2", "v1.0.3", "v1.0.4", "v1.0.5"];
+  const deprecatedVersions = versions.slice(-2); // Last 2 versions are deprecated
+  
   const statuses: ("Active" | "Inactive" | "Unresponsive")[] = ["Active", "Inactive", "Unresponsive"];
 
   const alternateNamesOptions = [
@@ -82,7 +87,7 @@ const generateMockFleetData = (imageId: string): FleetNode[] => {
   return Array.from({ length: 250 }, (_, i) => {
     const status = statuses[Math.floor(Math.random() * (i < 200 ? 1 : 3))];
     const version = versions[Math.floor(Math.random() * versions.length)];
-    const deprecated = version === "v3.9.2" || version === "v3.8.1";
+    const deprecated = deprecatedVersions.includes(version);
     const city = cities[Math.floor(Math.random() * cities.length)];
     const state = states[Math.floor(Math.random() * states.length)];
     const country = countries[Math.floor(Math.random() * countries.length)];
@@ -687,7 +692,7 @@ const FleetStatus = () => {
               <h3 className="text-lg font-semibold mb-4">Version × Status Distribution</h3>
               <ChartContainer config={chartConfig} className="h-[400px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={versionChartData} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <BarChart data={versionChartData} margin={{ top: 20, right: 30, left: 20, bottom: 40 }}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis 
                       dataKey="version" 
