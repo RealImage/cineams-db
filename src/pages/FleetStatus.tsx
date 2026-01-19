@@ -44,21 +44,21 @@ interface VersionData {
   inactive: number;
   unresponsive: number;
   deprecated: boolean;
-  recommended: boolean;
+  isDefault: boolean;
 }
 
 // Mock images data
 const mockImages = [
-  { id: "1", name: "WireOS", provider: "Appliance OS" },
-  { id: "2", name: "QWA-OS", provider: "Appliance OS" },
-  { id: "3", name: "PartnerOS", provider: "Appliance OS" },
-  { id: "4", name: "iCount", provider: "iCount" },
-  { id: "5", name: "Qlog Agent", provider: "Qlog" },
-  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire" },
-  { id: "7", name: "Agent Redux", provider: "Qube Wire" },
-  { id: "8", name: "Manifest Agent", provider: "Qube Wire" },
-  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire" },
-  { id: "10", name: "KDM Agent", provider: "Qube Wire" },
+  { id: "1", name: "WireOS", provider: "Appliance OS", defaultVersion: "v4.1.9" },
+  { id: "2", name: "QWA-OS", provider: "Appliance OS", defaultVersion: "v4.1.8" },
+  { id: "3", name: "PartnerOS", provider: "Appliance OS", defaultVersion: "v4.1.7" },
+  { id: "4", name: "iCount", provider: "iCount", defaultVersion: "v4.1.9" },
+  { id: "5", name: "Qlog Agent", provider: "Qlog", defaultVersion: "v4.0.5" },
+  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire", defaultVersion: "v4.1.9" },
+  { id: "7", name: "Agent Redux", provider: "Qube Wire", defaultVersion: "v4.1.8" },
+  { id: "8", name: "Manifest Agent", provider: "Qube Wire", defaultVersion: "v4.1.7" },
+  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire", defaultVersion: "v4.1.9" },
+  { id: "10", name: "KDM Agent", provider: "Qube Wire", defaultVersion: "v4.0.5" },
 ];
 
 // Mock fleet data generator
@@ -109,7 +109,7 @@ const generateMockFleetData = (imageId: string): FleetNode[] => {
 };
 
 // Generate version chart data
-const generateVersionChartData = (nodes: FleetNode[]): VersionData[] => {
+const generateVersionChartData = (nodes: FleetNode[], defaultVersion: string): VersionData[] => {
   const versionMap = new Map<string, VersionData>();
   
   nodes.forEach(node => {
@@ -120,7 +120,7 @@ const generateVersionChartData = (nodes: FleetNode[]): VersionData[] => {
         inactive: 0,
         unresponsive: 0,
         deprecated: node.deprecated,
-        recommended: node.version === "v4.1.9",
+        isDefault: node.version === defaultVersion,
       });
     }
     const data = versionMap.get(node.version)!;
@@ -192,7 +192,8 @@ const FleetStatus = () => {
     return data;
   }, [fleetData, selectedLocations, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly, activeKPI]);
 
-  const versionChartData = useMemo(() => generateVersionChartData(filteredData), [filteredData]);
+  const selectedImageData = mockImages.find(img => img.id === selectedImage);
+  const versionChartData = useMemo(() => generateVersionChartData(filteredData, selectedImageData?.defaultVersion || "v4.1.9"), [filteredData, selectedImageData]);
 
   // KPIs
   const kpis = useMemo(() => ({
@@ -702,9 +703,9 @@ const FleetStatus = () => {
                                 Deprecated
                               </text>
                             )}
-                            {data?.recommended && (
+                            {data?.isDefault && (
                               <text x={0} y={0} dy={30} textAnchor="middle" fill="hsl(142 76% 36%)" fontSize={10}>
-                                ★ Recommended
+                                ★ Default
                               </text>
                             )}
                           </g>
