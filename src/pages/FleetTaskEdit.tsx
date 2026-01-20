@@ -5,7 +5,7 @@ import { formatDateTime } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AddApplianceDialog } from "@/components/fleet/AddApplianceDialog";
+import { EditTaskDialog, TaskData } from "@/components/fleet/EditTaskDialog";
 import { toast } from "sonner";
 
 export interface TaskAppliance {
@@ -96,10 +97,12 @@ const getStatusColor = (status: TaskAppliance["updateStatus"]) => {
 const FleetTaskEdit = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const taskData = location.state?.taskData;
+  const initialTaskData = location.state?.taskData;
 
+  const [taskData, setTaskData] = useState<TaskData | null>(initialTaskData);
   const [appliances, setAppliances] = useState<TaskAppliance[]>(mockAppliances);
   const [addApplianceOpen, setAddApplianceOpen] = useState(false);
+  const [editTaskOpen, setEditTaskOpen] = useState(false);
 
   // If no task data, redirect back
   if (!taskData) {
@@ -130,6 +133,10 @@ const FleetTaskEdit = () => {
     toast.success("Appliance added to task");
   };
 
+  const handleEditTask = (updatedTaskData: TaskData) => {
+    setTaskData(updatedTaskData);
+  };
+
   const handleSaveTask = () => {
     toast.success("Task saved successfully");
     navigate("/fleet-management");
@@ -150,7 +157,13 @@ const FleetTaskEdit = () => {
       {/* Task Details Section */}
       <Card>
         <CardHeader>
-          <CardTitle>Task Details</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Task Details</CardTitle>
+            <Button variant="outline" size="sm" onClick={() => setEditTaskOpen(true)}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -287,6 +300,15 @@ const FleetTaskEdit = () => {
         onAddAppliance={handleAddAppliance}
         existingApplianceIds={appliances.map(a => a.id)}
       />
+
+      {taskData && (
+        <EditTaskDialog
+          open={editTaskOpen}
+          onOpenChange={setEditTaskOpen}
+          taskData={taskData}
+          onSaveTask={handleEditTask}
+        />
+      )}
     </div>
   );
 };
