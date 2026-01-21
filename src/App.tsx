@@ -46,6 +46,7 @@ const App = () => (
             <Route path="/fleet-management/images" element={<ImageManagement />} />
             <Route path="/fleet-management/images/:imageId/versions" element={<ManageVersions />} />
             <Route path="/fleet-management/task/new" element={<FleetTaskEdit />} />
+            <Route path="/fleet-management/task/:id/edit" element={<FleetTaskEdit />} />
             <Route path="/fleet-management/task/:id/view" element={<FleetTaskView />} />
             <Route path="/reports" element={<Reports />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

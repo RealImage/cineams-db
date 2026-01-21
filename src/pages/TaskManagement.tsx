@@ -212,7 +212,21 @@ const TaskManagement = () => {
       {
         label: "Edit",
         icon: <Edit className="h-4 w-4" />,
-        onClick: (row) => navigate(`/fleet-management/task/${row.id}/edit`),
+        onClick: (row) => navigate(`/fleet-management/task/${row.id}/edit`, { 
+          state: { 
+            taskData: {
+              taskType: row.taskType,
+              targetVersion: row.targetVersion || "",
+              partnerOSVersion: row.taskType === "PartnerOS Update" ? row.targetVersion : "",
+              agentName: "",
+              agentTargetVersion: "",
+              triggerDate: row.triggerDate.split(" ")[0],
+              triggerTime: row.triggerDate.split(" ")[1] || "10:00",
+              triggerTimezone: row.triggerTimezone,
+              description: row.description,
+            }
+          } 
+        }),
       },
     ];
 
