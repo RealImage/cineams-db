@@ -1,28 +1,13 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { format, parse } from "date-fns";
 import { useLocation, useNavigate } from "react-router-dom";
-import { formatDateTime } from "@/lib/dateUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Trash2, Pencil } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { ArrowLeft, Plus, Pencil } from "lucide-react";
 import { AddApplianceDialog } from "@/components/fleet/AddApplianceDialog";
 import { EditTaskDialog, TaskData } from "@/components/fleet/EditTaskDialog";
+import { TargetAppliancesTable } from "@/components/fleet/TargetAppliancesTable";
 import { toast } from "sonner";
 
 export interface TaskAppliance {
@@ -77,22 +62,6 @@ const mockAppliances: TaskAppliance[] = [
   },
 ];
 
-const getStatusColor = (status: TaskAppliance["updateStatus"]) => {
-  switch (status) {
-    case "Completed":
-      return "bg-green-500/10 text-green-600 border-green-500/20";
-    case "In Progress":
-      return "bg-blue-500/10 text-blue-600 border-blue-500/20";
-    case "Pending":
-      return "bg-yellow-500/10 text-yellow-600 border-yellow-500/20";
-    case "Failed":
-      return "bg-red-500/10 text-red-600 border-red-500/20";
-    case "Cancelled":
-      return "bg-gray-500/10 text-gray-600 border-gray-500/20";
-    default:
-      return "";
-  }
-};
 
 const FleetTaskEdit = () => {
   const location = useLocation();
@@ -118,9 +87,6 @@ const FleetTaskEdit = () => {
     );
   }
 
-  const formatLocation = (loc: { city: string; state: string; country: string }) => {
-    return `${loc.city}, ${loc.state}, ${loc.country}`;
-  };
 
   const handleRemoveAppliance = (id: string) => {
     setAppliances(prev => prev.filter(app => app.id !== id));
@@ -220,77 +186,10 @@ const FleetTaskEdit = () => {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Appliance Serial Number</TableHead>
-                  <TableHead>Node ID</TableHead>
-                  <TableHead>Theatre Name</TableHead>
-                  <TableHead>Chain Name</TableHead>
-                  <TableHead>Update Status</TableHead>
-                  <TableHead>Updated On</TableHead>
-                  <TableHead className="w-[50px]"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appliances.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                      No appliances added. Click "Add Appliance" to add appliances to this task.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  appliances.map((appliance) => (
-                    <TableRow key={appliance.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{appliance.applianceSerialNumber}</div>
-                          <div className="text-sm text-muted-foreground">{appliance.hardwareSerialNumber}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{appliance.nodeId}</div>
-                          <div className="text-sm text-muted-foreground">{appliance.clusterName}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{appliance.theatreName}</div>
-                          <div className="text-sm text-muted-foreground">{formatLocation(appliance.theatreLocation)}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{appliance.chainName}</div>
-                          <div className="text-sm text-muted-foreground">{formatLocation(appliance.chainAddress)}</div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className={getStatusColor(appliance.updateStatus)}>
-                          {appliance.updateStatus}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {formatDateTime(appliance.updatedOn)}
-                      </TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveAppliance(appliance.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          <TargetAppliancesTable
+            appliances={appliances}
+            onRemoveAppliance={handleRemoveAppliance}
+          />
         </CardContent>
       </Card>
 
