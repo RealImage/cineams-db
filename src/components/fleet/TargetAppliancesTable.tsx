@@ -130,7 +130,7 @@ export const TargetAppliancesTable = ({
     }
   };
 
-  const FilterPopover = ({
+  const SearchableFilterPopover = ({
     label,
     values,
     selectedValues,
@@ -140,45 +140,80 @@ export const TargetAppliancesTable = ({
     values: string[];
     selectedValues: string[];
     onToggle: (value: string) => void;
-  }) => (
-    <Popover>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className={selectedValues.length > 0 ? "border-primary" : ""}
-        >
-          {label}
+  }) => {
+    const [filterSearch, setFilterSearch] = useState("");
+
+    const filteredValues = useMemo(() => {
+      if (!filterSearch) return values;
+      const searchLower = filterSearch.toLowerCase();
+      return values.filter((v) => v.toLowerCase().includes(searchLower));
+    }, [values, filterSearch]);
+
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className={selectedValues.length > 0 ? "border-primary" : ""}
+          >
+            {label}
+            {selectedValues.length > 0 && (
+              <Badge variant="secondary" className="ml-2 h-5 px-1.5">
+                {selectedValues.length}
+              </Badge>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-0 bg-popover z-50" align="start">
+          <div className="p-2 border-b">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder={`Search ${label.toLowerCase()}...`}
+                value={filterSearch}
+                onChange={(e) => setFilterSearch(e.target.value)}
+                className="pl-8 h-8"
+              />
+            </div>
+          </div>
+          <div className="max-h-64 overflow-y-auto p-1">
+            {filteredValues.length === 0 ? (
+              <p className="text-sm text-muted-foreground p-3 text-center">
+                {values.length === 0 ? "No options available" : "No matches found"}
+              </p>
+            ) : (
+              filteredValues.map((value) => (
+                <div
+                  key={value}
+                  className="flex items-center space-x-2 p-2 hover:bg-muted rounded cursor-pointer"
+                  onClick={() => onToggle(value)}
+                >
+                  <Checkbox
+                    checked={selectedValues.includes(value)}
+                    onCheckedChange={() => onToggle(value)}
+                  />
+                  <span className="text-sm truncate flex-1">{value}</span>
+                </div>
+              ))
+            )}
+          </div>
           {selectedValues.length > 0 && (
-            <Badge variant="secondary" className="ml-2 h-5 px-1.5">
-              {selectedValues.length}
-            </Badge>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-64 p-2 bg-popover z-50" align="start">
-        <div className="max-h-64 overflow-y-auto space-y-1">
-          {values.length === 0 ? (
-            <p className="text-sm text-muted-foreground p-2">No options available</p>
-          ) : (
-            values.map((value) => (
-              <div
-                key={value}
-                className="flex items-center space-x-2 p-2 hover:bg-muted rounded cursor-pointer"
-                onClick={() => onToggle(value)}
+            <div className="p-2 border-t">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full h-7 text-xs"
+                onClick={() => selectedValues.forEach((v) => onToggle(v))}
               >
-                <Checkbox
-                  checked={selectedValues.includes(value)}
-                  onCheckedChange={() => onToggle(value)}
-                />
-                <span className="text-sm truncate">{value}</span>
-              </div>
-            ))
+                Clear selection ({selectedValues.length})
+              </Button>
+            </div>
           )}
-        </div>
-      </PopoverContent>
-    </Popover>
-  );
+        </PopoverContent>
+      </Popover>
+    );
+  };
 
   return (
     <div className="space-y-4">
@@ -194,19 +229,19 @@ export const TargetAppliancesTable = ({
           />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <FilterPopover
+          <SearchableFilterPopover
             label="Location"
             values={uniqueLocations}
             selectedValues={locationFilter}
             onToggle={(v) => toggleFilterValue(locationFilter, v, setLocationFilter)}
           />
-          <FilterPopover
+          <SearchableFilterPopover
             label="Chain"
             values={uniqueChains}
             selectedValues={chainFilter}
             onToggle={(v) => toggleFilterValue(chainFilter, v, setChainFilter)}
           />
-          <FilterPopover
+          <SearchableFilterPopover
             label="Cluster"
             values={uniqueClusters}
             selectedValues={clusterFilter}
