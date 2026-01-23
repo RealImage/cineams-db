@@ -121,10 +121,15 @@ const FleetTaskEdit = () => {
     toast.success("Appliance removed from task");
   };
 
-  const handleAddAppliance = (appliance: TaskAppliance) => {
-    setAppliances(prev => [...prev, appliance]);
+  const handleAddAppliance = (newAppliances: TaskAppliance[]) => {
+    setAppliances(prev => {
+      // Filter out duplicates
+      const existingIds = new Set(prev.map(a => a.id));
+      const uniqueNew = newAppliances.filter(a => !existingIds.has(a.id));
+      return [...prev, ...uniqueNew];
+    });
     setAddApplianceOpen(false);
-    toast.success("Appliance added to task");
+    toast.success(`${newAppliances.length} appliance(s) added to task`);
   };
 
   const handleEditTask = (updatedTaskData: TaskData) => {
