@@ -67,9 +67,37 @@ const FleetTaskEdit = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const initialTaskData = location.state?.taskData;
+  const initialAppliances = location.state?.appliances;
 
   const [taskData, setTaskData] = useState<TaskData | null>(initialTaskData);
-  const [appliances, setAppliances] = useState<TaskAppliance[]>(mockAppliances);
+  
+  // Convert incoming appliances to TaskAppliance format or use mock data
+  const [appliances, setAppliances] = useState<TaskAppliance[]>(() => {
+    if (initialAppliances && Array.isArray(initialAppliances)) {
+      return initialAppliances.map((app: any, index: number) => ({
+        id: app.id || `appliance-${index + 1}`,
+        applianceSerialNumber: app.applianceSerial || app.applianceSerialNumber || "",
+        hardwareSerialNumber: app.hardwareSerial || app.hardwareSerialNumber || "",
+        nodeId: app.nodeId || app.applianceSerial || "",
+        clusterName: app.cluster || app.clusterName || "",
+        theatreName: app.theatreName || "",
+        theatreLocation: {
+          city: app.city || app.theatreLocation?.city || "",
+          state: app.state || app.theatreLocation?.state || "",
+          country: app.country || app.theatreLocation?.country || "",
+        },
+        chainName: app.chain || app.chainName || "",
+        chainAddress: {
+          city: app.chainAddress?.city || app.city || "",
+          state: app.chainAddress?.state || app.state || "",
+          country: app.chainAddress?.country || app.country || "",
+        },
+        updateStatus: app.updateStatus || "Pending",
+        updatedOn: app.updatedOn || new Date().toISOString(),
+      }));
+    }
+    return mockAppliances;
+  });
   const [addApplianceOpen, setAddApplianceOpen] = useState(false);
   const [editTaskOpen, setEditTaskOpen] = useState(false);
 

@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon, Filter, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -144,6 +145,7 @@ const chartConfig: ChartConfig = {
 };
 
 const FleetStatus = () => {
+  const navigate = useNavigate();
   // Global Context State
   const [selectedImage, setSelectedImage] = useState<string>("");
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
@@ -767,9 +769,50 @@ const FleetStatus = () => {
                 <Download className="h-4 w-4 mr-2" />
                 Export
               </Button>
-              <Button size="sm">
+              <Button 
+                size="sm"
+                onClick={() => {
+                  const selectedImageData = mockImages.find(img => img.id === selectedImage);
+                  const now = new Date();
+                  const currentDate = now.toISOString().split('T')[0];
+                  const currentTime = now.toTimeString().slice(0, 5);
+                  
+                  // Map filtered data to appliance format
+                  const appliances = filteredData.map((node, index) => ({
+                    id: `appliance-${index + 1}`,
+                    applianceSerial: node.nodeId,
+                    hardwareSerial: `HW-${node.nodeId.replace('NODE-', '')}`,
+                    theatreName: node.theatreName,
+                    city: node.city,
+                    state: node.state,
+                    country: node.country,
+                    chain: node.theatreChain,
+                    cluster: `Cluster-${Math.floor(Math.random() * 10) + 1}`,
+                    updateStatus: "Pending" as const,
+                  }));
+                  
+                  navigate("/fleet-management/task/new", {
+                    state: {
+                      taskData: {
+                        taskType: "Agent Update",
+                        selectedAgent: selectedImageData?.name || "",
+                        agentName: selectedImageData?.name || "",
+                        triggerDate: currentDate,
+                        triggerTime: currentTime,
+                        triggerTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone.includes("America/Los_Angeles") ? "PST" : 
+                                         Intl.DateTimeFormat().resolvedOptions().timeZone.includes("America/New_York") ? "EST" : "PST",
+                        description: "",
+                        targetVersion: "",
+                        agentTargetVersion: "",
+                      },
+                      appliances,
+                    }
+                  });
+                }}
+                disabled={!selectedImage}
+              >
                 <Plus className="h-4 w-4 mr-2" />
-                Create Update Task
+                Create Task
               </Button>
             </div>
           </div>
