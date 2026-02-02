@@ -850,6 +850,7 @@ const FleetStatus = () => {
                 columns={columns}
                 searchable
                 searchPlaceholder="Search by Node ID, Theatre..."
+                showFilters={false}
                 actions={() => tableActions}
               />
             )}
