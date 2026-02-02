@@ -10,7 +10,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -365,9 +371,9 @@ export const AddApplianceDialog = ({
 
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           {/* Method Selection */}
-          <div>
-            <Label className="text-sm font-medium mb-3 block">Select Method</Label>
-            <RadioGroup 
+          <div className="space-y-2">
+            <Label className="text-sm font-medium">Select Method</Label>
+            <Select 
               value={addMethod} 
               onValueChange={(v) => {
                 setAddMethod(v as AddMethod);
@@ -376,17 +382,18 @@ export const AddApplianceDialog = ({
                 setInputValue("");
                 setSelectedTheatre("");
               }}
-              className="grid grid-cols-2 gap-2"
             >
-              {(Object.keys(methodLabels) as AddMethod[]).map((method) => (
-                <div key={method} className="flex items-center space-x-2">
-                  <RadioGroupItem value={method} id={method} />
-                  <Label htmlFor={method} className="text-sm cursor-pointer">
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a method" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(methodLabels) as AddMethod[]).map((method) => (
+                  <SelectItem key={method} value={method}>
                     {methodLabels[method].label}
-                  </Label>
-                </div>
-              ))}
-            </RadioGroup>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           {/* Input Area */}
