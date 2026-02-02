@@ -23,13 +23,14 @@ export function DataTable<T extends { id: string }>({
   onSearchChange,
   onSortChange,
   onFilterChange,
+  showFilters = true,
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: null });
   const [activeFilters, setActiveFilters] = useState<Filter<T>[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [useSheetFilter, setUseSheetFilter] = useState(window.innerWidth < 768);
   
   // Keep the latest onSearchChange without recreating the debounced function
@@ -275,17 +276,19 @@ export function DataTable<T extends { id: string }>({
           setSearchTerm={setSearchTerm}
           searchPlaceholder={searchPlaceholder}
         >
-          <Filters
-            columns={columns}
-            activeFilters={activeFilters}
-            handleFilterChange={handleFilterChange}
-            clearAllFilters={clearAllFilters}
-            getFilterOptions={getFilterOptions}
-            showFilters={showFilters}
-            setShowFilters={setShowFilters}
-            useSheetFilter={useSheetFilter}
-            getActiveFilterCount={getActiveFilterCount}
-          />
+          {showFilters && (
+            <Filters
+              columns={columns}
+              activeFilters={activeFilters}
+              handleFilterChange={handleFilterChange}
+              clearAllFilters={clearAllFilters}
+              getFilterOptions={getFilterOptions}
+              showFilters={filtersOpen}
+              setShowFilters={setFiltersOpen}
+              useSheetFilter={useSheetFilter}
+              getActiveFilterCount={getActiveFilterCount}
+            />
+          )}
         </SearchExport>
       )}
       

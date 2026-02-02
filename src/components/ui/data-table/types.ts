@@ -43,4 +43,5 @@ export interface DataTableProps<T> {
   onSearchChange?: (searchTerm: string) => void;
   onSortChange?: (sortKey: keyof T | null, direction: SortDirection) => void;
   onFilterChange?: (filters: Filter<T>[]) => void;
+  showFilters?: boolean;
 }
