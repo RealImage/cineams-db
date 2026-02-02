@@ -138,7 +138,7 @@ const FleetTaskEdit = () => {
 
   const handleSaveTask = () => {
     toast.success("Task saved successfully");
-    navigate("/fleet-management");
+    navigate("/fleet-management/tasks");
   };
 
   return (
