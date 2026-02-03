@@ -7,6 +7,7 @@ export const wireTapDevices: WireTAPDevice[] = [
     hardwareSerialNumber: "HW-875942",
     applicationSerialNumber: "QWA-L28038",
     hostName: "NODE-LAX01",
+    clusterName: "LAX-CLUSTER-01",
     connectivityType: "Fixed Broadband",
     ispName: "Spectrum Business",
     theatreId: "1",
@@ -22,13 +23,24 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Standard" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-15T14:30:00Z"
+    updatedAt: "2023-05-15T14:30:00Z",
+    connectivity: {
+      status: "Healthy",
+      lastCheckAt: "2025-02-03T10:15:00Z",
+      actualDownloadSpeed: 98,
+      actualUploadSpeed: 45,
+      speedStatus: "Meets",
+      routerBrand: "Cisco",
+      routerModel: "RV340",
+      routerSerialNumber: "CSC-789456123"
+    }
   },
   {
     id: "wt-011",
     hardwareSerialNumber: "HW-875952",
     applicationSerialNumber: "QWA-M98765",
     hostName: "NODE-LAX02",
+    clusterName: "LAX-CLUSTER-01",
     connectivityType: "5G",
     ispName: "Verizon Business",
     theatreId: "1",
@@ -44,7 +56,16 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Pro" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-06-10T08:20:00Z"
+    updatedAt: "2023-06-10T08:20:00Z",
+    connectivity: {
+      status: "Healthy",
+      lastCheckAt: "2025-02-03T10:10:00Z",
+      signalStrength: -72,
+      signalLabel: "Good",
+      routerBrand: "Cradlepoint",
+      routerModel: "IBR1700",
+      routerSerialNumber: "CP-456789012"
+    }
   },
   {
     id: "wt-012",
@@ -66,13 +87,19 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Enterprise" as const,
     pullOutStatus: "Pulled Out" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-04-05T12:00:00Z"
+    updatedAt: "2023-04-05T12:00:00Z",
+    connectivity: {
+      status: "Unhealthy",
+      lastCheckAt: "2025-02-01T08:00:00Z",
+      statusMessage: "Device unreachable"
+    }
   },
   {
     id: "wt-002",
     hardwareSerialNumber: "HW-875943",
     applicationSerialNumber: "QWA-M12304",
     hostName: "NODE-CHI02",
+    clusterName: "CHI-CLUSTER-01",
     connectivityType: "Mobile Broadband",
     ispName: "AT&T Business",
     theatreId: "th-002",
@@ -88,7 +115,17 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Pro" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-16T10:15:00Z"
+    updatedAt: "2023-05-16T10:15:00Z",
+    connectivity: {
+      status: "Acceptable",
+      lastCheckAt: "2025-02-03T09:45:00Z",
+      signalStrength: -85,
+      signalLabel: "Fair",
+      statusMessage: "Minor signal degradation",
+      routerBrand: "Cradlepoint",
+      routerModel: "E3000",
+      routerSerialNumber: "CP-123456789"
+    }
   },
   {
     id: "wt-003",
@@ -110,13 +147,19 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Enterprise" as const,
     pullOutStatus: "Pulled Out" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-17T09:45:00Z"
+    updatedAt: "2023-05-17T09:45:00Z",
+    connectivity: {
+      status: "Unhealthy",
+      lastCheckAt: "2025-01-28T14:30:00Z",
+      statusMessage: "Device unreachable"
+    }
   },
   {
     id: "wt-004",
     hardwareSerialNumber: "HW-875945",
     applicationSerialNumber: "QWA-L45621",
     hostName: "NODE-MIA04",
+    clusterName: "MIA-CLUSTER-01",
     connectivityType: "4G",
     ispName: "T-Mobile Business",
     theatreId: "th-004",
@@ -132,13 +175,23 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Standard" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-18T16:20:00Z"
+    updatedAt: "2023-05-18T16:20:00Z",
+    connectivity: {
+      status: "Degraded",
+      lastCheckAt: "2025-02-03T08:30:00Z",
+      signalStrength: -95,
+      signalLabel: "Weak",
+      statusMessage: "Weak signal",
+      routerBrand: "Cradlepoint",
+      routerSerialNumber: "CP-987654321"
+    }
   },
   {
     id: "wt-005",
     hardwareSerialNumber: "HW-875946",
     applicationSerialNumber: "QWA-M67890",
     hostName: "NODE-SEA05",
+    clusterName: "SEA-CLUSTER-01",
     connectivityType: "Fixed Broadband",
     ispName: "Comcast Business",
     theatreId: "th-005",
@@ -154,7 +207,15 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Pro" as const,
     pullOutStatus: "Maintenance" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-19T11:10:00Z"
+    updatedAt: "2023-05-19T11:10:00Z",
+    connectivity: {
+      status: "Degraded",
+      lastCheckAt: "2025-02-03T10:00:00Z",
+      actualDownloadSpeed: 78,
+      actualUploadSpeed: 25,
+      speedStatus: "Below",
+      statusMessage: "Below expected speed"
+    }
   },
   {
     id: "wt-006",
@@ -176,13 +237,19 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Enterprise" as const,
     pullOutStatus: "Pulled Out" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-20T13:25:00Z"
+    updatedAt: "2023-05-20T13:25:00Z",
+    connectivity: {
+      status: "Unhealthy",
+      lastCheckAt: "2025-01-25T16:00:00Z",
+      statusMessage: "Device unreachable"
+    }
   },
   {
     id: "wt-007",
     hardwareSerialNumber: "HW-875948",
     applicationSerialNumber: "QWA-L89012",
     hostName: "NODE-DEN07",
+    clusterName: "DEN-CLUSTER-01",
     connectivityType: "Fixed Broadband",
     ispName: "CenturyLink Business",
     theatreId: "th-007",
@@ -198,13 +265,24 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Standard" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-21T15:40:00Z"
+    updatedAt: "2023-05-21T15:40:00Z",
+    connectivity: {
+      status: "Healthy",
+      lastCheckAt: "2025-02-03T10:20:00Z",
+      actualDownloadSpeed: 152,
+      actualUploadSpeed: 48,
+      speedStatus: "Meets",
+      routerBrand: "Ubiquiti",
+      routerModel: "EdgeRouter 4",
+      routerSerialNumber: "UBI-741852963"
+    }
   },
   {
     id: "wt-008",
     hardwareSerialNumber: "HW-875949",
     applicationSerialNumber: "QWA-M23456",
     hostName: "NODE-AUS08",
+    clusterName: "AUS-CLUSTER-01",
     connectivityType: "4G",
     ispName: "Verizon Business",
     theatreId: "th-008",
@@ -220,7 +298,16 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Pro" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-22T09:15:00Z"
+    updatedAt: "2023-05-22T09:15:00Z",
+    connectivity: {
+      status: "Healthy",
+      lastCheckAt: "2025-02-03T09:55:00Z",
+      signalStrength: -68,
+      signalLabel: "Excellent",
+      routerBrand: "Cradlepoint",
+      routerModel: "IBR900",
+      routerSerialNumber: "CP-369258147"
+    }
   },
   {
     id: "wt-009",
@@ -242,13 +329,21 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Standard" as const,
     pullOutStatus: "Maintenance" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-23T14:30:00Z"
+    updatedAt: "2023-05-23T14:30:00Z",
+    connectivity: {
+      status: "Degraded",
+      lastCheckAt: "2025-02-02T18:00:00Z",
+      statusMessage: "Router ID missing",
+      signalStrength: -82,
+      signalLabel: "Fair"
+    }
   },
   {
     id: "wt-010",
     hardwareSerialNumber: "HW-875951",
     applicationSerialNumber: "QWA-L56789",
     hostName: "NODE-BOS10",
+    clusterName: "BOS-CLUSTER-01",
     connectivityType: "Fixed Broadband",
     ispName: "Comcast Business",
     theatreId: "th-010",
@@ -264,6 +359,16 @@ export const wireTapDevices: WireTAPDevice[] = [
     wireTapApplianceType: "Enterprise" as const,
     pullOutStatus: "Installed" as const,
     updatedBy: "admin@example.com",
-    updatedAt: "2023-05-24T10:45:00Z"
+    updatedAt: "2023-05-24T10:45:00Z",
+    connectivity: {
+      status: "Healthy",
+      lastCheckAt: "2025-02-03T10:25:00Z",
+      actualDownloadSpeed: 148,
+      actualUploadSpeed: 52,
+      speedStatus: "Meets",
+      routerBrand: "Cisco",
+      routerModel: "ISR 4321",
+      routerSerialNumber: "CSC-159753486"
+    }
   },
 ];

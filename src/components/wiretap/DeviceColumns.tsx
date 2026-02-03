@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Info, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Column } from "@/components/ui/data-table";
-import { WireTAPDevice } from "@/types/wireTAP";
+import { WireTAPDevice, ConnectivityStatus } from "@/types/wireTAP";
 import { 
   Tooltip,
   TooltipContent,
@@ -10,6 +10,36 @@ import {
   TooltipTrigger 
 } from "@/components/ui/tooltip";
 import { getActivationStatusIcon, getMappingStatusIcon, getVPNStatusIcon } from "./StatusIcons";
+
+const getConnectivityStatusColor = (status: ConnectivityStatus | undefined) => {
+  switch (status) {
+    case "Healthy":
+      return "bg-green-500";
+    case "Acceptable":
+      return "bg-yellow-500";
+    case "Degraded":
+      return "bg-orange-500";
+    case "Unhealthy":
+      return "bg-red-500";
+    default:
+      return "bg-gray-400";
+  }
+};
+
+const getConnectivityStatusTextColor = (status: ConnectivityStatus | undefined) => {
+  switch (status) {
+    case "Healthy":
+      return "text-green-600";
+    case "Acceptable":
+      return "text-yellow-600";
+    case "Degraded":
+      return "text-orange-600";
+    case "Unhealthy":
+      return "text-red-600";
+    default:
+      return "text-gray-500";
+  }
+};
 
 const CopyableField = ({ label, value }: { label: string; value: string }) => {
   const [copied, setCopied] = useState(false);
@@ -155,6 +185,32 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
     sortable: true,
     filterable: true,
     filterOptions: ["Mapped", "Unmapped", "Pending"]
+  },
+  {
+    header: "Connectivity Status",
+    accessor: (row: WireTAPDevice) => row.connectivity?.status || "Unknown",
+    cell: (row: WireTAPDevice) => {
+      const status = row.connectivity?.status;
+      const lastCheck = row.connectivity?.lastCheckAt;
+      return (
+        <div className="flex flex-col gap-1 cursor-pointer hover:bg-muted/50 rounded p-1 -m-1 transition-colors">
+          <div className="flex items-center gap-2">
+            <div className={`w-2.5 h-2.5 rounded-full ${getConnectivityStatusColor(status)}`} />
+            <span className={`text-sm font-medium ${getConnectivityStatusTextColor(status)}`}>
+              {status || "Unknown"}
+            </span>
+          </div>
+          {lastCheck && (
+            <span className="text-xs text-muted-foreground">
+              {format(new Date(lastCheck), "dd MMM yyyy hh:mm a")}
+            </span>
+          )}
+        </div>
+      );
+    },
+    sortable: true,
+    filterable: true,
+    filterOptions: ["Healthy", "Acceptable", "Degraded", "Unhealthy"]
   },
   {
     header: "VPN Status",
