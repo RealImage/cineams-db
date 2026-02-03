@@ -802,8 +802,8 @@ const FleetStatus = () => {
                         triggerTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone.includes("America/Los_Angeles") ? "PST" : 
                                          Intl.DateTimeFormat().resolvedOptions().timeZone.includes("America/New_York") ? "EST" : "PST",
                         description: "",
-                        targetVersion: "",
-                        agentTargetVersion: "",
+                        targetVersion: selectedImageData?.defaultVersion || "",
+                        agentTargetVersion: selectedImageData?.defaultVersion || "",
                       },
                       appliances,
                     }
