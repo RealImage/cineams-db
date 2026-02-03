@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { Edit, Trash2, Eye, RefreshCw } from "lucide-react";
+import { Edit, Trash2, Eye, RefreshCw, Signal } from "lucide-react";
 import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { FetchNewDevicesDialog } from "@/components/wiretap/FetchNewDevicesDialog";
+import { ConnectivityStatusOverlay } from "@/components/wiretap/ConnectivityStatusOverlay";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
@@ -21,6 +22,7 @@ const WireTAPDevices = () => {
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [isFetchNewDevicesDialogOpen, setIsFetchNewDevicesDialogOpen] = useState(false);
+  const [isConnectivityOverlayOpen, setIsConnectivityOverlayOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [lastFetchedDate, setLastFetchedDate] = useState<Date>(new Date());
 
@@ -90,6 +92,11 @@ const WireTAPDevices = () => {
 
   const columns = getDeviceColumns();
 
+  const handleViewConnectivity = (device: WireTAPDevice) => {
+    setCurrentDevice(device);
+    setIsConnectivityOverlayOpen(true);
+  };
+
   const getActions = (device: WireTAPDevice) => [
     {
       label: "Edit",
@@ -107,6 +114,11 @@ const WireTAPDevices = () => {
       label: "View Logs",
       icon: <Eye className="h-4 w-4" />,
       onClick: handleViewLogs
+    },
+    {
+      label: "View Connectivity",
+      icon: <Signal className="h-4 w-4" />,
+      onClick: handleViewConnectivity
     }
   ];
 
@@ -137,6 +149,13 @@ const WireTAPDevices = () => {
         searchable={true}
         searchPlaceholder="Search WireTAP devices..."
         actions={getActions}
+        onRowClick={handleViewConnectivity}
+      />
+      
+      <ConnectivityStatusOverlay
+        device={currentDevice}
+        isOpen={isConnectivityOverlayOpen}
+        onOpenChange={setIsConnectivityOverlayOpen}
       />
       
       <DeviceLogsDialog
