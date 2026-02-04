@@ -197,7 +197,7 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
           <div className="flex items-center gap-2">
             <div className={`w-2.5 h-2.5 rounded-full ${getConnectivityStatusColor(status)}`} />
             <span className={`text-sm font-medium ${getConnectivityStatusTextColor(status)}`}>
-              {status || "Unknown"}
+              {status === "Unhealthy" ? "Not Reachable" : (status || "Unknown")}
             </span>
           </div>
           {lastCheck && (
