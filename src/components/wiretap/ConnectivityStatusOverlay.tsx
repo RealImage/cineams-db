@@ -233,7 +233,7 @@ export const ConnectivityStatusOverlay = ({
                       <Signal className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold">{connectivity?.status || "Unknown"}</p>
+                      <p className="text-sm font-semibold">{connectivity?.status === "Unhealthy" ? "Not Reachable" : (connectivity?.status || "Unknown")}</p>
                       {connectivity?.statusMessage && (
                         <p className="text-xs text-muted-foreground">{connectivity.statusMessage}</p>
                       )}
