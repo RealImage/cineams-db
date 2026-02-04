@@ -75,7 +75,7 @@ const CopyableField = ({ label, value }: { label: string; value: string | undefi
   const isMissing = !value;
 
   return (
-    <div className="flex items-center justify-between py-2 group">
+    <div className="flex items-center justify-between py-1.5 group">
       <span className="text-sm text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
         {isMissing ? (
@@ -162,7 +162,7 @@ export const ConnectivityStatusOverlay = ({
               disabled={isRefreshing}
             >
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
-              Refresh Status
+              Refresh
             </Button>
           </div>
         </SheetHeader>
@@ -176,16 +176,15 @@ export const ConnectivityStatusOverlay = ({
                 Appliance Identity
               </h3>
             </div>
-            <div className="bg-muted/30 rounded-lg p-4">
+            <div className="bg-muted/30 rounded-lg p-3">
               <CopyableField label="Appliance Serial Number" value={device.applicationSerialNumber} />
-              <Separator className="my-1" />
               <CopyableField label="Hardware Serial Number" value={device.hardwareSerialNumber} />
-              <Separator className="my-1" />
               <CopyableField label="Cluster Name" value={device.clusterName} />
-              <Separator className="my-1" />
               <CopyableField label="Host Name / Node ID" value={device.hostName} />
             </div>
           </div>
+
+          <Separator />
 
           {/* Section 2: Connectivity Overview & Router Identification */}
           <div className="space-y-2">
@@ -195,27 +194,23 @@ export const ConnectivityStatusOverlay = ({
                 Connectivity Overview
               </h3>
             </div>
-            <div className="bg-muted/30 rounded-lg p-4 space-y-4">
+            <div className="bg-muted/30 rounded-lg p-3 space-y-3">
               {/* 2.1 Connection Details */}
               <div>
                 <CopyableField label="Connection Type" value={device.connectivityType} />
-                <Separator className="my-1" />
                 <CopyableField label="ISP / Carrier" value={device.ispName} />
-                <Separator className="my-1" />
                 <CopyableField label="Mapped Bandwidth" value={device.bandwidth} />
               </div>
 
               {/* 2.2 Router Identification */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2 mt-4">Router Identification</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Router Identification</p>
                 <CopyableField label="Router Brand" value={connectivity?.routerBrand} />
-                <Separator className="my-1" />
                 <CopyableField label="Router Model" value={connectivity?.routerModel} />
-                <Separator className="my-1" />
                 <CopyableField label="Router Serial Number" value={connectivity?.routerSerialNumber} />
                 
                 {!hasRouterInfo && (
-                  <div className="flex items-center gap-2 mt-3 p-2 bg-orange-50 border border-orange-200 rounded-md">
+                  <div className="flex items-center gap-2 mt-2 p-2 bg-orange-50 border border-orange-200 rounded-md">
                     <AlertTriangle className="h-4 w-4 text-orange-500" />
                     <p className="text-xs text-orange-700">
                       Router Brand + Serial required for signal status. Health capped at Degraded.
@@ -226,7 +221,7 @@ export const ConnectivityStatusOverlay = ({
 
               {/* 2.3 Signal / Speed Status */}
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-2 mt-4">Signal / Speed Status</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Signal / Speed Status</p>
                 <div className="flex items-center justify-between py-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full ${getStatusColor(connectivity?.status || "Unhealthy")} flex items-center justify-center`}>
@@ -282,6 +277,8 @@ export const ConnectivityStatusOverlay = ({
             </div>
           </div>
 
+          <Separator />
+
           {/* Section 3: Theatre Mapping */}
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -290,16 +287,13 @@ export const ConnectivityStatusOverlay = ({
                 Theatre Mapping
               </h3>
             </div>
-            <div className="bg-muted/30 rounded-lg p-4">
+            <div className="bg-muted/30 rounded-lg p-3">
               <CopyableField label="Theatre Name" value={device.theatreName} />
-              <Separator className="my-1" />
               <CopyableField 
                 label="Alternate Display Names" 
                 value={device.theatreAlternateNames?.join(", ")} 
               />
-              <Separator className="my-1" />
               <CopyableField label="Theatre UID" value={device.theatreUUID} />
-              <Separator className="my-1" />
               <CopyableField label="Theatre Address" value={device.theatreAddress} />
             </div>
           </div>
