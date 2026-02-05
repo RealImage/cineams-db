@@ -23,6 +23,7 @@ import {
   Map,
   ClipboardList,
   HardDrive,
+  ClipboardCheck,
 } from "lucide-react";
 
 export const SidebarNav = ({ 
@@ -84,6 +85,15 @@ export const SidebarNav = ({
     { label: "Fleet Status", path: "/fleet-management/status", icon: LayoutDashboard },
     { label: "Task Management", path: "/fleet-management/tasks", icon: ClipboardList },
     { label: "Image Management", path: "/fleet-management/images", icon: HardDrive },
+  ];
+
+  const additionalNavItems = [
+    { 
+      icon: <ClipboardCheck size={20} />, 
+      label: "Approvals & Conflicts", 
+      path: "/approvals-conflicts",
+      disabled: false 
+    },
   ];
 
   const bottomNavItems = [
@@ -228,6 +238,19 @@ export const SidebarNav = ({
           subItems={fleetManagementSubItems}
           isCollapsed={isCollapsed}
         />
+        
+        {/* Approvals & Conflicts */}
+        {additionalNavItems.map((item, i) => (
+          <NavItem
+            key={`additional-${i}`}
+            icon={item.icon}
+            label={item.label}
+            path={item.path}
+            isActive={isActive(item.path)}
+            disabled={item.disabled}
+            collapsed={isCollapsed}
+          />
+        ))}
         
         {bottomNavItems.map((item, i) => (
           <NavItem

@@ -19,6 +19,7 @@ import FleetTaskView from "./pages/FleetTaskView";
 import ManageVersions from "./pages/ManageVersions";
 import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
+import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -49,6 +50,7 @@ const App = () => (
             <Route path="/fleet-management/task/:id/edit" element={<FleetTaskEdit />} />
             <Route path="/fleet-management/task/:id/view" element={<FleetTaskView />} />
             <Route path="/reports" element={<Reports />} />
+            <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>
