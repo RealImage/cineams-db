@@ -30,7 +30,7 @@ export const SidebarNav = ({
   // Mock user data (replace with actual user context when available)
   const userData = {
     name: "John Smith",
-    company: "Qube Wire",
+    company: "Qube Cinema Inc.",
     role: "Administrator"
   };
   const navItems = [{
