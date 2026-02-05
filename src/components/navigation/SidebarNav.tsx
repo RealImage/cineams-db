@@ -208,15 +208,6 @@ export const SidebarNav = ({
         </div>
       )}
       
-      {/* User information */}
-      {!isCollapsed && (
-        <div className="mb-6 px-2">
-          <h3 className="font-semibold text-sm">{userData.name}</h3>
-          <p className="text-xs text-muted-foreground">{userData.company}</p>
-          <p className="text-xs text-muted-foreground">{userData.role}</p>
-        </div>
-      )}
-      
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => (
           <NavItem
@@ -268,6 +259,15 @@ export const SidebarNav = ({
       {/* Footer links with combined Terms/Privacy */}
       <div className="mt-auto pt-4">
         <Separator className="mb-4" />
+        
+        {/* User information */}
+        {!isCollapsed && (
+          <div className="mb-4 px-2">
+            <h3 className="font-semibold text-sm">{userData.name}</h3>
+            <p className="text-xs text-muted-foreground">{userData.company}</p>
+            <p className="text-xs text-muted-foreground">{userData.role}</p>
+          </div>
+        )}
         <div className="space-y-2">
           {!isCollapsed ? (
             <>
