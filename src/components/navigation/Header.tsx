@@ -23,6 +23,7 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path === "/tdl-devices") return "TDL Devices";
     if (path === "/wiretap-devices") return "WireTAP Devices";
     if (path === "/reports") return "Reports";
+    if (path === "/approvals-conflicts") return "Approvals & Conflicts";
     if (path === "/fleet-management/status") return "Fleet Status";
     if (path === "/fleet-management/tasks") return "Task Management";
     if (path === "/fleet-management/images") return "Image Management";
