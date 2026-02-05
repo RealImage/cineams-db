@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -47,6 +48,7 @@ export function AddWireTAPToTheatreDialog({
   const [searchText, setSearchText] = useState("");
   const [searchResult, setSearchResult] = useState<WireTAPDevice | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
+  const [autoConfig, setAutoConfig] = useState(false);
 
   const handleSearch = () => {
     const result = wireTapDevices.find(
@@ -67,6 +69,7 @@ export function AddWireTAPToTheatreDialog({
     setSearchText("");
     setSearchResult(null);
     setHasSearched(false);
+    setAutoConfig(false);
     onOpenChange(false);
   };
 
@@ -194,6 +197,22 @@ export function AddWireTAPToTheatreDialog({
             </div>
           )}
         </div>
+
+        {searchResult && !isMappedToOtherTheatre && (
+          <div className="flex items-center space-x-2 pt-2">
+            <Checkbox
+              id="auto-config"
+              checked={autoConfig}
+              onCheckedChange={(checked) => setAutoConfig(checked === true)}
+            />
+            <label
+              htmlFor="auto-config"
+              className="text-sm font-medium leading-none cursor-pointer"
+            >
+              Auto-configure WireTAP setup for this Theatre.
+            </label>
+          </div>
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={handleClose}>
