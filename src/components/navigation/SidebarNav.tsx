@@ -9,6 +9,12 @@ import { NavItem } from "./NavItem";
 import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
 import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 export const SidebarNav = ({
   sidebarOpen,
   setSidebarOpen,
@@ -171,10 +177,31 @@ export const SidebarNav = ({
         <Separator className="mb-2" />
         
         {/* User information */}
-        {!isCollapsed && <div className="mb-2 px-2">
-            <h3 className="font-semibold text-sm">{userData.name}</h3>
-            <p className="text-xs text-muted-foreground">{userData.company}</p>
-            <p className="text-xs text-muted-foreground">{userData.role}</p>
+        {!isCollapsed && <div className="mb-2 px-2 flex items-start justify-between">
+            <div>
+              <h3 className="font-semibold text-sm">{userData.name}</h3>
+              <p className="text-xs text-muted-foreground">{userData.company}</p>
+              <p className="text-xs text-muted-foreground">{userData.role}</p>
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Settings size={16} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a href="https://studio.firebase.google.com/studio-59580137" target="_blank" rel="noopener noreferrer">
+                    Company Profile
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <a href="https://studio.firebase.google.com/studio-59580137" target="_blank" rel="noopener noreferrer">
+                    Manage Users
+                  </a>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>}
         <div className="space-y-2">
           {!isCollapsed ? <>
