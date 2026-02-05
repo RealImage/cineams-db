@@ -130,12 +130,12 @@ export const SidebarNav = ({
   const isActive = (path: string) => {
     return location.pathname === path;
   };
-  return <motion.aside className={`fixed inset-y-0 left-0 z-50 bg-background border-r border-border py-4 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16 px-2' : 'w-64 px-3'}`} initial={isMobile ? {
+  return <motion.aside className={`fixed inset-y-0 left-0 z-50 bg-background border-r border-border py-2 flex flex-col transition-all duration-300 ${isCollapsed ? 'w-16 px-2' : 'w-64 px-3'}`} initial={isMobile ? {
     x: "-100%"
   } : false} animate={isMobile && sidebarOpen ? {
     x: 0
   } : false}>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-3">
         {!isCollapsed ? <Link to="/" className="flex items-center space-x-2">
             <Home className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">CinemaDB</span>
@@ -167,11 +167,11 @@ export const SidebarNav = ({
       </nav>
       
       {/* Footer links with combined Terms/Privacy */}
-      <div className="mt-auto pt-4">
-        <Separator className="mb-4" />
+      <div className="mt-auto pt-2">
+        <Separator className="mb-2" />
         
         {/* User information */}
-        {!isCollapsed && <div className="mb-4 px-2">
+        {!isCollapsed && <div className="mb-2 px-2">
             <h3 className="font-semibold text-sm">{userData.name}</h3>
             <p className="text-xs text-muted-foreground">{userData.company}</p>
             <p className="text-xs text-muted-foreground">{userData.role}</p>
