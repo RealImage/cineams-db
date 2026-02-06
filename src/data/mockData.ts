@@ -452,103 +452,64 @@ export const companies: Company[] = [
   }
 ];
 
-export const tdlDevices: TDLDevice[] = [
-  {
-    id: "1",
-    manufacturer: "Christie",
-    model: "CP4325-RGB",
-    serialNumber: "CHR4325RGB001",
-    softwareVersion: "2.5.1",
-    deviceRole: "SM",
-    certificateAutoSync: true,
-    validTill: "2025-12-31T23:59:59Z",
-    publicKeyThumbprint: "a1b2c3d4e5f6g7h8i9j0",
-    issuerThumbprint: "z9y8x7w6v5u4t3s2r1",
-    source: "FLM Registry",
-    retired: false,
-    updatedBy: "System",
-    updatedOn: "2023-10-15T14:30:00Z",
-    certificateStatus: "Valid",
-    firmwareVersion: "2.5.1",
-    autoUpdateCertificate: true
-  },
-  {
-    id: "2",
-    manufacturer: "Sony",
-    model: "SRX-R815P",
-    serialNumber: "SONY815P002",
-    softwareVersion: "3.1.0",
-    deviceRole: "PR",
-    certificateAutoSync: true,
-    validTill: "2025-06-15T23:59:59Z",
-    publicKeyThumbprint: "k1l2m3n4o5p6q7r8s9",
-    issuerThumbprint: "q1w2e3r4t5y6u7i8o9",
-    source: "User",
-    retired: false,
-    updatedBy: "John Smith",
-    updatedOn: "2023-09-20T10:15:00Z",
-    certificateStatus: "Valid",
-    firmwareVersion: "3.1.0",
-    autoUpdateCertificate: true
-  },
-  {
-    id: "3",
-    manufacturer: "Barco",
-    model: "DP4K-60L",
-    serialNumber: "BRC60L003",
-    softwareVersion: "1.9.2",
-    deviceRole: "LD",
-    certificateAutoSync: false,
-    validTill: "2024-03-20T23:59:59Z",
-    publicKeyThumbprint: "t1u2v3w4x5y6z7a8b9",
-    issuerThumbprint: "a9s8d7f6g5h4j3k2l1",
-    source: "FTP",
-    retired: false,
-    updatedBy: "System",
-    updatedOn: "2023-11-05T16:45:00Z",
-    certificateStatus: "Valid",
-    firmwareVersion: "1.9.2",
-    autoUpdateCertificate: false
-  },
-  {
-    id: "4",
-    manufacturer: "NEC",
-    model: "NC3541L",
-    serialNumber: "NEC3541L004",
-    softwareVersion: "2.2.3",
-    deviceRole: "PLY",
-    certificateAutoSync: true,
-    validTill: "2023-08-01T23:59:59Z",
-    publicKeyThumbprint: "c1d2e3f4g5h6i7j8k9",
-    issuerThumbprint: "z1x2c3v4b5n6m7q8w9",
-    source: "System",
-    retired: true,
-    updatedBy: "System",
-    updatedOn: "2023-10-30T09:10:00Z",
-    certificateStatus: "Expired",
-    firmwareVersion: "2.2.3",
-    autoUpdateCertificate: true
-  },
-  {
-    id: "5",
-    manufacturer: "Christie",
-    model: "CP2308",
-    serialNumber: "CHR2308005",
-    softwareVersion: "1.5.4",
-    deviceRole: "SM",
-    certificateAutoSync: true,
-    validTill: "2026-01-10T23:59:59Z",
-    publicKeyThumbprint: "l1m2n3o4p5q6r7s8t9",
-    issuerThumbprint: "p9o8i7u6y5t4r3e2w1",
-    source: "FLM Registry",
-    retired: false,
-    updatedBy: "System",
-    updatedOn: "2023-08-12T11:25:00Z",
-    certificateStatus: "Valid",
-    firmwareVersion: "1.5.4",
-    autoUpdateCertificate: true
+const generateTDLDevices = (count: number): TDLDevice[] => {
+  const manufacturers = ["Christie", "Sony", "Barco", "NEC", "Panasonic", "IMAX", "Dolby", "GDC", "QSC", "JBL"];
+  const models: Record<string, string[]> = {
+    Christie: ["CP4325-RGB", "CP2308", "CP4230", "CP2215", "CP2220", "CP4440-RGB", "CineLife+"],
+    Sony: ["SRX-R815P", "SRX-R515P", "SRX-R320", "SRX-T615", "SRX-R110"],
+    Barco: ["DP4K-60L", "DP4K-32B", "DP2K-15C", "SP4K-55", "DP4K-23B"],
+    NEC: ["NC3541L", "NC2402ML", "NC1802ML", "NC1201L", "NC3240S"],
+    Panasonic: ["PT-RQ50K", "PT-RZ31K", "PT-RQ22K", "PT-RZ21K"],
+    IMAX: ["GT Laser 4K", "GT Laser", "Xenon 15/70", "Digital Laser"],
+    Dolby: ["IMS3000", "IMS2000", "CP750", "CP950", "DSS200"],
+    GDC: ["SR-1000", "SX-3000", "SX-4000", "TMS-2000"],
+    QSC: ["Q-SYS Core 110f", "Q-SYS Core 510i", "DCA 1644", "CX108V"],
+    JBL: ["5674", "4642A", "5628", "3722N", "9300"],
+  };
+  const roles = ["SM", "PR", "LD", "PLY", "AUD", "MON"];
+  const sources = ["FLM Registry", "User", "FTP", "System", "API Import", "Manual Entry"];
+  const updaters = ["System", "John Smith", "Jane Doe", "Admin", "Mike Johnson", "Sarah Wilson", "Auto Sync", "David Chen", "Emily Brown", "Robert Kim"];
+
+  const devices: TDLDevice[] = [];
+
+  for (let i = 1; i <= count; i++) {
+    const manufacturer = manufacturers[i % manufacturers.length];
+    const modelList = models[manufacturer];
+    const model = modelList[i % modelList.length];
+    const retired = i % 20 === 0;
+    const isExpired = i % 15 === 0;
+    const validYear = isExpired ? 2024 + Math.floor(Math.random() * 1) : 2025 + Math.floor(Math.random() * 3);
+    const validMonth = (i % 12) + 1;
+    const validDay = (i % 28) + 1;
+    const certAutoSync = i % 5 !== 0;
+    const updatedYear = 2023 + (i % 3);
+    const updatedMonth = (i % 12) + 1;
+
+    devices.push({
+      id: String(i),
+      manufacturer,
+      model,
+      serialNumber: `${manufacturer.substring(0, 3).toUpperCase()}${model.replace(/[^A-Z0-9]/gi, "").substring(0, 4)}${String(i).padStart(5, "0")}`,
+      softwareVersion: `${1 + (i % 4)}.${i % 10}.${i % 5}`,
+      deviceRole: roles[i % roles.length],
+      certificateAutoSync: certAutoSync,
+      validTill: `${validYear}-${String(validMonth).padStart(2, "0")}-${String(validDay).padStart(2, "0")}T23:59:59Z`,
+      publicKeyThumbprint: Array.from({ length: 20 }, (_, j) => "abcdef0123456789"[(i * 7 + j * 3) % 16]).join(""),
+      issuerThumbprint: Array.from({ length: 20 }, (_, j) => "0123456789abcdef"[(i * 11 + j * 5) % 16]).join(""),
+      source: sources[i % sources.length],
+      retired,
+      updatedBy: updaters[i % updaters.length],
+      updatedOn: `${updatedYear}-${String(updatedMonth).padStart(2, "0")}-${String((i % 28) + 1).padStart(2, "0")}T${String(i % 24).padStart(2, "0")}:${String(i % 60).padStart(2, "0")}:00Z`,
+      certificateStatus: isExpired ? "Expired" : "Valid",
+      firmwareVersion: `${1 + (i % 4)}.${i % 10}.${i % 5}`,
+      autoUpdateCertificate: certAutoSync,
+    });
   }
-];
+
+  return devices;
+};
+
+export const tdlDevices: TDLDevice[] = generateTDLDevices(10000);
 
 export const mockDashboardStats: DashboardStats = {
   totalTheatres: 2458,
