@@ -3,10 +3,11 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, FileCheck, CheckCircle, XCircle, Clock } from "lucide-react";
+import { Plus, Edit, Trash2, FileCheck, CheckCircle, XCircle } from "lucide-react";
 import { tdlDevices as mockDevices } from "@/data/mockData";
 import { TDLDevice } from "@/types";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 const TDLDevices = () => {
   const [devices, setDevices] = useState<TDLDevice[]>(mockDevices);
@@ -28,22 +29,9 @@ const TDLDevices = () => {
     toast.info(`Verifying device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
   };
   
-  const getCertificateStatusIcon = (status: string) => {
-    switch (status) {
-      case "Valid":
-        return <CheckCircle className="h-4 w-4 text-green-600" />;
-      case "Expired":
-        return <Clock className="h-4 w-4 text-yellow-600" />;
-      case "Revoked":
-        return <XCircle className="h-4 w-4 text-red-600" />;
-      default:
-        return null;
-    }
-  };
-  
   const columns: Column<TDLDevice>[] = [
     {
-      header: "Manufacturer",
+      header: "Manufacturer / Make",
       accessor: "manufacturer" as keyof TDLDevice
     },
     {
@@ -55,35 +43,63 @@ const TDLDevices = () => {
       accessor: "serialNumber" as keyof TDLDevice
     },
     {
-      header: "Certificate Status",
-      accessor: "certificateStatus" as keyof TDLDevice,
+      header: "Software Version",
+      accessor: "softwareVersion" as keyof TDLDevice
+    },
+    {
+      header: "Device Role",
+      accessor: "deviceRole" as keyof TDLDevice
+    },
+    {
+      header: "Certificate Auto-Sync",
+      accessor: "certificateAutoSync" as keyof TDLDevice,
       cell: (row: TDLDevice) => (
-        <div className="flex items-center space-x-2">
-          {getCertificateStatusIcon(row.certificateStatus)}
-          <span className={`${
-            row.certificateStatus === "Valid" 
-              ? "text-green-600" 
-              : row.certificateStatus === "Expired" 
-                ? "text-yellow-600" 
-                : "text-red-600"
-          }`}>
-            {row.certificateStatus}
-          </span>
-        </div>
+        <span className={row.certificateAutoSync ? "text-green-600" : "text-muted-foreground"}>
+          {row.certificateAutoSync ? "Yes" : "No"}
+        </span>
       )
     },
     {
-      header: "Firmware",
-      accessor: "firmwareVersion" as keyof TDLDevice
+      header: "Valid Till",
+      accessor: "validTill" as keyof TDLDevice,
+      cell: (row: TDLDevice) => {
+        const isExpired = new Date(row.validTill) < new Date();
+        return (
+          <span className={isExpired ? "text-destructive" : ""}>
+            {formatDate(row.validTill)}
+          </span>
+        );
+      }
     },
     {
-      header: "Updated On",
-      accessor: "updatedOn" as keyof TDLDevice,
-      cell: (row: TDLDevice) => new Date(row.updatedOn).toLocaleDateString()
+      header: "Public Key Thumbprint",
+      accessor: "publicKeyThumbprint" as keyof TDLDevice
+    },
+    {
+      header: "Issuer Thumbprint",
+      accessor: "issuerThumbprint" as keyof TDLDevice
     },
     {
       header: "Source",
       accessor: "source" as keyof TDLDevice
+    },
+    {
+      header: "Retired?",
+      accessor: "retired" as keyof TDLDevice,
+      cell: (row: TDLDevice) => (
+        <span className={row.retired ? "text-destructive font-medium" : "text-muted-foreground"}>
+          {row.retired ? "Yes" : "No"}
+        </span>
+      )
+    },
+    {
+      header: "Updated By",
+      accessor: "updatedBy" as keyof TDLDevice
+    },
+    {
+      header: "Updated On",
+      accessor: "updatedOn" as keyof TDLDevice,
+      cell: (row: TDLDevice) => formatDate(row.updatedOn)
     }
   ];
   

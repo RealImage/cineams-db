@@ -257,9 +257,14 @@ export type TDLDevice = {
   manufacturer: string;
   model: string;
   serialNumber: string;
+  softwareVersion: string;
+  deviceRole: string;
+  certificateAutoSync: boolean;
+  validTill: string;
   publicKeyThumbprint: string;
   issuerThumbprint: string;
   source: string;
+  retired: boolean;
   updatedBy: string;
   updatedOn: string;
   certificateStatus: string;
