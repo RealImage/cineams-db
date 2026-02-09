@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Theatre } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Film, MapPin, Building, Tag, User } from "lucide-react";
+import { formatDate } from "@/lib/dateUtils";
 
 interface ViewTheatreDialogProps {
   open: boolean;
@@ -26,13 +27,6 @@ export const ViewTheatreDialog = ({
     onOpenChange(false);
   };
   
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
 
   // Get screen count either from screenCount property or screens array length
   const screenCount = theatre.screenCount || (theatre.screens?.length || 0);

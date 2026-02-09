@@ -6,6 +6,7 @@ import { Column, SortConfig, Filter, Action } from "@/components/ui/data-table/t
 import { Plus, Eye, Edit, XCircle, ArrowRight } from "lucide-react";
 import { AddTaskDialog } from "@/components/fleet/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
+import { formatDate } from "@/lib/dateUtils";
 
 export interface FleetTask {
   id: string;
@@ -187,6 +188,7 @@ const TaskManagement = () => {
       accessor: "createdOn",
       header: "Created On",
       sortable: true,
+      cell: (row) => formatDate(row.createdOn),
     },
     {
       accessor: "status",

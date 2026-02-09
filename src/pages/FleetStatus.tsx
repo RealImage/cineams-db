@@ -14,7 +14,7 @@ import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, Action } from "@/components/ui/data-table/types";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { formatDate, formatDateTime } from "@/lib/dateUtils";
+import { formatDate, formatDateTime, formatTime } from "@/lib/dateUtils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -399,7 +399,7 @@ const FleetStatus = () => {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
-              Last refreshed: {lastRefreshed.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              Last refreshed: {formatTime(lastRefreshed)}
             </span>
             <Button variant="outline" size="sm" onClick={handleRefresh} disabled={isRefreshing || !selectedImage}>
               <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />

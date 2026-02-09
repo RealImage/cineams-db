@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateUtils";
 import { ExternalLink, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { wireTapDevices } from "@/data/wireTapDevices";
@@ -44,7 +45,7 @@ export const WireTAPMonitoringWidget = () => {
                     </div>
                     <div className="text-xs text-right">
                       <p className="text-red-600 font-medium">Last seen:</p>
-                      <p>{new Date(device.updatedAt).toLocaleDateString()}</p>
+                      <p>{formatDate(device.updatedAt)}</p>
                     </div>
                   </div>
                 </div>
