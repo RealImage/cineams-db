@@ -58,7 +58,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { wireTapDevices } from "@/data/wireTapDevices";
 import { WireTAPDevice as WireTAPDeviceType } from "@/types/wireTAP";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/dateUtils";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 import { AddWireTAPToTheatreDialog } from "./theatres/AddWireTAPToTheatreDialog";
@@ -146,7 +146,7 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
               </TableCell>
               <TableCell>{getActivationStatusBadge(device.activationStatus)}</TableCell>
               <TableCell className="text-muted-foreground">
-                {format(new Date(device.updatedAt), "MMM dd, yyyy hh:mm a")}
+                {formatDateTime(device.updatedAt)}
               </TableCell>
               {showActions && (
                 <TableCell>

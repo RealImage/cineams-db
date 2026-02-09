@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/dateUtils";
 import { Info, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Column } from "@/components/ui/data-table";
@@ -202,7 +202,7 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
           </div>
           {lastCheck && (
             <span className="text-xs text-muted-foreground">
-              {format(new Date(lastCheck), "dd MMM yyyy hh:mm a")}
+              {formatDateTime(lastCheck)}
             </span>
           )}
         </div>
@@ -235,7 +235,7 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
   {
     header: "Updated At",
     accessor: "updatedAt",
-    cell: (row: WireTAPDevice) => format(new Date(row.updatedAt), "MMM dd, yyyy 'at' h:mm a"),
+    cell: (row: WireTAPDevice) => formatDateTime(row.updatedAt),
     sortable: true,
     filterable: true,
     filterType: 'dateRange' as const

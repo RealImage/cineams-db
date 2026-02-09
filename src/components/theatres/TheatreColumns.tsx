@@ -4,6 +4,7 @@ import { Film, Calendar, User } from "lucide-react";
 import { Theatre } from "@/types";
 import { Column } from "@/components/ui/data-table"; // Import the Column type from data-table
 import { Badge } from "@/components/ui/badge";
+import { formatDate } from "@/lib/dateUtils";
 
 export const useTheatreColumns = (): Column<Theatre>[] => {
   const columns: Column<Theatre>[] = [
@@ -117,7 +118,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
         <div className="flex items-center">
           <Calendar className="h-4 w-4 mr-1 text-muted-foreground" />
           <span className="text-sm">
-            {new Date(row.updatedAt).toLocaleDateString()}
+            {formatDate(row.updatedAt)}
           </span>
         </div>
       )

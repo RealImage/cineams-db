@@ -7,6 +7,7 @@ import { Plus, Edit, Trash2 } from "lucide-react";
 import { chains as mockChains } from "@/data/mockData";
 import { Chain } from "@/types";
 import { toast } from "sonner";
+import { formatDate } from "@/lib/dateUtils";
 
 const Chains = () => {
   const [chains, setChains] = useState<Chain[]>(mockChains);
@@ -53,7 +54,7 @@ const Chains = () => {
     {
       header: "Last Updated",
       accessor: "updatedAt" as keyof Chain,
-      cell: (row: Chain) => new Date(row.updatedAt).toLocaleDateString()
+      cell: (row: Chain) => formatDate(row.updatedAt)
     }
   ];
   

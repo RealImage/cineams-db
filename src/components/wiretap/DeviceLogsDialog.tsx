@@ -1,5 +1,5 @@
 
-import { format } from "date-fns";
+import { formatDateTime } from "@/lib/dateUtils";
 import { Download, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { WireTAPDevice } from "@/types/wireTAP";
@@ -49,7 +49,7 @@ export function DeviceLogsDialog({ isOpen, onOpenChange, device }: DeviceLogsDia
             <div>
               <p className="text-sm font-medium text-red-800">Device Offline Warning</p>
               <p className="text-xs text-red-600">
-                This device has been offline for more than 24 hours. Last seen on {format(new Date(device.updatedAt), "MMM dd, yyyy 'at' h:mm a")}
+                This device has been offline for more than 24 hours. Last seen on {formatDateTime(device.updatedAt)}
               </p>
             </div>
           </div>
@@ -61,7 +61,7 @@ export function DeviceLogsDialog({ isOpen, onOpenChange, device }: DeviceLogsDia
               <div key={index} className="border-b pb-2 last:border-0">
                 <div className="flex justify-between text-sm">
                   <span className="font-semibold">{log.action}</span>
-                  <span className="text-muted-foreground">{format(new Date(log.timestamp), "MMM dd, yyyy 'at' h:mm a")}</span>
+                  <span className="text-muted-foreground">{formatDateTime(log.timestamp)}</span>
                 </div>
                 <p className="text-sm mt-1">{log.details}</p>
               </div>
