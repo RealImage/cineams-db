@@ -1,12 +1,14 @@
 
 import { useEffect, useState } from "react";
-import { Building2, Users, Film, Monitor } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Building2, Users, Film, Monitor, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WireTAPMonitoringWidget } from "@/components/dashboard/WireTAPMonitoringWidget";
 import { DashboardStats } from "@/types";
 
 export default function Index() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -101,6 +103,23 @@ export default function Index() {
           icon={<Users className="h-4 w-4" />}
           // Removing trend and trendText props
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div onClick={() => navigate("/approvals-conflicts")} className="cursor-pointer">
+          <StatCard
+            title="Approvals Pending"
+            value={50}
+            icon={<ClipboardCheck className="h-4 w-4" />}
+          />
+        </div>
+        <div onClick={() => navigate("/approvals-conflicts")} className="cursor-pointer">
+          <StatCard
+            title="Conflicts Pending"
+            value={192056}
+            icon={<AlertTriangle className="h-4 w-4" />}
+          />
+        </div>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
