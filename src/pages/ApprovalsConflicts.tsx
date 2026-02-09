@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
@@ -30,8 +31,11 @@ const conflictItems: DashboardItem[] = [
   { label: "Screens without Screen Names or Numbers", count: 265 },
 ];
 
-const DashboardItemRow = ({ item }: { item: DashboardItem }) => (
-  <div className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md transition-colors cursor-pointer">
+const DashboardItemRow = ({ item, onClick }: { item: DashboardItem; onClick?: () => void }) => (
+  <div
+    className="flex items-center justify-between py-2 px-3 hover:bg-muted/50 rounded-md transition-colors cursor-pointer"
+    onClick={onClick}
+  >
     <span className="text-sm">{item.label}</span>
     <Badge variant={item.count > 0 ? "default" : "secondary"} className="min-w-[3rem] justify-center">
       {item.count.toLocaleString()}
@@ -39,7 +43,12 @@ const DashboardItemRow = ({ item }: { item: DashboardItem }) => (
   </div>
 );
 
+const approvalRoutes: Record<string, string> = {
+  "Company Claims": "/approvals-conflicts/company-claims",
+};
+
 const ApprovalsConflicts = () => {
+  const navigate = useNavigate();
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -55,7 +64,11 @@ const ApprovalsConflicts = () => {
             </CardHeader>
             <CardContent className="space-y-1">
               {approvalItems.map((item) => (
-                <DashboardItemRow key={item.label} item={item} />
+                <DashboardItemRow
+                  key={item.label}
+                  item={item}
+                  onClick={approvalRoutes[item.label] ? () => navigate(approvalRoutes[item.label]) : undefined}
+                />
               ))}
             </CardContent>
           </Card>
