@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
@@ -15,16 +15,32 @@ import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { FetchNewDevicesDialog } from "@/components/wiretap/FetchNewDevicesDialog";
 import { ConnectivityStatusOverlay } from "@/components/wiretap/ConnectivityStatusOverlay";
+import { WireTAPFilterPanel, AppliedFilterPills, WireTAPFilters, emptyFilters } from "@/components/wiretap/WireTAPFilterPanel";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
+  const [filters, setFilters] = useState<WireTAPFilters>({ ...emptyFilters });
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [isFetchNewDevicesDialogOpen, setIsFetchNewDevicesDialogOpen] = useState(false);
   const [isConnectivityOverlayOpen, setIsConnectivityOverlayOpen] = useState(false);
   const [currentDevice, setCurrentDevice] = useState<WireTAPDevice | null>(null);
   const [lastFetchedDate, setLastFetchedDate] = useState<Date>(new Date());
+
+  const filteredDevices = useMemo(() => {
+    return devices.filter(d => {
+      if (filters.connectivityType.length && !filters.connectivityType.includes(d.connectivityType)) return false;
+      if (filters.theatreChain.length && !filters.theatreChain.includes(d.theatreName)) return false;
+      if (filters.storageCapacity.length && !filters.storageCapacity.includes(d.storageCapacity)) return false;
+      if (filters.applianceType.length && !filters.applianceType.includes(d.wireTapApplianceType)) return false;
+      if (filters.activationStatus.length && !filters.activationStatus.includes(d.activationStatus)) return false;
+      if (filters.mappingStatus.length && !filters.mappingStatus.includes(d.mappingStatus)) return false;
+      if (filters.internetConnectivity.length && !filters.internetConnectivity.includes(d.connectivity?.status || "Unknown")) return false;
+      if (filters.vpnStatus.length && !filters.vpnStatus.includes(d.vpnStatus)) return false;
+      return true;
+    });
+  }, [devices, filters]);
 
   const handleActivateDevice = (device: WireTAPDevice) => {
     const updatedDevices = devices.map(d => {
@@ -134,22 +150,28 @@ const WireTAPDevices = () => {
           Manage your WireTAP devices across all theatres
         </p>
         <div className="flex flex-col items-end gap-2">
-          <Button onClick={handleFetchNewDevices} variant="outline">
-            <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
-          </Button>
+          <div className="flex items-center gap-2">
+            <WireTAPFilterPanel devices={devices} filters={filters} onFiltersChange={setFilters} />
+            <Button onClick={handleFetchNewDevices} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
+            </Button>
+          </div>
           <p className="text-sm text-muted-foreground">
             Last Fetched on: {format(lastFetchedDate, "dd MMM yyyy hh:mm a")}
           </p>
         </div>
       </div>
+
+      <AppliedFilterPills filters={filters} onFiltersChange={setFilters} />
       
       <DataTable
-        data={devices}
+        data={filteredDevices}
         columns={columns}
         searchable={true}
         searchPlaceholder="Search WireTAP devices..."
         actions={getActions}
         onRowClick={handleViewConnectivity}
+        showFilters={false}
       />
       
       <ConnectivityStatusOverlay
