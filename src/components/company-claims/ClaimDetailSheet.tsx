@@ -58,11 +58,15 @@ export const ClaimDetailSheet = ({ claim, open, onOpenChange }: ClaimDetailSheet
           <Separator />
           <DetailRow label="Company Type" value={claim.companyType} />
           <DetailRow label="Company Name" value={claim.companyName} />
-          <DetailRow label="Theatre Count" value={claim.theatreCount} />
-          <DetailRow label="Screen Count" value={claim.screenCount} />
+          <div className="grid grid-cols-2 gap-4">
+            <DetailRow label="Theatre Count" value={claim.theatreCount} />
+            <DetailRow label="Screen Count" value={claim.screenCount} />
+          </div>
           <Separator />
-          <DetailRow label="Claimed By" value={claim.claimedBy} />
-          <DetailRow label="Claimed On" value={formatDateTime(claim.claimedOn)} />
+          <div className="grid grid-cols-2 gap-4">
+            <DetailRow label="Claimed By" value={claim.claimedBy} />
+            <DetailRow label="Claimed On" value={formatDateTime(claim.claimedOn)} />
+          </div>
         </div>
 
         <SheetFooter className="flex flex-row gap-2 sm:justify-start">
