@@ -187,7 +187,7 @@ export const getDeviceColumns = (): Column<WireTAPDevice>[] => [
     filterOptions: ["Mapped", "Unmapped", "Pending"]
   },
   {
-    header: "Connectivity Status",
+    header: "Internet Connectivity",
     accessor: (row: WireTAPDevice) => row.connectivity?.status || "Unknown",
     cell: (row: WireTAPDevice) => {
       const status = row.connectivity?.status;
