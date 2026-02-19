@@ -13,6 +13,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetFooter,
 } from "@/components/ui/sheet";
 import {
   Command,
@@ -59,6 +60,16 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
 
   if (!partner) return null;
 
+  const handleAccept = () => {
+    toast.success(`Partner request from "${partner.company}" has been accepted.`);
+    onOpenChange(false);
+  };
+
+  const handleReject = () => {
+    toast.error(`Partner request from "${partner.company}" has been rejected.`);
+    onOpenChange(false);
+  };
+
   const handleAdd = () => {
     if (!searchValue.trim()) {
       toast.error("Please enter a value");
@@ -90,15 +101,15 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
         {/* Section 1: Partner Details */}
         <div className="py-4 space-y-4">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Partner Details</h3>
-          <div className="grid gap-3">
-            <DetailRow label="Name" value={partner.name} />
-            <DetailRow label="Company Legal Name" value={partner.companyLegalName} />
-            <DetailRow label="Company Role" value={partner.companyRole} />
-            <DetailRow label="Street Address" value={partner.streetAddress} />
-            <DetailRow label="Location" value={`${partner.city}, ${partner.state}, ${partner.country}`} />
-            <DetailRow label="Company Website" value={partner.companyWebsite} />
-            <DetailRow label="Company Phone" value={partner.companyPhone} />
-          </div>
+           <div className="grid grid-cols-2 gap-3">
+              <DetailRow label="Name" value={partner.name} />
+              <DetailRow label="Company Legal Name" value={partner.companyLegalName} />
+              <DetailRow label="Company Role" value={partner.companyRole} />
+              <DetailRow label="Street Address" value={partner.streetAddress} />
+              <DetailRow label="Location" value={`${partner.city}, ${partner.state}, ${partner.country}`} />
+              <DetailRow label="Company Website" value={partner.companyWebsite} />
+              <DetailRow label="Company Phone" value={partner.companyPhone} />
+            </div>
         </div>
 
         <Separator />
@@ -189,6 +200,11 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
             </div>
           )}
         </div>
+
+        <SheetFooter className="flex flex-row gap-2 sm:justify-start pt-4">
+          <Button onClick={handleAccept} className="flex-1">Accept</Button>
+          <Button variant="destructive" onClick={handleReject} className="flex-1">Reject</Button>
+        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
