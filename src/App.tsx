@@ -21,6 +21,7 @@ import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
+import Partners from "./pages/Partners";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,7 @@ const App = () => (
             <Route path="/reports" element={<Reports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             <Route path="/approvals-conflicts/company-claims" element={<CompanyClaims />} />
+            <Route path="/approvals-conflicts/partners" element={<Partners />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Route>
