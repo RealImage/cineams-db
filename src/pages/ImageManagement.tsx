@@ -2,7 +2,9 @@ import { useState, useCallback, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, SortConfig, Filter, Action } from "@/components/ui/data-table/types";
-import { Plus, Settings, FileText } from "lucide-react";
+import { Plus, Settings, FileText, Star, StarOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 import { AddVersionDialog } from "@/components/fleet/AddVersionDialog";
 import { ViewImageLogsDialog } from "@/components/fleet/ViewImageLogsDialog";
 import { formatDate } from "@/lib/dateUtils";
@@ -13,16 +15,17 @@ export interface ImageItem {
   latestVersion: string;
   updatedOn: string;
   updatedBy: string;
+  defaultInstall?: boolean;
 }
 
 // Mock data based on user requirements
 const mockImageData: ImageItem[] = [
-  { id: "1", provider: "Appliance OS", agentOsName: "WireOS", latestVersion: "v4.1.9", updatedOn: "2024-01-10", updatedBy: "System" },
+  { id: "1", provider: "Appliance OS", agentOsName: "WireOS", latestVersion: "v4.1.9", updatedOn: "2024-01-10", updatedBy: "System", defaultInstall: true },
   { id: "2", provider: "Appliance OS", agentOsName: "QWA-OS", latestVersion: "v3.14.21", updatedOn: "2024-01-08", updatedBy: "Admin" },
   { id: "3", provider: "Appliance OS", agentOsName: "PartnerOS", latestVersion: "v3.12.14", updatedOn: "2024-01-05", updatedBy: "System" },
   { id: "4", provider: "iCount", agentOsName: "iCount", latestVersion: "v2.5.17", updatedOn: "2024-01-12", updatedBy: "John Doe" },
   { id: "5", provider: "Qlog", agentOsName: "Qlog Agent", latestVersion: "v1.3.2", updatedOn: "2024-01-09", updatedBy: "Jane Smith" },
-  { id: "6", provider: "Qube Wire", agentOsName: "Kadet (Agent Zero)", latestVersion: "v1.1.3", updatedOn: "2024-01-11", updatedBy: "Mike Johnson" },
+  { id: "6", provider: "Qube Wire", agentOsName: "Kadet (Agent Zero)", latestVersion: "v1.1.3", updatedOn: "2024-01-11", updatedBy: "Mike Johnson", defaultInstall: true },
   { id: "7", provider: "Qube Wire", agentOsName: "Agent Redux", latestVersion: "v4.2.6", updatedOn: "2024-01-13", updatedBy: "System" },
   { id: "8", provider: "Qube Wire", agentOsName: "Manifest Agent", latestVersion: "v4.0.0", updatedOn: "2024-01-07", updatedBy: "Admin" },
   { id: "9", provider: "Qube Wire", agentOsName: "Content Ingest Agent", latestVersion: "v1.2.3", updatedOn: "2024-01-06", updatedBy: "Sarah Wilson" },
@@ -72,6 +75,17 @@ const ImageManagement = () => {
       accessor: "agentOsName",
       header: "Agent / OS Name",
       sortable: true,
+      cell: (row) => (
+        <div className="flex items-center gap-2">
+          <span>{row.agentOsName}</span>
+          {row.defaultInstall && (
+            <Badge variant="outline" className="text-xs border-amber-500 text-amber-600 bg-amber-50 gap-1">
+              <Star className="h-3 w-3 fill-amber-500 text-amber-500" />
+              Default Install
+            </Badge>
+          )}
+        </div>
+      ),
     },
     {
       accessor: "latestVersion",
@@ -91,8 +105,27 @@ const ImageManagement = () => {
     },
   ];
 
+  const handleToggleDefaultInstall = (image: ImageItem) => {
+    const updated = mockImageData.map(i => 
+      i.id === image.id ? { ...i, defaultInstall: !i.defaultInstall } : i
+    );
+    // Update the source array in place for persistence across fetches
+    mockImageData.splice(0, mockImageData.length, ...updated);
+    fetchData();
+    if (image.defaultInstall) {
+      toast.success(`"${image.agentOsName}" unmarked as Default Install on New WireTAP.`);
+    } else {
+      toast.success(`"${image.agentOsName}" marked as Default Install on New WireTAP.`);
+    }
+  };
+
   const getActionsForImage = (image: ImageItem): Action<ImageItem>[] => {
     return [
+      {
+        label: image.defaultInstall ? "Unmark as Default Install" : "Mark as Default Install",
+        icon: image.defaultInstall ? <StarOff className="h-4 w-4" /> : <Star className="h-4 w-4" />,
+        onClick: (row) => handleToggleDefaultInstall(row),
+      },
       {
         label: "Add Version",
         icon: <Plus className="h-4 w-4" />,
