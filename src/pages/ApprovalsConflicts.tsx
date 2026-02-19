@@ -45,6 +45,7 @@ const DashboardItemRow = ({ item, onClick }: { item: DashboardItem; onClick?: ()
 
 const approvalRoutes: Record<string, string> = {
   "Company Claims": "/approvals-conflicts/company-claims",
+  "Partners": "/approvals-conflicts/partners",
 };
 
 const ApprovalsConflicts = () => {
