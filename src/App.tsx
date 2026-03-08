@@ -19,6 +19,7 @@ import FleetTaskView from "./pages/FleetTaskView";
 import ManageVersions from "./pages/ManageVersions";
 import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
+import PulseDashboard from "./pages/PulseDashboard";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
 import Partners from "./pages/Partners";
