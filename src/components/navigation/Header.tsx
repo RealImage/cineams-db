@@ -29,6 +29,11 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path === "/fleet-management/tasks") return "Task Management";
     if (path === "/fleet-management/images") return "Image Management";
     if (path.startsWith("/fleet-management/images/") && path.includes("/versions")) return "Manage Versions";
+    if (path === "/screen-pulse/dashboard") return "Pulse Dashboard";
+    if (path === "/screen-pulse/environment") return "Environment Manager";
+    if (path === "/screen-pulse/projection") return "Projection Manager";
+    if (path === "/screen-pulse/screens") return "Screen Manager";
+    if (path === "/screen-pulse/reports") return "Reports";
     
     return "Dashboard";
   };

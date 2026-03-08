@@ -66,10 +66,7 @@ const ScreenManager = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Screen Manager</h1>
-        <p className="text-muted-foreground">Manage screen installations and tracking status</p>
-      </div>
+      <p className="text-muted-foreground">Manage screen installations and tracking status</p>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
