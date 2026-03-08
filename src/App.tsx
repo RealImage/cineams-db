@@ -20,6 +20,7 @@ import ManageVersions from "./pages/ManageVersions";
 import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
 import PulseDashboard from "./pages/PulseDashboard";
+import ScreenManager from "./pages/ScreenManager";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
 import Partners from "./pages/Partners";
@@ -58,7 +59,7 @@ const App = () => (
             <Route path="/screen-pulse/dashboard" element={<PulseDashboard />} />
             <Route path="/screen-pulse/environment" element={<Reports />} />
             <Route path="/screen-pulse/projection" element={<Reports />} />
-            <Route path="/screen-pulse/screens" element={<Reports />} />
+            <Route path="/screen-pulse/screens" element={<ScreenManager />} />
             <Route path="/screen-pulse/reports" element={<Reports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             <Route path="/approvals-conflicts/company-claims" element={<CompanyClaims />} />
