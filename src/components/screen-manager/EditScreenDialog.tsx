@@ -78,22 +78,26 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
           {/* Pulse Section */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Pulse Installation</h4>
-            <div className="space-y-2">
-              <Label>Installation Status</Label>
-              <Select value={pulseInstalled ? "yes" : "no"} onValueChange={(v) => setPulseInstalled(v === "yes")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {pulseInstalled && (
-              <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Installation Status</Label>
+                <Select value={pulseInstalled ? "yes" : "no"} onValueChange={(v) => setPulseInstalled(v === "yes")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {pulseInstalled && (
                 <div className="space-y-2">
                   <Label>Device Serial Number</Label>
                   <Input value={pulseSerial} onChange={(e) => setPulseSerial(e.target.value)} placeholder="Enter serial number" />
                 </div>
+              )}
+            </div>
+            {pulseInstalled && (
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Installed On</Label>
                   <Popover>
@@ -112,7 +116,7 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
                   <Label>Installed By</Label>
                   <Input value={pulseBy} onChange={(e) => setPulseBy(e.target.value)} placeholder="Enter name" />
                 </div>
-              </>
+              </div>
             )}
           </div>
 
@@ -121,22 +125,26 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
           {/* Lionis Section */}
           <div className="space-y-3">
             <h4 className="text-sm font-semibold text-foreground">Lionis Installation</h4>
-            <div className="space-y-2">
-              <Label>Installation Status</Label>
-              <Select value={lionisInstalled ? "yes" : "no"} onValueChange={(v) => setLionisInstalled(v === "yes")}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="yes">Yes</SelectItem>
-                  <SelectItem value="no">No</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {lionisInstalled && (
-              <>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <Label>Installation Status</Label>
+                <Select value={lionisInstalled ? "yes" : "no"} onValueChange={(v) => setLionisInstalled(v === "yes")}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="yes">Yes</SelectItem>
+                    <SelectItem value="no">No</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {lionisInstalled && (
                 <div className="space-y-2">
                   <Label>Device Serial Number</Label>
                   <Input value={lionisSerial} onChange={(e) => setLionisSerial(e.target.value)} placeholder="Enter serial number" />
                 </div>
+              )}
+            </div>
+            {lionisInstalled && (
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
                   <Label>Installed On</Label>
                   <Popover>
@@ -155,7 +163,7 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
                   <Label>Installed By</Label>
                   <Input value={lionisBy} onChange={(e) => setLionisBy(e.target.value)} placeholder="Enter name" />
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
