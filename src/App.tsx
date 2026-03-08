@@ -61,7 +61,7 @@ const App = () => (
             <Route path="/screen-pulse/environment" element={<Reports />} />
             <Route path="/screen-pulse/projection" element={<Reports />} />
             <Route path="/screen-pulse/screens" element={<ScreenManager />} />
-            <Route path="/screen-pulse/reports" element={<Reports />} />
+            <Route path="/screen-pulse/reports" element={<ScreenPulseReports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             <Route path="/approvals-conflicts/company-claims" element={<CompanyClaims />} />
             <Route path="/approvals-conflicts/partners" element={<Partners />} />
