@@ -87,6 +87,10 @@ export const SidebarNav = ({
     path: "/screen-pulse/projection",
     icon: Monitor
   }, {
+    label: "Screen Manager",
+    path: "/screen-pulse/screens",
+    icon: Monitor
+  }, {
     label: "Reports",
     path: "/screen-pulse/reports",
     icon: FileText

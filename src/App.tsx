@@ -58,6 +58,7 @@ const App = () => (
             <Route path="/screen-pulse/dashboard" element={<PulseDashboard />} />
             <Route path="/screen-pulse/environment" element={<Reports />} />
             <Route path="/screen-pulse/projection" element={<Reports />} />
+            <Route path="/screen-pulse/screens" element={<Reports />} />
             <Route path="/screen-pulse/reports" element={<Reports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             <Route path="/approvals-conflicts/company-claims" element={<CompanyClaims />} />
