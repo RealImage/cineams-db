@@ -74,6 +74,23 @@ export const SidebarNav = ({
     path: "/fleet-management/images",
     icon: HardDrive
   }];
+  const screenPulseSubItems = [{
+    label: "Pulse Dashboard",
+    path: "/screen-pulse/dashboard",
+    icon: LayoutDashboard
+  }, {
+    label: "Environment Manager",
+    path: "/screen-pulse/environment",
+    icon: Settings
+  }, {
+    label: "Projection Manager",
+    path: "/screen-pulse/projection",
+    icon: Monitor
+  }, {
+    label: "Reports",
+    path: "/screen-pulse/reports",
+    icon: FileText
+  }];
   const additionalNavItems = [{
     icon: <ClipboardCheck size={20} />,
     label: "Approvals & Conflicts",
