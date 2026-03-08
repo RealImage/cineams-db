@@ -6,6 +6,7 @@ import { StatCard } from "@/components/dashboard/StatCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScreenFilterPanel } from "@/components/screen-manager/ScreenFilterPanel";
 import { EditScreenDialog } from "@/components/screen-manager/EditScreenDialog";
@@ -123,14 +124,36 @@ const ScreenManager = () => {
                   <TableCell>{screen.screenName}</TableCell>
                   <TableCell className="text-muted-foreground">{screen.city}, {screen.state}, {screen.country}</TableCell>
                   <TableCell>
-                    <Badge variant={screen.pulseInstalled ? "default" : "secondary"}>
-                      {screen.pulseInstalled ? "Yes" : "No"}
-                    </Badge>
+                    {screen.pulseInstalled ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="default">Yes</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs space-y-1">
+                          <div><span className="font-semibold">Serial:</span> {screen.pulseSerialNumber}</div>
+                          <div><span className="font-semibold">Installed:</span> {screen.pulseInstalledOn ? format(new Date(screen.pulseInstalledOn), "MMM d, yyyy") : "—"}</div>
+                          <div><span className="font-semibold">By:</span> {screen.pulseInstalledBy || "—"}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Badge variant="secondary">No</Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={screen.lionisInstalled ? "default" : "secondary"}>
-                      {screen.lionisInstalled ? "Yes" : "No"}
-                    </Badge>
+                    {screen.lionisInstalled ? (
+                      <Tooltip>
+                        <TooltipTrigger>
+                          <Badge variant="default">Yes</Badge>
+                        </TooltipTrigger>
+                        <TooltipContent className="text-xs space-y-1">
+                          <div><span className="font-semibold">Serial:</span> {screen.lionisSerialNumber}</div>
+                          <div><span className="font-semibold">Installed:</span> {screen.lionisInstalledOn ? format(new Date(screen.lionisInstalledOn), "MMM d, yyyy") : "—"}</div>
+                          <div><span className="font-semibold">By:</span> {screen.lionisInstalledBy || "—"}</div>
+                        </TooltipContent>
+                      </Tooltip>
+                    ) : (
+                      <Badge variant="secondary">No</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
                     <div>{format(new Date(screen.updatedOn), "MMM d, yyyy h:mm a")}</div>
