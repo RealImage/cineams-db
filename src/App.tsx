@@ -52,6 +52,12 @@ const App = () => (
             <Route path="/fleet-management/task/:id/edit" element={<FleetTaskEdit />} />
             <Route path="/fleet-management/task/:id/view" element={<FleetTaskView />} />
             <Route path="/reports" element={<Reports />} />
+            {/* Screen Pulse Routes */}
+            <Route path="/screen-pulse" element={<Navigate to="/screen-pulse/dashboard" replace />} />
+            <Route path="/screen-pulse/dashboard" element={<Reports />} />
+            <Route path="/screen-pulse/environment" element={<Reports />} />
+            <Route path="/screen-pulse/projection" element={<Reports />} />
+            <Route path="/screen-pulse/reports" element={<Reports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
             <Route path="/approvals-conflicts/company-claims" element={<CompanyClaims />} />
             <Route path="/approvals-conflicts/partners" element={<Partners />} />
