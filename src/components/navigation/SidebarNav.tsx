@@ -8,7 +8,7 @@ import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lu
 import { NavItem } from "./NavItem";
 import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
-import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck } from "lucide-react";
+import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -183,6 +183,8 @@ export const SidebarNav = ({
         {/* Fleet Management with submenu */}
         <NavItemWithSubmenu icon={Settings} label="Fleet Management" basePath="/fleet-management" subItems={fleetManagementSubItems} isCollapsed={isCollapsed} />
         
+        {/* Screen Pulse with submenu */}
+        <NavItemWithSubmenu icon={Activity} label="Screen Pulse" basePath="/screen-pulse" subItems={screenPulseSubItems} isCollapsed={isCollapsed} />
         {/* Approvals & Conflicts */}
         {additionalNavItems.map((item, i) => <NavItem key={`additional-${i}`} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} disabled={item.disabled} collapsed={isCollapsed} />)}
         
