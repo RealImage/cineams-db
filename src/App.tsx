@@ -22,6 +22,7 @@ import Reports from "./pages/Reports";
 import PulseDashboard from "./pages/PulseDashboard";
 import ScreenManager from "./pages/ScreenManager";
 import ScreenPulseReports from "./pages/ScreenPulseReports";
+import EnvironmentManager from "./pages/EnvironmentManager";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
 import Partners from "./pages/Partners";
@@ -58,7 +59,7 @@ const App = () => (
             {/* Screen Pulse Routes */}
             <Route path="/screen-pulse" element={<Navigate to="/screen-pulse/dashboard" replace />} />
             <Route path="/screen-pulse/dashboard" element={<PulseDashboard />} />
-            <Route path="/screen-pulse/environment" element={<ScreenPulseReports />} />
+            <Route path="/screen-pulse/environment" element={<EnvironmentManager />} />
             <Route path="/screen-pulse/projection" element={<ScreenPulseReports />} />
             <Route path="/screen-pulse/screens" element={<ScreenManager />} />
             <Route path="/screen-pulse/reports" element={<ScreenPulseReports />} />
