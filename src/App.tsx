@@ -21,6 +21,7 @@ import FleetStatus from "./pages/FleetStatus";
 import Reports from "./pages/Reports";
 import PulseDashboard from "./pages/PulseDashboard";
 import ScreenManager from "./pages/ScreenManager";
+import ScreenPulseReports from "./pages/ScreenPulseReports";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
 import Partners from "./pages/Partners";
