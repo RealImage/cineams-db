@@ -58,8 +58,8 @@ const App = () => (
             {/* Screen Pulse Routes */}
             <Route path="/screen-pulse" element={<Navigate to="/screen-pulse/dashboard" replace />} />
             <Route path="/screen-pulse/dashboard" element={<PulseDashboard />} />
-            <Route path="/screen-pulse/environment" element={<Reports />} />
-            <Route path="/screen-pulse/projection" element={<Reports />} />
+            <Route path="/screen-pulse/environment" element={<ScreenPulseReports />} />
+            <Route path="/screen-pulse/projection" element={<ScreenPulseReports />} />
             <Route path="/screen-pulse/screens" element={<ScreenManager />} />
             <Route path="/screen-pulse/reports" element={<ScreenPulseReports />} />
             <Route path="/approvals-conflicts" element={<ApprovalsConflicts />} />
