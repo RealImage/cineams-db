@@ -1,0 +1,251 @@
+
+import { useState, useMemo, useCallback } from "react";
+import { Filter, CheckCircle2, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
+import { ProjectionFilterPanel, type ProjectionFilters } from "@/components/projection-manager/ProjectionFilterPanel";
+import { projectionScreenData, projectionScoreBins, type QualityStatus } from "@/data/projectionManagerData";
+
+const PAGE_SIZE = 100;
+
+const defaultFilters: ProjectionFilters = {
+  chain: "all",
+  location: "all",
+  scoreRange: "all",
+  projectionQuality: "all",
+  soundQuality: "all",
+};
+
+const QualityCell = ({ value, status }: { value: string; status: QualityStatus }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <div className="flex items-center gap-1.5 cursor-default">
+        {status === "within_limits" ? (
+          <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />
+        ) : (
+          <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />
+        )}
+        <span className="text-sm">{value}</span>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent side="top" className="text-xs">
+      {status === "within_limits" ? "Within Recommended Limits" : "Outside Recommended Limits"}
+    </TooltipContent>
+  </Tooltip>
+);
+
+const chartConfig = { count: { label: "Screens", color: "hsl(var(--primary))" } };
+
+const ProjectionManager = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [filters, setFilters] = useState<ProjectionFilters>(defaultFilters);
+  const [selectedBar, setSelectedBar] = useState<string | null>(null);
+
+  const chains = useMemo(() => [...new Set(projectionScreenData.map((s) => s.chainName))].sort(), []);
+  const locationOptions = useMemo(() => [...new Set(projectionScreenData.map((s) => `${s.city}, ${s.state}, ${s.country}`))].sort(), []);
+
+  const histogramData = useMemo(
+    () => projectionScoreBins.map((bin) => ({
+      range: bin.label,
+      count: projectionScreenData.filter((s) => s.score >= bin.min && s.score <= bin.max).length,
+      min: bin.min,
+      max: bin.max,
+    })),
+    []
+  );
+
+  const filteredData = useMemo(() => {
+    let result = [...projectionScreenData];
+
+    if (selectedBar) {
+      const bin = projectionScoreBins.find((b) => b.label === selectedBar);
+      if (bin) result = result.filter((s) => s.score >= bin.min && s.score <= bin.max);
+    }
+
+    if (searchTerm) {
+      const lower = searchTerm.toLowerCase();
+      result = result.filter(
+        (s) =>
+          s.theatreName.toLowerCase().includes(lower) ||
+          s.chainName.toLowerCase().includes(lower) ||
+          s.city.toLowerCase().includes(lower) ||
+          s.state.toLowerCase().includes(lower) ||
+          s.country.toLowerCase().includes(lower)
+      );
+    }
+
+    if (filters.chain !== "all") result = result.filter((s) => s.chainName === filters.chain);
+    if (filters.location !== "all") result = result.filter((s) => `${s.city}, ${s.state}, ${s.country}` === filters.location);
+    if (filters.scoreRange !== "all") result = result.filter((s) => s.scoreCategory === filters.scoreRange);
+    if (filters.projectionQuality !== "all") result = result.filter((s) => s.projectionQuality.status === filters.projectionQuality);
+    if (filters.soundQuality !== "all") result = result.filter((s) => s.soundQuality.status === filters.soundQuality);
+
+    return result;
+  }, [searchTerm, filters, selectedBar]);
+
+  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
+  const paginatedData = filteredData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const activeFilterCount = Object.values(filters).filter((v) => v !== "all").length + (selectedBar ? 1 : 0);
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }));
+    setCurrentPage(1);
+  };
+
+  const handleBarClick = useCallback((data: any) => {
+    if (data?.activePayload) {
+      const clickedRange = data.activePayload[0]?.payload?.range;
+      setSelectedBar((prev) => (prev === clickedRange ? null : clickedRange));
+      setCurrentPage(1);
+    }
+  }, []);
+
+  const clearAll = () => {
+    setFilters(defaultFilters);
+    setSelectedBar(null);
+    setCurrentPage(1);
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <p className="text-muted-foreground">Projection score distribution and screen-level quality ratings</p>
+
+      {/* Histogram */}
+      <DashboardCard
+        title="Projection Score Distribution"
+        description={selectedBar ? `Filtered to: ${selectedBar} — click again to clear` : "Click a bar to filter the table below"}
+      >
+        <ChartContainer config={chartConfig} className="h-[300px] w-full">
+          <BarChart data={histogramData} margin={{ top: 10, right: 20, bottom: 40, left: 20 }} onClick={handleBarClick}>
+            <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+            <XAxis
+              dataKey="range"
+              tick={{ fontSize: 12 }}
+              className="fill-muted-foreground"
+              label={{ value: "Score Range", position: "insideBottom", offset: -20, className: "fill-muted-foreground text-xs" }}
+            />
+            <YAxis
+              tick={{ fontSize: 12 }}
+              className="fill-muted-foreground"
+              label={{ value: "Screens", angle: -90, position: "insideLeft", offset: -5, className: "fill-muted-foreground text-xs" }}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Bar dataKey="count" radius={[4, 4, 0, 0]} className="cursor-pointer">
+              {histogramData.map((entry) => (
+                <Cell
+                  key={entry.range}
+                  fill={selectedBar === entry.range ? "hsl(var(--primary))" : selectedBar ? "hsl(var(--muted-foreground) / 0.3)" : "hsl(var(--primary))"}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ChartContainer>
+      </DashboardCard>
+
+      {/* Legend */}
+      <div className="flex items-center gap-6 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> Within Recommended Limits</div>
+        <div className="flex items-center gap-1.5"><XCircle className="h-3.5 w-3.5 text-destructive" /> Outside Recommended Limits</div>
+      </div>
+
+      {/* Search & Filter Bar */}
+      <div className="flex items-center gap-3">
+        <Input
+          placeholder="Search theatre name, chain, or location..."
+          value={searchTerm}
+          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          className="max-w-md"
+        />
+        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
+          <Filter className="h-4 w-4 mr-2" />
+          Filters
+          {activeFilterCount > 0 && (
+            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
+              {activeFilterCount}
+            </Badge>
+          )}
+        </Button>
+        {selectedBar && (
+          <Badge variant="secondary" className="cursor-pointer" onClick={() => { setSelectedBar(null); setCurrentPage(1); }}>
+            Score: {selectedBar} ✕
+          </Badge>
+        )}
+        <span className="text-sm text-muted-foreground ml-auto">
+          {filteredData.length} screen{filteredData.length !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-md border overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Score</TableHead>
+                <TableHead>Screen</TableHead>
+                <TableHead>Theatre Name</TableHead>
+                <TableHead>Chain Name</TableHead>
+                <TableHead>Location</TableHead>
+                <TableHead>Projection Quality</TableHead>
+                <TableHead>Sound Quality</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginatedData.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    No screens match the current filters.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                paginatedData.map((screen) => (
+                  <TableRow key={screen.id}>
+                    <TableCell className="font-bold text-center">{screen.score}</TableCell>
+                    <TableCell className="font-medium">{screen.screenName}</TableCell>
+                    <TableCell>{screen.theatreName}</TableCell>
+                    <TableCell>{screen.chainName}</TableCell>
+                    <TableCell className="text-muted-foreground">{screen.city}, {screen.state}, {screen.country}</TableCell>
+                    <TableCell><QualityCell value={screen.projectionQuality.value} status={screen.projectionQuality.status} /></TableCell>
+                    <TableCell><QualityCell value={screen.soundQuality.value} status={screen.soundQuality.status} /></TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>Previous</Button>
+            <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next</Button>
+          </div>
+        </div>
+      )}
+
+      {/* Filter Panel */}
+      <ProjectionFilterPanel
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        chains={chains}
+        locations={locationOptions}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClear={clearAll}
+      />
+    </div>
+  );
+};
+
+export default ProjectionManager;
