@@ -291,6 +291,12 @@ const EnvironmentManager = () => {
         onFilterChange={handleFilterChange}
         onClear={clearAll}
       />
+
+      <ScreenDetailDialog
+        screen={selectedScreen}
+        open={!!selectedScreen}
+        onOpenChange={(open) => { if (!open) setSelectedScreen(null); }}
+      />
     </div>
   );
 };
