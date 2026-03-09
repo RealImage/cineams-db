@@ -23,6 +23,7 @@ import PulseDashboard from "./pages/PulseDashboard";
 import ScreenManager from "./pages/ScreenManager";
 import ScreenPulseReports from "./pages/ScreenPulseReports";
 import EnvironmentManager from "./pages/EnvironmentManager";
+import ProjectionManager from "./pages/ProjectionManager";
 import ApprovalsConflicts from "./pages/ApprovalsConflicts";
 import CompanyClaims from "./pages/CompanyClaims";
 import Partners from "./pages/Partners";
