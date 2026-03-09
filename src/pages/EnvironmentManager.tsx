@@ -1,15 +1,16 @@
 
 import { useState, useMemo, useCallback } from "react";
-import { Filter } from "lucide-react";
+import { Filter, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { EnvironmentFilterPanel, type EnvironmentFilters } from "@/components/environment-manager/EnvironmentFilterPanel";
-import { environmentScreenData, scoreRangeBins, type EnvironmentScreenRecord, type RatingStatus } from "@/data/environmentManagerData";
+import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus } from "@/data/environmentManagerData";
 
 const PAGE_SIZE = 100;
 
@@ -24,21 +25,38 @@ const defaultFilters: EnvironmentFilters = {
   offDust: "all",
 };
 
-const ratingLabel = (status: RatingStatus) => {
+const statusTooltip = (status: RatingStatus) => {
   switch (status) {
-    case "within_theatre_baseline": return "Theatre Baseline";
-    case "within_recommended_baseline": return "Recommended";
+    case "within_theatre_baseline": return "Within Theatre Baseline";
+    case "within_recommended_baseline": return "Within Recommended Baseline";
     case "out_of_range": return "Out of Range";
   }
 };
 
-const ratingVariant = (status: RatingStatus): "default" | "secondary" | "destructive" => {
+const StatusIcon = ({ status }: { status: RatingStatus }) => {
   switch (status) {
-    case "within_theatre_baseline": return "default";
-    case "within_recommended_baseline": return "secondary";
-    case "out_of_range": return "destructive";
+    case "within_theatre_baseline":
+      return <CheckCircle2 className="h-3.5 w-3.5 text-green-600 shrink-0" />;
+    case "within_recommended_baseline":
+      return <AlertTriangle className="h-3.5 w-3.5 text-yellow-600 shrink-0" />;
+    case "out_of_range":
+      return <XCircle className="h-3.5 w-3.5 text-destructive shrink-0" />;
   }
 };
+
+const MetricCell = ({ metric }: { metric: EnvironmentMetric }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <div className="flex items-center gap-1.5 cursor-default">
+        <StatusIcon status={metric.status} />
+        <span className="text-sm tabular-nums">{metric.value}{metric.unit}</span>
+      </div>
+    </TooltipTrigger>
+    <TooltipContent side="top" className="text-xs">
+      {statusTooltip(metric.status)}
+    </TooltipContent>
+  </Tooltip>
+);
 
 const chartConfig = {
   count: { label: "Screens", color: "hsl(var(--primary))" },
@@ -53,7 +71,6 @@ const EnvironmentManager = () => {
 
   const chains = useMemo(() => [...new Set(environmentScreenData.map((s) => s.chainName))].sort(), []);
 
-  // Build histogram data
   const histogramData = useMemo(() => {
     return scoreRangeBins.map((bin) => ({
       range: bin.label,
@@ -63,17 +80,14 @@ const EnvironmentManager = () => {
     }));
   }, []);
 
-  // Apply all filters
   const filteredData = useMemo(() => {
     let result = [...environmentScreenData];
 
-    // Bar click filter
     if (selectedBar) {
       const bin = scoreRangeBins.find((b) => b.label === selectedBar);
       if (bin) result = result.filter((s) => s.score >= bin.min && s.score <= bin.max);
     }
 
-    // Search
     if (searchTerm) {
       const lower = searchTerm.toLowerCase();
       result = result.filter(
@@ -85,18 +99,17 @@ const EnvironmentManager = () => {
       );
     }
 
-    // Panel filters
     if (filters.chain !== "all") result = result.filter((s) => s.chainName === filters.chain);
     if (filters.scoreRange !== "all") {
       const bin = scoreRangeBins.find((b) => b.label === filters.scoreRange);
       if (bin) result = result.filter((s) => s.score >= bin.min && s.score <= bin.max);
     }
-    if (filters.onTemperature !== "all") result = result.filter((s) => s.onTemperature === filters.onTemperature);
-    if (filters.onHumidity !== "all") result = result.filter((s) => s.onHumidity === filters.onHumidity);
-    if (filters.onDust !== "all") result = result.filter((s) => s.onDust === filters.onDust);
-    if (filters.offTemperature !== "all") result = result.filter((s) => s.offTemperature === filters.offTemperature);
-    if (filters.offHumidity !== "all") result = result.filter((s) => s.offHumidity === filters.offHumidity);
-    if (filters.offDust !== "all") result = result.filter((s) => s.offDust === filters.offDust);
+    if (filters.onTemperature !== "all") result = result.filter((s) => s.onTemperature.status === filters.onTemperature);
+    if (filters.onHumidity !== "all") result = result.filter((s) => s.onHumidity.status === filters.onHumidity);
+    if (filters.onDust !== "all") result = result.filter((s) => s.onDust.status === filters.onDust);
+    if (filters.offTemperature !== "all") result = result.filter((s) => s.offTemperature.status === filters.offTemperature);
+    if (filters.offHumidity !== "all") result = result.filter((s) => s.offHumidity.status === filters.offHumidity);
+    if (filters.offDust !== "all") result = result.filter((s) => s.offDust.status === filters.offDust);
 
     return result;
   }, [searchTerm, filters, selectedBar]);
@@ -160,6 +173,13 @@ const EnvironmentManager = () => {
           </BarChart>
         </ChartContainer>
       </DashboardCard>
+
+      {/* Legend */}
+      <div className="flex items-center gap-6 text-xs text-muted-foreground">
+        <div className="flex items-center gap-1.5"><CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> Within Theatre Baseline</div>
+        <div className="flex items-center gap-1.5"><AlertTriangle className="h-3.5 w-3.5 text-yellow-600" /> Within Recommended Baseline</div>
+        <div className="flex items-center gap-1.5"><XCircle className="h-3.5 w-3.5 text-destructive" /> Out of Range</div>
+      </div>
 
       {/* Search & Filter Bar */}
       <div className="flex items-center gap-3">
@@ -235,12 +255,12 @@ const EnvironmentManager = () => {
                     <TableCell>{screen.theatreName}</TableCell>
                     <TableCell>{screen.chainName}</TableCell>
                     <TableCell className="text-muted-foreground">{screen.city}, {screen.state}, {screen.country}</TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.onTemperature)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.onTemperature)}</Badge></TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.onHumidity)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.onHumidity)}</Badge></TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.onDust)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.onDust)}</Badge></TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.offTemperature)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.offTemperature)}</Badge></TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.offHumidity)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.offHumidity)}</Badge></TableCell>
-                    <TableCell><Badge variant={ratingVariant(screen.offDust)} className="text-[10px] whitespace-nowrap">{ratingLabel(screen.offDust)}</Badge></TableCell>
+                    <TableCell><MetricCell metric={screen.onTemperature} /></TableCell>
+                    <TableCell><MetricCell metric={screen.onHumidity} /></TableCell>
+                    <TableCell><MetricCell metric={screen.onDust} /></TableCell>
+                    <TableCell><MetricCell metric={screen.offTemperature} /></TableCell>
+                    <TableCell><MetricCell metric={screen.offHumidity} /></TableCell>
+                    <TableCell><MetricCell metric={screen.offDust} /></TableCell>
                   </TableRow>
                 ))
               )}
