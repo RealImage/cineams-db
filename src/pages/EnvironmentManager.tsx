@@ -69,6 +69,7 @@ const EnvironmentManager = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<EnvironmentFilters>(defaultFilters);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
+  const [selectedScreen, setSelectedScreen] = useState<EnvironmentScreenRecord | null>(null);
 
   const chains = useMemo(() => [...new Set(environmentScreenData.map((s) => s.chainName))].sort(), []);
 
