@@ -10,7 +10,8 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { EnvironmentFilterPanel, type EnvironmentFilters } from "@/components/environment-manager/EnvironmentFilterPanel";
-import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus } from "@/data/environmentManagerData";
+import { ScreenDetailDialog } from "@/components/environment-manager/ScreenDetailDialog";
+import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus, type EnvironmentScreenRecord } from "@/data/environmentManagerData";
 
 const PAGE_SIZE = 100;
 
@@ -68,6 +69,7 @@ const EnvironmentManager = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<EnvironmentFilters>(defaultFilters);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
+  const [selectedScreen, setSelectedScreen] = useState<EnvironmentScreenRecord | null>(null);
 
   const chains = useMemo(() => [...new Set(environmentScreenData.map((s) => s.chainName))].sort(), []);
 
@@ -249,7 +251,7 @@ const EnvironmentManager = () => {
                 </TableRow>
               ) : (
                 paginatedData.map((screen) => (
-                  <TableRow key={screen.id}>
+                  <TableRow key={screen.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedScreen(screen)}>
                     <TableCell className="font-bold text-center">{screen.score}</TableCell>
                     <TableCell className="font-medium">{screen.screenName}</TableCell>
                     <TableCell>{screen.theatreName}</TableCell>
@@ -288,6 +290,12 @@ const EnvironmentManager = () => {
         filters={filters}
         onFilterChange={handleFilterChange}
         onClear={clearAll}
+      />
+
+      <ScreenDetailDialog
+        screen={selectedScreen}
+        open={!!selectedScreen}
+        onOpenChange={(open) => { if (!open) setSelectedScreen(null); }}
       />
     </div>
   );
