@@ -13,9 +13,9 @@ export interface ScreenTimeSeries {
   humidity: TimeSeriesPoint[];
   dust: TimeSeriesPoint[];
   thresholds: {
-    temperature: { upper: number; lower: number };
-    humidity: { upper: number; lower: number };
-    dust: { upper: number; lower: number };
+    temperature: { onUpper: number; onLower: number; offUpper: number; offLower: number };
+    humidity: { onUpper: number; onLower: number; offUpper: number; offLower: number };
+    dust: { onUpper: number; onLower: number; offUpper: number; offLower: number };
   };
 }
 
@@ -104,15 +104,15 @@ export function generateScreenTimeSeries(screenId: string, range: TimeRange): Sc
   for (let i = 0; i < screenId.length; i++) seed += screenId.charCodeAt(i) * (i + 1);
 
   const thresholds = {
-    temperature: { upper: 26, lower: 20 },
-    humidity: { upper: 55, lower: 38 },
-    dust: { upper: 48, lower: -2 },
+    temperature: { onUpper: 26, onLower: 20, offUpper: 28, offLower: 16 },
+    humidity: { onUpper: 55, onLower: 38, offUpper: 60, offLower: 30 },
+    dust: { onUpper: 48, onLower: 0, offUpper: 60, offLower: 0 },
   };
 
   return {
-    temperature: generateSeries(range, seed, 23, 0.8, thresholds.temperature.upper, thresholds.temperature.lower),
-    humidity: generateSeries(range, seed + 100, 45, 2.5, thresholds.humidity.upper, thresholds.humidity.lower),
-    dust: generateSeries(range, seed + 200, 30, 4, thresholds.dust.upper, thresholds.dust.lower),
+    temperature: generateSeries(range, seed, 23, 0.8, thresholds.temperature.onUpper, thresholds.temperature.onLower),
+    humidity: generateSeries(range, seed + 100, 45, 2.5, thresholds.humidity.onUpper, thresholds.humidity.onLower),
+    dust: generateSeries(range, seed + 200, 30, 4, thresholds.dust.onUpper, thresholds.dust.onLower),
     thresholds,
   };
 }
