@@ -10,7 +10,8 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { EnvironmentFilterPanel, type EnvironmentFilters } from "@/components/environment-manager/EnvironmentFilterPanel";
-import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus } from "@/data/environmentManagerData";
+import { ScreenDetailDialog } from "@/components/environment-manager/ScreenDetailDialog";
+import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus, type EnvironmentScreenRecord } from "@/data/environmentManagerData";
 
 const PAGE_SIZE = 100;
 
