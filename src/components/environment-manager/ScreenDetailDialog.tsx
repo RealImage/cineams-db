@@ -19,12 +19,8 @@ const chartConfig = {
   breach: { label: "Breach", color: "hsl(var(--destructive))" },
 };
 
-// Split data into segments of normal/breach for dual-line rendering
 function splitSegments(data: TimeSeriesPoint[]) {
-  // We'll render two lines: normalValue (null when breach) and breachValue (null when normal)
-  // For continuity, include the transition point in both
   return data.map((pt, i, arr) => {
-    const prev = i > 0 ? arr[i - 1] : null;
     const next = i < arr.length - 1 ? arr[i + 1] : null;
     const isTransitionToNormal = pt.isBreach && next && !next.isBreach;
     const isTransitionToBreach = !pt.isBreach && next && next.isBreach;
@@ -38,7 +34,6 @@ function splitSegments(data: TimeSeriesPoint[]) {
   });
 }
 
-// Build ON period reference areas
 function getOnPeriodAreas(data: TimeSeriesPoint[]) {
   const areas: { start: string; end: string }[] = [];
   let inOn = false;
@@ -54,19 +49,21 @@ function getOnPeriodAreas(data: TimeSeriesPoint[]) {
 interface MetricChartProps {
   title: string;
   data: TimeSeriesPoint[];
-  upper: number;
-  lower: number;
+  onUpper: number;
+  onLower: number;
+  offUpper: number;
+  offLower: number;
   unit: string;
 }
 
-const MetricChart = ({ title, data, upper, lower, unit }: MetricChartProps) => {
+const MetricChart = ({ title, data, onUpper, onLower, offUpper, offLower, unit }: MetricChartProps) => {
   const chartData = useMemo(() => splitSegments(data), [data]);
   const onAreas = useMemo(() => getOnPeriodAreas(data), [data]);
-  
-  const minVal = Math.min(...data.map(d => d.value), lower) - 3;
-  const maxVal = Math.max(...data.map(d => d.value), upper) + 3;
 
-  // Show ~8 ticks on X axis
+  const allThresholds = [onUpper, onLower, offUpper, offLower];
+  const minVal = Math.min(...data.map(d => d.value), ...allThresholds) - 3;
+  const maxVal = Math.max(...data.map(d => d.value), ...allThresholds) + 3;
+
   const tickInterval = Math.max(1, Math.floor(chartData.length / 8));
 
   return (
@@ -75,8 +72,7 @@ const MetricChart = ({ title, data, upper, lower, unit }: MetricChartProps) => {
       <ChartContainer config={chartConfig} className="h-[200px] w-full">
         <LineChart data={chartData} margin={{ top: 5, right: 30, bottom: 5, left: 10 }}>
           <CartesianGrid strokeDasharray="3 3" className="stroke-border" opacity={0.5} />
-          
-          {/* ON period background bands */}
+
           {onAreas.map((area, i) => (
             <ReferenceArea
               key={`on-${i}`}
@@ -87,9 +83,13 @@ const MetricChart = ({ title, data, upper, lower, unit }: MetricChartProps) => {
             />
           ))}
 
-          {/* Threshold lines */}
-          <ReferenceLine y={upper} stroke="hsl(142 76% 36% / 0.5)" strokeDasharray="6 4" strokeWidth={1} />
-          <ReferenceLine y={lower} stroke="hsl(142 76% 36% / 0.5)" strokeDasharray="6 4" strokeWidth={1} />
+          {/* ON state thresholds - green dotted */}
+          <ReferenceLine y={onUpper} stroke="hsl(142 76% 36%)" strokeDasharray="6 4" strokeWidth={1.5} />
+          <ReferenceLine y={onLower} stroke="hsl(142 76% 36%)" strokeDasharray="6 4" strokeWidth={1.5} />
+
+          {/* OFF state thresholds - blue dotted */}
+          <ReferenceLine y={offUpper} stroke="hsl(217 91% 60%)" strokeDasharray="6 4" strokeWidth={1.5} />
+          <ReferenceLine y={offLower} stroke="hsl(217 91% 60%)" strokeDasharray="6 4" strokeWidth={1.5} />
 
           <XAxis
             dataKey="dateLabel"
@@ -117,28 +117,14 @@ const MetricChart = ({ title, data, upper, lower, unit }: MetricChartProps) => {
               );
             }}
           />
-          <Line
-            type="monotone"
-            dataKey="normalValue"
-            stroke="hsl(var(--foreground))"
-            strokeWidth={1.5}
-            dot={false}
-            connectNulls={false}
-          />
-          <Line
-            type="monotone"
-            dataKey="breachValue"
-            stroke="hsl(var(--destructive))"
-            strokeWidth={2.5}
-            dot={false}
-            connectNulls={false}
-          />
+          <Line type="monotone" dataKey="normalValue" stroke="hsl(var(--foreground))" strokeWidth={1.5} dot={false} connectNulls={false} />
+          <Line type="monotone" dataKey="breachValue" stroke="hsl(var(--destructive))" strokeWidth={2.5} dot={false} connectNulls={false} />
         </LineChart>
       </ChartContainer>
-      {/* Threshold labels on right */}
-      <div className="flex justify-end gap-4 text-[10px] text-muted-foreground mt-1">
-        <span>Upper: {upper}{unit === "µg/m³" ? " µg/m³" : unit}</span>
-        <span>Lower: {lower}{unit === "µg/m³" ? " µg/m³" : unit}</span>
+      {/* Threshold labels */}
+      <div className="flex justify-end gap-6 text-[10px] text-muted-foreground mt-1">
+        <span className="text-green-600">ON: {onUpper}–{onLower} {unit}</span>
+        <span className="text-blue-500">OFF: {offUpper}–{offLower} {unit}</span>
       </div>
     </div>
   );
@@ -191,28 +177,34 @@ export const ScreenDetailDialog = ({ screen, open, onOpenChange }: ScreenDetailD
           <MetricChart
             title="Temperature (°C)"
             data={timeSeries.temperature}
-            upper={timeSeries.thresholds.temperature.upper}
-            lower={timeSeries.thresholds.temperature.lower}
+            onUpper={timeSeries.thresholds.temperature.onUpper}
+            onLower={timeSeries.thresholds.temperature.onLower}
+            offUpper={timeSeries.thresholds.temperature.offUpper}
+            offLower={timeSeries.thresholds.temperature.offLower}
             unit="°C"
           />
           <MetricChart
             title="Humidity (%)"
             data={timeSeries.humidity}
-            upper={timeSeries.thresholds.humidity.upper}
-            lower={timeSeries.thresholds.humidity.lower}
+            onUpper={timeSeries.thresholds.humidity.onUpper}
+            onLower={timeSeries.thresholds.humidity.onLower}
+            offUpper={timeSeries.thresholds.humidity.offUpper}
+            offLower={timeSeries.thresholds.humidity.offLower}
             unit="%"
           />
           <MetricChart
             title="Dust (µg/m³)"
             data={timeSeries.dust}
-            upper={timeSeries.thresholds.dust.upper}
-            lower={timeSeries.thresholds.dust.lower}
+            onUpper={timeSeries.thresholds.dust.onUpper}
+            onLower={timeSeries.thresholds.dust.onLower}
+            offUpper={timeSeries.thresholds.dust.offUpper}
+            offLower={timeSeries.thresholds.dust.offLower}
             unit="µg/m³"
           />
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-6 text-xs text-muted-foreground pt-2 border-t">
+        <div className="flex flex-wrap items-center gap-6 text-xs text-muted-foreground pt-2 border-t">
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-3 rounded-sm bg-green-100 border border-green-200" /> ON Period
           </div>
@@ -224,6 +216,14 @@ export const ScreenDetailDialog = ({ screen, open, onOpenChange }: ScreenDetailD
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-4 h-0.5 bg-destructive" /> Breach
+          </div>
+          <div className="flex items-center gap-1.5">
+            <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="hsl(142 76% 36%)" strokeWidth="2" strokeDasharray="4 2" /></svg>
+            ON Threshold
+          </div>
+          <div className="flex items-center gap-1.5">
+            <svg width="16" height="2"><line x1="0" y1="1" x2="16" y2="1" stroke="hsl(217 91% 60%)" strokeWidth="2" strokeDasharray="4 2" /></svg>
+            OFF Threshold
           </div>
         </div>
       </DialogContent>
