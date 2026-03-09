@@ -1,6 +1,12 @@
 
 export type RatingStatus = "within_theatre_baseline" | "within_recommended_baseline" | "out_of_range";
 
+export interface EnvironmentMetric {
+  value: number;
+  unit: string;
+  status: RatingStatus;
+}
+
 export interface EnvironmentScreenRecord {
   id: string;
   screenName: string;
@@ -10,12 +16,12 @@ export interface EnvironmentScreenRecord {
   state: string;
   country: string;
   score: number;
-  onTemperature: RatingStatus;
-  onHumidity: RatingStatus;
-  onDust: RatingStatus;
-  offTemperature: RatingStatus;
-  offHumidity: RatingStatus;
-  offDust: RatingStatus;
+  onTemperature: EnvironmentMetric;
+  onHumidity: EnvironmentMetric;
+  onDust: EnvironmentMetric;
+  offTemperature: EnvironmentMetric;
+  offHumidity: EnvironmentMetric;
+  offDust: EnvironmentMetric;
 }
 
 const chains = ["AMC", "Regal", "Cinemark", "Odeon", "PVR", "CGV", "Cinépolis", "Village", "Pathé", "IMAX"];
@@ -47,13 +53,36 @@ const theatreNames = [
   "Pathé Arena", "IMAX Melbourne",
 ];
 
-const statuses: RatingStatus[] = ["within_theatre_baseline", "within_recommended_baseline", "out_of_range"];
-
 function randomStatus(): RatingStatus {
   const r = Math.random();
   if (r < 0.45) return "within_theatre_baseline";
   if (r < 0.8) return "within_recommended_baseline";
   return "out_of_range";
+}
+
+function randomTemp(status: RatingStatus): EnvironmentMetric {
+  // Theatre baseline: 20-24°C, Recommended: 18-26°C, Out of range: 15-17 or 27-32
+  let value: number;
+  if (status === "within_theatre_baseline") value = 20 + Math.random() * 4;
+  else if (status === "within_recommended_baseline") value = Math.random() > 0.5 ? 18 + Math.random() * 2 : 24 + Math.random() * 2;
+  else value = Math.random() > 0.5 ? 15 + Math.random() * 2 : 27 + Math.random() * 5;
+  return { value: Math.round(value * 10) / 10, unit: "°C", status };
+}
+
+function randomHumidity(status: RatingStatus): EnvironmentMetric {
+  let value: number;
+  if (status === "within_theatre_baseline") value = 40 + Math.random() * 15;
+  else if (status === "within_recommended_baseline") value = Math.random() > 0.5 ? 30 + Math.random() * 10 : 55 + Math.random() * 10;
+  else value = Math.random() > 0.5 ? 15 + Math.random() * 15 : 65 + Math.random() * 20;
+  return { value: Math.round(value), unit: "%", status };
+}
+
+function randomDust(status: RatingStatus): EnvironmentMetric {
+  let value: number;
+  if (status === "within_theatre_baseline") value = 5 + Math.random() * 20;
+  else if (status === "within_recommended_baseline") value = 25 + Math.random() * 25;
+  else value = 50 + Math.random() * 100;
+  return { value: Math.round(value), unit: "µg/m³", status };
 }
 
 export const environmentScreenData: EnvironmentScreenRecord[] = Array.from({ length: 200 }, (_, i) => {
@@ -68,13 +97,13 @@ export const environmentScreenData: EnvironmentScreenRecord[] = Array.from({ len
     city: loc.city,
     state: loc.state,
     country: loc.country,
-    score: Math.floor(Math.random() * 121), // 0 to 120
-    onTemperature: randomStatus(),
-    onHumidity: randomStatus(),
-    onDust: randomStatus(),
-    offTemperature: randomStatus(),
-    offHumidity: randomStatus(),
-    offDust: randomStatus(),
+    score: Math.floor(Math.random() * 121),
+    onTemperature: randomTemp(randomStatus()),
+    onHumidity: randomHumidity(randomStatus()),
+    onDust: randomDust(randomStatus()),
+    offTemperature: randomTemp(randomStatus()),
+    offHumidity: randomHumidity(randomStatus()),
+    offDust: randomDust(randomStatus()),
   };
 });
 
