@@ -251,7 +251,7 @@ const EnvironmentManager = () => {
                 </TableRow>
               ) : (
                 paginatedData.map((screen) => (
-                  <TableRow key={screen.id}>
+                  <TableRow key={screen.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedScreen(screen)}>
                     <TableCell className="font-bold text-center">{screen.score}</TableCell>
                     <TableCell className="font-medium">{screen.screenName}</TableCell>
                     <TableCell>{screen.theatreName}</TableCell>
