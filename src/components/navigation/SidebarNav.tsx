@@ -8,7 +8,7 @@ import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lu
 import { NavItem } from "./NavItem";
 import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
-import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity } from "lucide-react";
+import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity, Server, Radio, Zap, Cpu } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,11 +55,6 @@ export const SidebarNav = ({
     icon: <Monitor size={20} />,
     label: "TDL Devices",
     path: "/tdl-devices"
-  }, {
-    icon: <List size={20} />,
-    label: "WireTAP Devices",
-    path: "/wiretap-devices",
-    disabled: false
   }];
   const fleetManagementSubItems = [{
     label: "Fleet Status",
@@ -73,6 +68,23 @@ export const SidebarNav = ({
     label: "Image Management",
     path: "/fleet-management/images",
     icon: HardDrive
+  }];
+  const qubeAppliancesSubItems = [{
+    label: "WireTAP",
+    path: "/qube-appliances/wiretap",
+    icon: Radio
+  }, {
+    label: "Qube ACS",
+    path: "/qube-appliances/qube-acs",
+    icon: Cpu
+  }, {
+    label: "Pulse",
+    path: "/qube-appliances/pulse",
+    icon: Activity
+  }, {
+    label: "Edge",
+    path: "/qube-appliances/edge",
+    icon: Zap
   }];
   const screenPulseSubItems = [{
     label: "Pulse Dashboard",
@@ -184,6 +196,9 @@ export const SidebarNav = ({
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} disabled={item.disabled} collapsed={isCollapsed} />)}
         
+        {/* Qube Appliances with submenu */}
+        <NavItemWithSubmenu icon={Server} label="Qube Appliances" basePath="/qube-appliances" subItems={qubeAppliancesSubItems} isCollapsed={isCollapsed} />
+
         {/* Fleet Management with submenu */}
         <NavItemWithSubmenu icon={Settings} label="Fleet Management" basePath="/fleet-management" subItems={fleetManagementSubItems} isCollapsed={isCollapsed} />
         
