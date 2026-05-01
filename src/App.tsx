@@ -12,6 +12,9 @@ import TDLDevices from "./pages/TDLDevices";
 import WireTAPDevices from "./pages/WireTAPDevices";
 import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import EditWireTAPDevice from "./pages/EditWireTAPDevice";
+import QubeACS from "./pages/QubeACS";
+import PulseAppliances from "./pages/PulseAppliances";
+import EdgeAppliances from "./pages/EdgeAppliances";
 import TaskManagement from "./pages/TaskManagement";
 import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
@@ -43,8 +46,17 @@ const App = () => (
             <Route path="/theatre/:id/edit" element={<EditTheatre />} />
             <Route path="/chains" element={<Chains />} />
             <Route path="/tdl-devices" element={<TDLDevices />} />
-            <Route path="/wiretap-devices" element={<WireTAPDevices />} />
-            <Route path="/wiretap-devices/add" element={<AddWireTAPDevice />} />
+            {/* Qube Appliances Routes */}
+            <Route path="/qube-appliances" element={<Navigate to="/qube-appliances/wiretap" replace />} />
+            <Route path="/qube-appliances/wiretap" element={<WireTAPDevices />} />
+            <Route path="/qube-appliances/wiretap/add" element={<AddWireTAPDevice />} />
+            <Route path="/qube-appliances/wiretap/:id/edit" element={<EditWireTAPDevice />} />
+            <Route path="/qube-appliances/qube-acs" element={<QubeACS />} />
+            <Route path="/qube-appliances/pulse" element={<PulseAppliances />} />
+            <Route path="/qube-appliances/edge" element={<EdgeAppliances />} />
+            {/* Legacy redirects */}
+            <Route path="/wiretap-devices" element={<Navigate to="/qube-appliances/wiretap" replace />} />
+            <Route path="/wiretap-devices/add" element={<Navigate to="/qube-appliances/wiretap/add" replace />} />
             <Route path="/wiretap-devices/:id/edit" element={<EditWireTAPDevice />} />
             {/* Fleet Management Routes */}
             <Route path="/fleet-management" element={<Navigate to="/fleet-management/status" replace />} />
