@@ -194,7 +194,7 @@ export const SidebarNav = ({
         </div>}
       
       <nav className="space-y-1 flex-1 overflow-auto">
-        {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} disabled={item.disabled} collapsed={isCollapsed} />)}
+        {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} collapsed={isCollapsed} />)}
         
         {/* Qube Appliances with submenu */}
         <NavItemWithSubmenu icon={Server} label="Qube Appliances" basePath="/qube-appliances" subItems={qubeAppliancesSubItems} isCollapsed={isCollapsed} />
