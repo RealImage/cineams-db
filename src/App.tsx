@@ -57,7 +57,7 @@ const App = () => (
             {/* Legacy redirects */}
             <Route path="/wiretap-devices" element={<Navigate to="/qube-appliances/wiretap" replace />} />
             <Route path="/wiretap-devices/add" element={<Navigate to="/qube-appliances/wiretap/add" replace />} />
-            <Route path="/wiretap-devices/:id/edit" element={<WireTAPDeviceLegacyRedirect />} />
+            <Route path="/wiretap-devices/:id/edit" element={<EditWireTAPDevice />} />
             {/* Fleet Management Routes */}
             <Route path="/fleet-management" element={<Navigate to="/fleet-management/status" replace />} />
             <Route path="/fleet-management/status" element={<FleetStatus />} />
