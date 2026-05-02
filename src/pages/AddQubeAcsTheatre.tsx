@@ -26,6 +26,7 @@ const AddQubeAcsTheatre = () => {
   const theatre = useMemo(() => lookupTheatres.find((t) => t.id === lookupId), [lookupId]);
 
   const [editDetails, setEditDetails] = useState(false);
+  const [editDevice, setEditDevice] = useState(false);
   const [details, setDetails] = useState({
     latitude: theatre?.latitude ?? 0,
     longitude: theatre?.longitude ?? 0,
@@ -207,10 +208,24 @@ const AddQubeAcsTheatre = () => {
                 <section className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-semibold">Qube ACS Device</h4>
-                    {active.hasDevice && active.status === "Active" && (
-                      <Badge className="bg-[hsl(142_76%_36%)] hover:bg-[hsl(142_76%_36%)]">Active</Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {active.hasDevice && active.status === "Active" && (
+                        <Badge className="bg-[hsl(142_76%_36%)] hover:bg-[hsl(142_76%_36%)]">Active</Badge>
+                      )}
+                      <Button variant="outline" size="sm" onClick={() => {
+                        if (!editDevice && !active.hasDevice) {
+                          updateScreen(active.screenId, { hasDevice: true });
+                        }
+                        setEditDevice((v) => !v);
+                      }}>
+                        <Pencil className="h-3.5 w-3.5 mr-2" />
+                        {editDevice ? "Done" : active.hasDevice ? "Edit" : "Add"}
+                      </Button>
+                    </div>
                   </div>
+                  {!active.hasDevice && !editDevice ? (
+                    <p className="text-sm text-muted-foreground italic">Qube ACS device is not available at this screen.</p>
+                  ) : editDevice ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1">
                       <Label htmlFor="appId" className="text-xs">Qube ACS Appliance ID</Label>
@@ -268,6 +283,34 @@ const AddQubeAcsTheatre = () => {
                       </Select>
                     </div>
                   </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Qube ACS Appliance ID</Label>
+                        <p className="text-sm font-medium">{active.applianceId || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Device IP Address</Label>
+                        <p className="text-sm font-medium">{active.ipAddress || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Installed Date</Label>
+                        <p className="text-sm font-medium">{active.installedDate ? format(new Date(active.installedDate), "dd MMM yyyy") : "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Installed By</Label>
+                        <p className="text-sm font-medium">{active.installedBy || "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Last Active On</Label>
+                        <p className="text-sm font-medium">{active.lastActiveOn ? format(new Date(active.lastActiveOn), "dd MMM yyyy hh:mm a") : "—"}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Status</Label>
+                        <p className="text-sm font-medium">{active.status}</p>
+                      </div>
+                    </div>
+                  )}
                 </section>
               </div>
             )}
