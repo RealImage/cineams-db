@@ -8,7 +8,7 @@ import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lu
 import { NavItem } from "./NavItem";
 import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
-import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity, Server, Radio, Zap, Cpu } from "lucide-react";
+import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity, Server, Radio, Zap, Cpu, MonitorSmartphone, ShieldCheck } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,10 +51,6 @@ export const SidebarNav = ({
     icon: <LinkIcon size={20} />,
     label: "Chains",
     path: "/chains"
-  }, {
-    icon: <Monitor size={20} />,
-    label: "TDL Devices",
-    path: "/tdl-devices"
   }];
   const fleetManagementSubItems = [{
     label: "Fleet Status",
@@ -70,6 +66,32 @@ export const SidebarNav = ({
     icon: HardDrive
   }];
   const qubeAppliancesSubItems = [{
+    label: "WireTAP",
+    path: "/qube-appliances/wiretap",
+    icon: Radio
+  }, {
+    label: "Qube ACS",
+    path: "/qube-appliances/qube-acs",
+    icon: Cpu
+  }, {
+    label: "Pulse",
+    path: "/qube-appliances/pulse",
+    icon: Activity
+  }, {
+    label: "Edge",
+    path: "/qube-appliances/edge",
+    icon: Zap
+  }];
+  const theatreDeviceManagementSubItems = [{
+    label: "Screen Device Management",
+    path: "/theatre-device-management/screen-devices",
+    icon: MonitorSmartphone
+  }, {
+    label: "TDL Devices",
+    path: "/theatre-device-management/tdl-devices",
+    icon: ShieldCheck
+  }];
+  const _unused_qa = [{
     label: "WireTAP",
     path: "/qube-appliances/wiretap",
     icon: Radio
@@ -196,6 +218,9 @@ export const SidebarNav = ({
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} collapsed={isCollapsed} />)}
         
+        {/* Theatre Device Management with submenu */}
+        <NavItemWithSubmenu icon={Monitor} label="Theatre Device Management" basePath="/theatre-device-management" subItems={theatreDeviceManagementSubItems} isCollapsed={isCollapsed} />
+
         {/* Qube Appliances with submenu */}
         <NavItemWithSubmenu icon={Server} label="Qube Appliances" basePath="/qube-appliances" subItems={qubeAppliancesSubItems} isCollapsed={isCollapsed} />
 
