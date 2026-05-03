@@ -91,23 +91,6 @@ export const SidebarNav = ({
     path: "/theatre-device-management/tdl-devices",
     icon: ShieldCheck
   }];
-  const _unused_qa = [{
-    label: "WireTAP",
-    path: "/qube-appliances/wiretap",
-    icon: Radio
-  }, {
-    label: "Qube ACS",
-    path: "/qube-appliances/qube-acs",
-    icon: Cpu
-  }, {
-    label: "Pulse",
-    path: "/qube-appliances/pulse",
-    icon: Activity
-  }, {
-    label: "Edge",
-    path: "/qube-appliances/edge",
-    icon: Zap
-  }];
   const screenPulseSubItems = [{
     label: "Pulse Dashboard",
     path: "/screen-pulse/dashboard",
