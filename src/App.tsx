@@ -9,6 +9,7 @@ import Theatres from "./pages/Theatres";
 import EditTheatre from "./pages/EditTheatre";
 import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
+import ScreenDeviceManagement from "./pages/ScreenDeviceManagement";
 import WireTAPDevices from "./pages/WireTAPDevices";
 import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import EditWireTAPDevice from "./pages/EditWireTAPDevice";
@@ -46,7 +47,11 @@ const App = () => (
             <Route path="/theatres" element={<Theatres />} />
             <Route path="/theatre/:id/edit" element={<EditTheatre />} />
             <Route path="/chains" element={<Chains />} />
-            <Route path="/tdl-devices" element={<TDLDevices />} />
+            <Route path="/tdl-devices" element={<Navigate to="/theatre-device-management/tdl-devices" replace />} />
+            {/* Theatre Device Management */}
+            <Route path="/theatre-device-management" element={<Navigate to="/theatre-device-management/screen-devices" replace />} />
+            <Route path="/theatre-device-management/screen-devices" element={<ScreenDeviceManagement />} />
+            <Route path="/theatre-device-management/tdl-devices" element={<TDLDevices />} />
             {/* Qube Appliances Routes */}
             <Route path="/qube-appliances" element={<Navigate to="/qube-appliances/wiretap" replace />} />
             <Route path="/qube-appliances/wiretap" element={<WireTAPDevices />} />
