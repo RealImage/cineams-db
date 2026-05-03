@@ -201,8 +201,8 @@ export const SidebarNav = ({
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} collapsed={isCollapsed} />)}
         
-        {/* Theatre Device Management with submenu */}
-        <NavItemWithSubmenu icon={Monitor} label="Theatre Device Management" basePath="/theatre-device-management" subItems={theatreDeviceManagementSubItems} isCollapsed={isCollapsed} />
+        {/* Theatre Devices with submenu */}
+        <NavItemWithSubmenu icon={Monitor} label="Theatre Devices" basePath="/theatre-device-management" subItems={theatreDeviceManagementSubItems} isCollapsed={isCollapsed} />
 
         {/* Qube Appliances with submenu */}
         <NavItemWithSubmenu icon={Server} label="Qube Appliances" basePath="/qube-appliances" subItems={qubeAppliancesSubItems} isCollapsed={isCollapsed} />
