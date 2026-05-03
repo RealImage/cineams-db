@@ -15,6 +15,7 @@ import AddWireTAPDevice from "./pages/AddWireTAPDevice";
 import EditWireTAPDevice from "./pages/EditWireTAPDevice";
 import QubeACS from "./pages/QubeACS";
 import AddQubeAcsTheatre from "./pages/AddQubeAcsTheatre";
+import EditQubeAcsTheatre from "./pages/EditQubeAcsTheatre";
 import PulseAppliances from "./pages/PulseAppliances";
 import EdgeAppliances from "./pages/EdgeAppliances";
 import TaskManagement from "./pages/TaskManagement";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/qube-appliances/wiretap/:id/edit" element={<EditWireTAPDevice />} />
             <Route path="/qube-appliances/qube-acs" element={<QubeACS />} />
             <Route path="/qube-appliances/qube-acs/add/:lookupId" element={<AddQubeAcsTheatre />} />
+            <Route path="/qube-appliances/qube-acs/:id/edit" element={<EditQubeAcsTheatre />} />
             <Route path="/qube-appliances/pulse" element={<PulseAppliances />} />
             <Route path="/qube-appliances/edge" element={<EdgeAppliances />} />
             {/* Legacy redirects */}

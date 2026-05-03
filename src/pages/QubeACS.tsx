@@ -1,19 +1,23 @@
 import { useMemo, useState } from "react";
-import { Filter, Plus, Copy, Check } from "lucide-react";
+import { Filter, Plus, Copy, Check, MoreHorizontal, Eye, Pencil } from "lucide-react";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { qubeAcsTheatres } from "@/data/qubeAcsData";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { qubeAcsTheatres, QubeAcsTheatre } from "@/data/qubeAcsData";
 import { QubeAcsFilterPanel, QubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
 import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDialog";
+import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
 
 const PAGE_SIZE = 100;
 
 const QubeACS = () => {
+  const navigate = useNavigate();
   const [data] = useState(qubeAcsTheatres);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -21,6 +25,10 @@ const QubeACS = () => {
   const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<QubeAcsFilters>({ chain: "all", location: "all" });
+  const [detailTheatre, setDetailTheatre] = useState<QubeAcsTheatre | null>(null);
+
+  const openDetails = (t: QubeAcsTheatre) => setDetailTheatre(t);
+  const goEdit = (t: QubeAcsTheatre) => navigate(`/qube-appliances/qube-acs/${t.id}/edit`);
 
   const chains = useMemo(() => [...new Set(data.map((t) => t.chainName))].sort(), [data]);
   const locations = useMemo(() => [...new Set(data.map((t) => `${t.city}, ${t.state}, ${t.country}`))].sort(), [data]);
@@ -99,13 +107,14 @@ const QubeACS = () => {
                 <TableHead>Screens</TableHead>
                 <TableHead>Updated At</TableHead>
                 <TableHead>Updated By</TableHead>
+                <TableHead className="w-12 text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginated.length === 0 ? (
-                <TableRow><TableCell colSpan={6} className="text-center h-24 text-muted-foreground">No results found.</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">No results found.</TableCell></TableRow>
               ) : paginated.map((t) => (
-                <TableRow key={t.id} className="hover:bg-muted/50">
+                <TableRow key={t.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => openDetails(t)}>
                   <TableCell>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -139,6 +148,21 @@ const QubeACS = () => {
                   <TableCell>{t.enabledScreens} / {t.totalScreens}</TableCell>
                   <TableCell className="text-xs">{format(new Date(t.updatedAt), "dd MMM yyyy hh:mm a")}</TableCell>
                   <TableCell className="text-xs">{t.updatedBy}</TableCell>
+                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openDetails(t)}>
+                          <Eye className="h-4 w-4 mr-2" /> View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => goEdit(t)}>
+                          <Pencil className="h-4 w-4 mr-2" /> Edit Details
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -167,6 +191,13 @@ const QubeACS = () => {
       />
 
       <AddTheatreLookupDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      <QubeAcsDetailSheet
+        theatre={detailTheatre}
+        open={!!detailTheatre}
+        onOpenChange={(o) => !o && setDetailTheatre(null)}
+        onEdit={(t) => { setDetailTheatre(null); goEdit(t); }}
+      />
     </div>
   );
 };
