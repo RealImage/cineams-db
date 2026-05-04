@@ -34,6 +34,8 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path.startsWith("/qube-appliances/qube-acs/add")) return "Add Qube ACS Theatre";
     if (path.startsWith("/qube-appliances/qube-acs/") && path.endsWith("/edit")) return "Edit Qube ACS Theatre";
     if (path === "/qube-appliances/pulse") return "Pulse";
+    if (path.startsWith("/qube-appliances/pulse/add")) return "Add Pulse Theatre";
+    if (path.startsWith("/qube-appliances/pulse/") && path.endsWith("/edit")) return "Edit Pulse Theatre";
     if (path === "/qube-appliances/edge") return "Edge";
 
     // Fleet Management
