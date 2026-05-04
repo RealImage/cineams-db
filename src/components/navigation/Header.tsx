@@ -16,26 +16,50 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
   
   const getPageTitle = () => {
     const path = location.pathname;
-    
+
     if (path === "/") return "Dashboard";
     if (path === "/theatres") return "Theatres";
+    if (path.startsWith("/theatre/") && path.endsWith("/edit")) return "Edit Theatre";
     if (path === "/chains") return "Chains";
-    if (path === "/tdl-devices") return "TDL Devices";
-    if (path === "/wiretap-devices") return "WireTAP Devices";
-    if (path === "/reports") return "Reports";
-    if (path === "/approvals-conflicts") return "Approvals & Conflicts";
-    if (path === "/approvals-conflicts/company-claims") return "Company Claims";
+
+    // Devices Master
+    if (path === "/theatre-device-management/screen-devices") return "Screen Device Management";
+    if (path === "/theatre-device-management/tdl-devices" || path === "/tdl-devices") return "TDL Devices";
+
+    // Qube Appliances
+    if (path === "/qube-appliances/wiretap") return "WireTAP Devices";
+    if (path === "/qube-appliances/wiretap/add") return "Add WireTAP Device";
+    if (path.startsWith("/qube-appliances/wiretap/") && path.endsWith("/edit")) return "Edit WireTAP Device";
+    if (path === "/qube-appliances/qube-acs") return "Qube ACS";
+    if (path.startsWith("/qube-appliances/qube-acs/add")) return "Add Qube ACS Theatre";
+    if (path.startsWith("/qube-appliances/qube-acs/") && path.endsWith("/edit")) return "Edit Qube ACS Theatre";
+    if (path === "/qube-appliances/pulse") return "Pulse";
+    if (path === "/qube-appliances/edge") return "Edge";
+
+    // Fleet Management
     if (path === "/fleet-management/status") return "Fleet Status";
     if (path === "/fleet-management/tasks") return "Task Management";
     if (path === "/fleet-management/images") return "Image Management";
     if (path.startsWith("/fleet-management/images/") && path.includes("/versions")) return "Manage Versions";
+    if (path === "/fleet-management/task/new") return "Create Task";
+    if (path.startsWith("/fleet-management/task/") && path.endsWith("/edit")) return "Edit Task";
+    if (path.startsWith("/fleet-management/task/") && path.endsWith("/view")) return "Task Details";
+
+    // Screen Pulse
     if (path === "/screen-pulse/dashboard") return "Pulse Dashboard";
     if (path === "/screen-pulse/environment") return "Environment Manager";
     if (path === "/screen-pulse/projection") return "Projection Manager";
     if (path === "/screen-pulse/screens") return "Screen Manager";
-    if (path === "/screen-pulse/reports") return "Reports";
-    
-    return "Dashboard";
+    if (path === "/screen-pulse/reports") return "Screen Pulse Reports";
+
+    // Approvals & Conflicts
+    if (path === "/approvals-conflicts") return "Approvals & Conflicts";
+    if (path === "/approvals-conflicts/company-claims") return "Company Claims";
+    if (path === "/approvals-conflicts/partners") return "Partners";
+
+    if (path === "/reports") return "Reports";
+
+    return "";
   };
   
   return (
