@@ -86,7 +86,7 @@ export const edgeTheatres: EdgeTheatre[] = Array.from({ length: 60 }, (_, i) => 
   const enabled = 2 + (i % (total - 1));
   return {
     id: `edge-th-${i + 1}`,
-    theatreId: `T${String(30000 + i)}`,
+    theatreId: `T${String(50000 + i)}`,
     theatreName: `${chain} ${tName}`,
     alsoKnownAs: i % 3 === 0 ? `${tName} Cineplex` : undefined,
     city: loc.city,
@@ -99,7 +99,7 @@ export const edgeTheatres: EdgeTheatre[] = Array.from({ length: 60 }, (_, i) => 
     updatedBy: operators[i % operators.length],
     latitude: loc.lat + (Math.random() - 0.5) * 0.05,
     longitude: loc.lng + (Math.random() - 0.5) * 0.05,
-    networkId: `NET-${2000 + i}`,
+    networkId: `NET-${3000 + i}`,
     networkPassword: "********",
     screens: makeScreens(total, enabled, i + 1),
   };
@@ -124,7 +124,7 @@ export const edgeLookupTheatres: EdgeLookupTheatre[] = Array.from({ length: 80 }
   const tName = rand(theatreNames, i + 7);
   return {
     id: `edge-lk-${i + 1}`,
-    theatreId: `T${String(40000 + i)}`,
+    theatreId: `T${String(60000 + i)}`,
     theatreName: `${chain} ${tName} ${i + 1}`,
     city: loc.city,
     state: loc.state,
