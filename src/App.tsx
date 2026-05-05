@@ -20,6 +20,8 @@ import PulseAppliances from "./pages/PulseAppliances";
 import AddPulseTheatre from "./pages/AddPulseTheatre";
 import EditPulseTheatre from "./pages/EditPulseTheatre";
 import EdgeAppliances from "./pages/EdgeAppliances";
+import AddEdgeTheatre from "./pages/AddEdgeTheatre";
+import EditEdgeTheatre from "./pages/EditEdgeTheatre";
 import TaskManagement from "./pages/TaskManagement";
 import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
@@ -67,6 +69,8 @@ const App = () => (
             <Route path="/qube-appliances/pulse/add/:lookupId" element={<AddPulseTheatre />} />
             <Route path="/qube-appliances/pulse/:id/edit" element={<EditPulseTheatre />} />
             <Route path="/qube-appliances/edge" element={<EdgeAppliances />} />
+            <Route path="/qube-appliances/edge/add/:lookupId" element={<AddEdgeTheatre />} />
+            <Route path="/qube-appliances/edge/:id/edit" element={<EditEdgeTheatre />} />
             {/* Legacy redirects */}
             <Route path="/wiretap-devices" element={<Navigate to="/qube-appliances/wiretap" replace />} />
             <Route path="/wiretap-devices/add" element={<Navigate to="/qube-appliances/wiretap/add" replace />} />
