@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
-import { ArrowLeft, Pencil, CalendarIcon, CheckCircle2, Circle } from "lucide-react";
+import { ArrowLeft, Pencil, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +9,10 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { lookupTheatres, QubeAcsScreenDevice } from "@/data/qubeAcsData";
 import { cn } from "@/lib/utils";
+import EditScreenDeviceDialog from "@/components/qube-acs/EditScreenDeviceDialog";
 
 type Status = "Active" | "Device Paused" | "Inactive";
 
@@ -26,7 +24,7 @@ const AddQubeAcsTheatre = () => {
   const theatre = useMemo(() => lookupTheatres.find((t) => t.id === lookupId), [lookupId]);
 
   const [editDetails, setEditDetails] = useState(false);
-  const [editDevice, setEditDevice] = useState(false);
+  const [editDeviceOpen, setEditDeviceOpen] = useState(false);
   const [details, setDetails] = useState({
     latitude: theatre?.latitude ?? 0,
     longitude: theatre?.longitude ?? 0,
@@ -212,111 +210,36 @@ const AddQubeAcsTheatre = () => {
                       {active.hasDevice && active.status === "Active" && (
                         <Badge className="bg-[hsl(142_76%_36%)] hover:bg-[hsl(142_76%_36%)]">Active</Badge>
                       )}
-                      <Button variant="outline" size="sm" onClick={() => {
-                        if (!editDevice && !active.hasDevice) {
-                          updateScreen(active.screenId, { hasDevice: true });
-                        }
-                        setEditDevice((v) => !v);
-                      }}>
+                      <Button variant="outline" size="sm" onClick={() => setEditDeviceOpen(true)}>
                         <Pencil className="h-3.5 w-3.5 mr-2" />
-                        {editDevice ? "Done" : active.hasDevice ? "Edit" : "Add"}
+                        {active.hasDevice ? "Edit" : "Add"}
                       </Button>
                     </div>
                   </div>
-                  {!active.hasDevice && !editDevice ? (
-                    <p className="text-sm text-muted-foreground italic">Qube ACS device is not available at this screen.</p>
-                  ) : editDevice ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label htmlFor="appId" className="text-xs">Qube ACS Appliance ID</Label>
-                      <Input id="appId" value={active.applianceId ?? ""} onChange={(e) => updateScreen(active.screenId, { applianceId: e.target.value })} placeholder="QACS-XXXXX" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="ip" className="text-xs">Device IP Address</Label>
-                      <Input
-                        id="ip"
-                        value={active.ipAddress ?? ""}
-                        onChange={(e) => updateScreen(active.screenId, { ipAddress: e.target.value })}
-                        placeholder="192.168.1.10"
-                        pattern="^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Installed Date</Label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !active.installedDate && "text-muted-foreground")}>
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {active.installedDate ? format(new Date(active.installedDate), "dd MMM yyyy") : "Pick a date"}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={active.installedDate ? new Date(active.installedDate) : undefined}
-                            onSelect={(d) => updateScreen(active.screenId, { installedDate: d?.toISOString() })}
-                            initialFocus
-                            className={cn("p-3 pointer-events-auto")}
-                          />
-                        </PopoverContent>
-                      </Popover>
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="installedBy" className="text-xs">Installed By</Label>
-                      <Input id="installedBy" value={active.installedBy ?? ""} onChange={(e) => updateScreen(active.screenId, { installedBy: e.target.value })} placeholder="Name" />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Last Active On</Label>
-                      <p className="text-sm font-medium h-10 flex items-center">
-                        {active.lastActiveOn ? format(new Date(active.lastActiveOn), "dd MMM yyyy hh:mm a") : "—"}
-                      </p>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Status</Label>
-                      <Select value={active.status} onValueChange={(v: Status) => updateScreen(active.screenId, { status: v, hasDevice: v !== "Inactive" ? true : active.hasDevice })}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Active">Active</SelectItem>
-                          <SelectItem value="Device Paused">Device Paused</SelectItem>
-                          <SelectItem value="Inactive">Inactive</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Screen Network ID</Label><p className="text-sm font-medium">{active.screenNetworkId || "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Screen Network Password</Label><p className="text-sm font-medium">{active.screenNetworkPassword ? "••••••••" : "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Qube ACS Appliance ID</Label><p className="text-sm font-medium">{active.applianceId || "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Qube ACS CM Serial Number</Label><p className="text-sm font-medium">{active.cmSerialNumber || "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Device IP Address</Label><p className="text-sm font-medium">{active.ipAddress || "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Status</Label><p className="text-sm font-medium">{active.status}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Installed Date</Label><p className="text-sm font-medium">{active.installedDate ? format(new Date(active.installedDate), "dd MMM yyyy") : "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Installed By</Label><p className="text-sm font-medium">{active.installedBy || "—"}</p></div>
+                    <div className="space-y-1"><Label className="text-xs text-muted-foreground">Last Active On</Label><p className="text-sm font-medium">{active.lastActiveOn ? format(new Date(active.lastActiveOn), "dd MMM yyyy hh:mm a") : "—"}</p></div>
                   </div>
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Qube ACS Appliance ID</Label>
-                        <p className="text-sm font-medium">{active.applianceId || "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Device IP Address</Label>
-                        <p className="text-sm font-medium">{active.ipAddress || "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Installed Date</Label>
-                        <p className="text-sm font-medium">{active.installedDate ? format(new Date(active.installedDate), "dd MMM yyyy") : "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Installed By</Label>
-                        <p className="text-sm font-medium">{active.installedBy || "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Last Active On</Label>
-                        <p className="text-sm font-medium">{active.lastActiveOn ? format(new Date(active.lastActiveOn), "dd MMM yyyy hh:mm a") : "—"}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-xs text-muted-foreground">Status</Label>
-                        <p className="text-sm font-medium">{active.status}</p>
-                      </div>
-                    </div>
-                  )}
                 </section>
               </div>
             )}
           </div>
         </div>
       </Card>
+
+      <EditScreenDeviceDialog
+        open={editDeviceOpen}
+        onOpenChange={setEditDeviceOpen}
+        screen={active ?? null}
+        onSave={(patch) => active && updateScreen(active.screenId, patch)}
+      />
     </div>
   );
 };
