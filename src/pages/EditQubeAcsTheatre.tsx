@@ -100,8 +100,6 @@ const EditQubeAcsTheatre = () => {
                 onChange={(e) => setDetails((d) => ({ ...d, longitude: parseFloat(e.target.value) || 0 }))} />
             ) : <p className="text-sm font-medium">{details.longitude.toFixed(6)}</p>}
           </div>
-          <div className="space-y-1">
-          </div>
         </div>
       </Card>
 
