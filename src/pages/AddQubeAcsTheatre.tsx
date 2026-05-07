@@ -28,8 +28,6 @@ const AddQubeAcsTheatre = () => {
   const [details, setDetails] = useState({
     latitude: theatre?.latitude ?? 0,
     longitude: theatre?.longitude ?? 0,
-    networkId: "",
-    networkPassword: "",
   });
 
   const [screens, setScreens] = useState<ScreenDeviceForm[]>(() =>
@@ -120,18 +118,6 @@ const AddQubeAcsTheatre = () => {
               <Input type="number" step="0.000001" value={details.longitude}
                 onChange={(e) => setDetails((d) => ({ ...d, longitude: parseFloat(e.target.value) || 0 }))} />
             ) : <p className="text-sm font-medium">{details.longitude.toFixed(6)}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Network ID</Label>
-            {editDetails ? (
-              <Input value={details.networkId} onChange={(e) => setDetails((d) => ({ ...d, networkId: e.target.value }))} placeholder="Enter Network ID" />
-            ) : <p className="text-sm font-medium">{details.networkId || "—"}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Network Password</Label>
-            {editDetails ? (
-              <Input type="password" value={details.networkPassword} onChange={(e) => setDetails((d) => ({ ...d, networkPassword: e.target.value }))} placeholder="Enter Password" />
-            ) : <p className="text-sm font-medium">{details.networkPassword ? "••••••••" : "—"}</p>}
           </div>
         </div>
       </Card>
