@@ -26,8 +26,6 @@ const EditQubeAcsTheatre = () => {
   const [details, setDetails] = useState({
     latitude: theatre?.latitude ?? 0,
     longitude: theatre?.longitude ?? 0,
-    networkId: theatre?.networkId ?? "",
-    networkPassword: theatre?.networkPassword ?? "",
   });
   const [screens, setScreens] = useState<QubeAcsScreenDevice[]>(() => theatre ? [...theatre.screens] : []);
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null);
@@ -103,16 +101,6 @@ const EditQubeAcsTheatre = () => {
             ) : <p className="text-sm font-medium">{details.longitude.toFixed(6)}</p>}
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Network ID</Label>
-            {editDetails ? (
-              <Input value={details.networkId} onChange={(e) => setDetails((d) => ({ ...d, networkId: e.target.value }))} />
-            ) : <p className="text-sm font-medium">{details.networkId || "—"}</p>}
-          </div>
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Network Password</Label>
-            {editDetails ? (
-              <Input type="password" value={details.networkPassword} onChange={(e) => setDetails((d) => ({ ...d, networkPassword: e.target.value }))} />
-            ) : <p className="text-sm font-medium">{details.networkPassword ? "••••••••" : "—"}</p>}
           </div>
         </div>
       </Card>
