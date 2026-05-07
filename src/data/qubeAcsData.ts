@@ -2,7 +2,10 @@ export interface QubeAcsScreenDevice {
   screenId: string;
   screenName: string;
   applianceId?: string;
+  cmSerialNumber?: string;
   ipAddress?: string;
+  screenNetworkId?: string;
+  screenNetworkPassword?: string;
   installedDate?: string;
   installedBy?: string;
   lastActiveOn?: string;
