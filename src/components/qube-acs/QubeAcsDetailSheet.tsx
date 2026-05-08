@@ -54,8 +54,6 @@ export const QubeAcsDetailSheet = ({ theatre, open, onOpenChange, onEdit }: Prop
                 <Field label="Theatre Location" value={`${theatre.city}, ${theatre.state}, ${theatre.country}`} />
                 <Field label="Latitude" value={theatre.latitude.toFixed(6)} />
                 <Field label="Longitude" value={theatre.longitude.toFixed(6)} />
-                <Field label="Network ID" value={theatre.networkId} />
-                <Field label="Network Password" value={theatre.networkPassword ? "••••••••" : "—"} />
               </div>
             </section>
 
@@ -84,12 +82,14 @@ export const QubeAcsDetailSheet = ({ theatre, open, onOpenChange, onEdit }: Prop
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <div className="grid grid-cols-2 gap-4 px-3 py-3 border border-t-0 rounded-b-md">
+                            <Field label="Screen Network ID" value={s.screenNetworkId} />
+                            <Field label="Screen Network Password" value={s.screenNetworkPassword ? "••••••••" : "—"} />
                             <Field label="Qube ACS Appliance ID" value={s.applianceId} />
+                            <Field label="Qube ACS CM Serial Number" value={s.cmSerialNumber} />
                             <Field label="Device IP Address" value={s.ipAddress} />
+                            <Field label="Status" value={s.status} />
                             <Field label="Installed Date" value={s.installedDate ? format(new Date(s.installedDate), "dd MMM yyyy") : null} />
                             <Field label="Installed By" value={s.installedBy} />
-                            <Field label="Last Active On" value={s.lastActiveOn ? format(new Date(s.lastActiveOn), "dd MMM yyyy hh:mm a") : null} />
-                            <Field label="Status" value={s.status} />
                           </div>
                         </CollapsibleContent>
                       </Collapsible>
