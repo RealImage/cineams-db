@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Filter, Plus, Copy, Check, MoreHorizontal, Eye, Pencil } from "lucide-react";
+import { Filter, Plus, Copy, Check, MoreHorizontal, Eye, Pencil, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -13,6 +13,7 @@ import { qubeAcsTheatres, QubeAcsTheatre } from "@/data/qubeAcsData";
 import { QubeAcsFilterPanel, QubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
 import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDialog";
 import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
+import SystemConstantsDialog from "@/components/qube-acs/SystemConstantsDialog";
 
 const PAGE_SIZE = 100;
 
@@ -22,6 +23,7 @@ const QubeACS = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [constantsOpen, setConstantsOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<QubeAcsFilters>({ chain: "all", location: "all" });
@@ -91,7 +93,10 @@ const QubeACS = () => {
         <span className="text-sm text-muted-foreground">
           {filtered.length} theatre{filtered.length !== 1 ? "s" : ""}
         </span>
-        <Button className="ml-auto" onClick={() => setAddOpen(true)}>
+        <Button variant="outline" className="ml-auto" onClick={() => setConstantsOpen(true)}>
+          <Settings2 className="h-4 w-4 mr-2" /> System Constants
+        </Button>
+        <Button onClick={() => setAddOpen(true)}>
           <Plus className="h-4 w-4 mr-2" /> Add Theatre
         </Button>
       </div>
@@ -191,6 +196,8 @@ const QubeACS = () => {
       />
 
       <AddTheatreLookupDialog open={addOpen} onOpenChange={setAddOpen} />
+
+      <SystemConstantsDialog open={constantsOpen} onOpenChange={setConstantsOpen} />
 
       <QubeAcsDetailSheet
         theatre={detailTheatre}
