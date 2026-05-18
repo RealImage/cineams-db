@@ -9,6 +9,7 @@ export interface QubeAcsScreenDevice {
   installedDate?: string;
   installedBy?: string;
   lastActiveOn?: string;
+  comments?: string;
   status: "Active" | "Device Paused" | "Inactive";
   hasDevice: boolean;
 }
