@@ -125,6 +125,11 @@ export const EditScreenDeviceDialog = ({ open, onOpenChange, screen, onSave }: P
           </div>
         </div>
 
+        <div className="space-y-1 py-2">
+          <Label htmlFor="comments" className="text-xs">Comments</Label>
+          <Textarea id="comments" value={form.comments ?? ""} onChange={(e) => upd({ comments: e.target.value })} placeholder="Enter any comments about this screen device..." className="min-h-[80px]" />
+        </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
           <Button onClick={handleSave}>Save</Button>
