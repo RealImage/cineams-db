@@ -9,6 +9,7 @@ export interface QubeAcsScreenDevice {
   installedDate?: string;
   installedBy?: string;
   lastActiveOn?: string;
+  comments?: string;
   status: "Active" | "Device Paused" | "Inactive";
   hasDevice: boolean;
 }
@@ -76,6 +77,7 @@ function makeScreens(count: number, enabledCount: number, theatreSeed: number): 
       installedDate: hasDevice ? randomDate(new Date(2023, 0, 1), new Date(2025, 6, 1)) : undefined,
       installedBy: hasDevice ? operators[(theatreSeed + i) % operators.length] : undefined,
       lastActiveOn: hasDevice ? randomDate(new Date(2026, 3, 1), new Date(2026, 4, 28)) : undefined,
+      comments: hasDevice && i % 4 === 0 ? "Setup completed. Verified connectivity and calibrated display." : undefined,
       status,
     };
   });

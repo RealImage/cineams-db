@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -40,6 +41,7 @@ export const EditScreenDeviceDialog = ({ open, onOpenChange, screen, onSave }: P
       hasDevice: form.status !== "Inactive" ? true : form.hasDevice,
       installedDate: form.installedDate,
       installedBy: form.installedBy,
+      comments: form.comments,
     });
     onOpenChange(false);
   };
@@ -121,6 +123,11 @@ export const EditScreenDeviceDialog = ({ open, onOpenChange, screen, onSave }: P
             <Label htmlFor="instBy" className="text-xs">Installed By</Label>
             <Input id="instBy" value={form.installedBy ?? ""} onChange={(e) => upd({ installedBy: e.target.value })} placeholder="Name" />
           </div>
+        </div>
+
+        <div className="space-y-1 py-2">
+          <Label htmlFor="comments" className="text-xs">Comments</Label>
+          <Textarea id="comments" value={form.comments ?? ""} onChange={(e) => upd({ comments: e.target.value })} placeholder="Enter any comments about this screen device..." className="min-h-[80px]" />
         </div>
 
         <DialogFooter>
