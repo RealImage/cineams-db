@@ -168,6 +168,7 @@ const EditQubeAcsTheatre = () => {
                     <div className="space-y-1"><Label className="text-xs text-muted-foreground">Installed Date</Label><p className="text-sm font-medium">{active.installedDate ? format(new Date(active.installedDate), "dd MMM yyyy") : "—"}</p></div>
                     <div className="space-y-1"><Label className="text-xs text-muted-foreground">Installed By</Label><p className="text-sm font-medium">{active.installedBy || "—"}</p></div>
                     <div className="space-y-1"><Label className="text-xs text-muted-foreground">Last Active On</Label><p className="text-sm font-medium">{active.lastActiveOn ? format(new Date(active.lastActiveOn), "dd MMM yyyy hh:mm a") : "—"}</p></div>
+                    <div className="space-y-1 md:col-span-2"><Label className="text-xs text-muted-foreground">Comments</Label><p className="text-sm font-medium whitespace-pre-wrap">{active.comments || "—"}</p></div>
                   </div>
                 </section>
               </div>
