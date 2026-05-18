@@ -41,6 +41,7 @@ export const EditScreenDeviceDialog = ({ open, onOpenChange, screen, onSave }: P
       hasDevice: form.status !== "Inactive" ? true : form.hasDevice,
       installedDate: form.installedDate,
       installedBy: form.installedBy,
+      comments: form.comments,
     });
     onOpenChange(false);
   };
