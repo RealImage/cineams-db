@@ -18,7 +18,9 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     const path = location.pathname;
 
     if (path === "/") return "Dashboard";
-    if (path === "/theatres") return "Theatres";
+    if (path === "/theatres" || path === "/theatres/list") return "Theatre List";
+    if (path === "/theatres/flm-feeds") return "FLM Feeds";
+    if (path === "/theatres/dashboard") return "Theatres Dashboard";
     if (path.startsWith("/theatre/") && path.endsWith("/edit")) return "Edit Theatre";
     if (path === "/chains") return "Chains";
 

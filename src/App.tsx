@@ -6,6 +6,8 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import Index from "./pages/Index";
 import Theatres from "./pages/Theatres";
+import FLMFeeds from "./pages/FLMFeeds";
+import TheatresDashboard from "./pages/TheatresDashboard";
 import EditTheatre from "./pages/EditTheatre";
 import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
@@ -50,7 +52,10 @@ const App = () => (
         <Routes>
           <Route element={<Layout />}>
             <Route path="/" element={<Index />} />
-            <Route path="/theatres" element={<Theatres />} />
+            <Route path="/theatres" element={<Navigate to="/theatres/list" replace />} />
+            <Route path="/theatres/list" element={<Theatres />} />
+            <Route path="/theatres/flm-feeds" element={<FLMFeeds />} />
+            <Route path="/theatres/dashboard" element={<TheatresDashboard />} />
             <Route path="/theatre/:id/edit" element={<EditTheatre />} />
             <Route path="/chains" element={<Chains />} />
             <Route path="/tdl-devices" element={<Navigate to="/theatre-device-management/tdl-devices" replace />} />
