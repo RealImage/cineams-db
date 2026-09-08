@@ -43,11 +43,21 @@ export const SidebarNav = ({
     icon: <LayoutDashboard size={20} />,
     label: "Dashboard",
     path: "/"
+  }];
+  const theatresSubItems = [{
+    label: "Theatre List",
+    path: "/theatres/list",
+    icon: List
   }, {
-    icon: <Building2 size={20} />,
-    label: "Theatres",
-    path: "/theatres"
+    label: "FLM Feeds",
+    path: "/theatres/flm-feeds",
+    icon: FileText
   }, {
+    label: "Dashboard",
+    path: "/theatres/dashboard",
+    icon: LayoutDashboard
+  }];
+  const chainsNavItems = [{
     icon: <LinkIcon size={20} />,
     label: "Chains",
     path: "/chains"
@@ -200,6 +210,12 @@ export const SidebarNav = ({
       
       <nav className="space-y-1 flex-1 overflow-auto">
         {navItems.map((item, i) => <NavItem key={i} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} collapsed={isCollapsed} />)}
+
+        {/* Theatres with submenu */}
+        <NavItemWithSubmenu icon={Building2} label="Theatres" basePath="/theatres" subItems={theatresSubItems} isCollapsed={isCollapsed} />
+
+        {chainsNavItems.map((item, i) => <NavItem key={`chain-${i}`} icon={item.icon} label={item.label} path={item.path} isActive={isActive(item.path)} collapsed={isCollapsed} />)}
+        
         
         {/* Devices Master with submenu */}
         <NavItemWithSubmenu icon={Monitor} label="Devices Master" basePath="/theatre-device-management" subItems={theatreDeviceManagementSubItems} isCollapsed={isCollapsed} />
