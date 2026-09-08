@@ -43,11 +43,21 @@ export const SidebarNav = ({
     icon: <LayoutDashboard size={20} />,
     label: "Dashboard",
     path: "/"
+  }];
+  const theatresSubItems = [{
+    label: "Theatre List",
+    path: "/theatres/list",
+    icon: List
   }, {
-    icon: <Building2 size={20} />,
-    label: "Theatres",
-    path: "/theatres"
+    label: "FLM Feeds",
+    path: "/theatres/flm-feeds",
+    icon: FileText
   }, {
+    label: "Dashboard",
+    path: "/theatres/dashboard",
+    icon: LayoutDashboard
+  }];
+  const chainsNavItems = [{
     icon: <LinkIcon size={20} />,
     label: "Chains",
     path: "/chains"
