@@ -143,7 +143,7 @@ const FLMFeeds = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Target Theatre</TableHead>
+              <TableHead>Target Theatre Name</TableHead>
               <TableHead>Target Chain</TableHead>
               <TableHead>Source Feed</TableHead>
               <TableHead>Source Theatre ID</TableHead>
