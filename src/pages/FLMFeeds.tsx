@@ -224,6 +224,9 @@ const FLMFeeds = () => {
           </TableBody>
         </Table>
       </div>
+
+      <FlmDetailSheet feed={detailFeed} onClose={() => setDetailFeed(null)} />
+      <MapThirdPartyIdDialog feed={mapFeed} onClose={() => setMapFeed(null)} />
     </motion.div>
   );
 };
