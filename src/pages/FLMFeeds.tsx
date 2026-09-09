@@ -168,7 +168,6 @@ const FLMFeeds = () => {
                     <TooltipTrigger asChild>
                       <div className="cursor-default">
                         <div className="font-medium">{f.theatreName}</div>
-                        <div className="text-xs text-muted-foreground">{f.location}</div>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent className="max-w-xs space-y-2 p-3">
@@ -237,7 +236,10 @@ const FLMFeeds = () => {
                 <TableCell>
                   <Badge variant="outline">{f.source}</Badge>
                 </TableCell>
-                <TableCell className="font-mono text-xs">{f.theatreIdFeed}</TableCell>
+                <TableCell>
+                  <div className="font-mono text-xs">{f.theatreIdFeed}</div>
+                  <div className="text-xs text-muted-foreground">{f.location}</div>
+                </TableCell>
                 <TableCell>
                   <Badge variant={f.isNewTheatre ? "default" : "secondary"}>
                     {f.isNewTheatre ? "Yes" : "No"}
