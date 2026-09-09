@@ -145,6 +145,7 @@ const FLMFeeds = () => {
               <TableHead>New Theatre?</TableHead>
               <TableHead>Received On</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[50px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
