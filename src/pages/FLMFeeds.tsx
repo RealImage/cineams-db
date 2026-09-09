@@ -61,6 +61,7 @@ const FLMFeeds = () => {
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return flmFeeds.filter((f) => {
+      if (ignoredIds.has(f.id)) return false;
       const matchesSearch =
         !q ||
         [f.theatreName, f.theatreDisplayName, f.chain, f.location, f.theatreIdFeed, f.theatreUuid]
