@@ -194,6 +194,31 @@ const FLMFeeds = () => {
                     {f.status}
                   </Badge>
                 </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setDetailFeed(f)}>
+                        View FLM Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setMapFeed(f)}>
+                        Map Third Party ID
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleIgnore(f)}>
+                        Ignore Update
+                      </DropdownMenuItem>
+                      {f.isNewTheatre && (
+                        <DropdownMenuItem onClick={() => handleAddTheatre(f)}>
+                          Add New Theatre
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
