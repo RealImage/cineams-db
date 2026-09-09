@@ -2,7 +2,18 @@ import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Search, MoreHorizontal } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FlmFeed } from "@/data/flmFeedsData";
+import { FlmDetailSheet } from "@/components/flm/FlmDetailSheet";
+import { MapThirdPartyIdDialog } from "@/components/flm/MapThirdPartyIdDialog";
 import {
   Select,
   SelectContent,
@@ -29,14 +40,28 @@ import { formatDate, formatTime } from "@/lib/dateUtils";
 const SOURCES = ["MACCS", "DCIP", "Qube Radar", "Cinergy", "Sony", "KDMx"];
 
 const FLMFeeds = () => {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("all");
   const [isNew, setIsNew] = useState("all");
+  const [detailFeed, setDetailFeed] = useState<FlmFeed | null>(null);
+  const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+
+  const handleIgnore = (feed: FlmFeed) => {
+    setIgnoredIds((prev) => new Set(prev).add(feed.id));
+    toast({ title: "Update ignored", description: `${feed.theatreName} feed update has been ignored.` });
+  };
+
+  const handleAddTheatre = (feed: FlmFeed) => {
+    toast({ title: "Add Theatre", description: `Starting add-theatre flow for ${feed.theatreName}.` });
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
     return flmFeeds.filter((f) => {
+      if (ignoredIds.has(f.id)) return false;
       const matchesSearch =
         !q ||
         [f.theatreName, f.theatreDisplayName, f.chain, f.location, f.theatreIdFeed, f.theatreUuid]
@@ -49,7 +74,7 @@ const FLMFeeds = () => {
         isNew === "all" || (isNew === "yes" ? f.isNewTheatre : !f.isNewTheatre);
       return matchesSearch && matchesSource && matchesStatus && matchesNew;
     });
-  }, [search, source, status, isNew]);
+  }, [search, source, status, isNew, ignoredIds]);
 
   return (
     <motion.div
@@ -120,12 +145,13 @@ const FLMFeeds = () => {
               <TableHead>New Theatre?</TableHead>
               <TableHead>Received On</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead className="w-[50px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
                   No feed records found.
                 </TableCell>
               </TableRow>
@@ -168,11 +194,39 @@ const FLMFeeds = () => {
                     {f.status}
                   </Badge>
                 </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setDetailFeed(f)}>
+                        View FLM Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setMapFeed(f)}>
+                        Map Third Party ID
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleIgnore(f)}>
+                        Ignore Update
+                      </DropdownMenuItem>
+                      {f.isNewTheatre && (
+                        <DropdownMenuItem onClick={() => handleAddTheatre(f)}>
+                          Add New Theatre
+                        </DropdownMenuItem>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      <FlmDetailSheet feed={detailFeed} onClose={() => setDetailFeed(null)} />
+      <MapThirdPartyIdDialog feed={mapFeed} onClose={() => setMapFeed(null)} />
     </motion.div>
   );
 };
