@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, MoreHorizontal } from "lucide-react";
+import { Search, MoreHorizontal, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -48,6 +48,12 @@ const FLMFeeds = () => {
   const [detailFeed, setDetailFeed] = useState<FlmFeed | null>(null);
   const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({ title: "Copied", description: `${label} copied to clipboard.` });
+    });
+  };
 
   const handleIgnore = (feed: FlmFeed) => {
     setIgnoredIds((prev) => new Set(prev).add(feed.id));
@@ -137,11 +143,10 @@ const FLMFeeds = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Theatre Name</TableHead>
-              <TableHead>Chain</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Theatre ID</TableHead>
-              <TableHead>Source</TableHead>
+              <TableHead>Target Theatre</TableHead>
+              <TableHead>Target Chain</TableHead>
+              <TableHead>Source Feed</TableHead>
+              <TableHead>Source Theatre ID</TableHead>
               <TableHead>New Theatre?</TableHead>
               <TableHead>Received On</TableHead>
               <TableHead>Status</TableHead>
@@ -151,7 +156,7 @@ const FLMFeeds = () => {
           <TableBody>
             {rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   No feed records found.
                 </TableCell>
               </TableRow>
@@ -166,20 +171,73 @@ const FLMFeeds = () => {
                         <div className="text-xs text-muted-foreground">{f.location}</div>
                       </div>
                     </TooltipTrigger>
-                    <TooltipContent className="max-w-xs space-y-1">
-                      <p className="font-medium">{f.theatreName}</p>
-                      <p className="text-xs">Display Name: {f.theatreDisplayName}</p>
-                      <p className="text-xs">Address: {f.address}</p>
-                      <p className="text-xs">Theatre UUID: {f.theatreUuid}</p>
+                    <TooltipContent className="max-w-xs space-y-2 p-3">
+                      <div className="space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theatre Name</p>
+                            <p className="text-sm font-medium">{f.theatreName}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyToClipboard(f.theatreName, "Theatre Name")}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theatre Display Name</p>
+                            <p className="text-sm">{f.theatreDisplayName}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyToClipboard(f.theatreDisplayName, "Theatre Display Name")}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theatre UUID</p>
+                            <p className="font-mono text-xs break-all">{f.theatreUuid}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyToClipboard(f.theatreUuid, "Theatre UUID")}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Theatre Address</p>
+                            <p className="text-sm">{f.address}</p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            onClick={() => copyToClipboard(f.address, "Theatre Address")}
+                          >
+                            <Copy className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                 </TableCell>
                 <TableCell className="text-sm">{f.chain}</TableCell>
-                <TableCell className="text-sm">{f.location}</TableCell>
-                <TableCell className="font-mono text-xs">{f.theatreIdFeed}</TableCell>
                 <TableCell>
                   <Badge variant="outline">{f.source}</Badge>
                 </TableCell>
+                <TableCell className="font-mono text-xs">{f.theatreIdFeed}</TableCell>
                 <TableCell>
                   <Badge variant={f.isNewTheatre ? "default" : "secondary"}>
                     {f.isNewTheatre ? "Yes" : "No"}
