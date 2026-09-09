@@ -40,10 +40,23 @@ import { formatDate, formatTime } from "@/lib/dateUtils";
 const SOURCES = ["MACCS", "DCIP", "Qube Radar", "Cinergy", "Sony", "KDMx"];
 
 const FLMFeeds = () => {
+  const { toast } = useToast();
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("all");
   const [isNew, setIsNew] = useState("all");
+  const [detailFeed, setDetailFeed] = useState<FlmFeed | null>(null);
+  const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
+  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+
+  const handleIgnore = (feed: FlmFeed) => {
+    setIgnoredIds((prev) => new Set(prev).add(feed.id));
+    toast({ title: "Update ignored", description: `${feed.theatreName} feed update has been ignored.` });
+  };
+
+  const handleAddTheatre = (feed: FlmFeed) => {
+    toast({ title: "Add Theatre", description: `Starting add-theatre flow for ${feed.theatreName}.` });
+  };
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
