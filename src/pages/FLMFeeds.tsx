@@ -74,7 +74,7 @@ const FLMFeeds = () => {
         isNew === "all" || (isNew === "yes" ? f.isNewTheatre : !f.isNewTheatre);
       return matchesSearch && matchesSource && matchesStatus && matchesNew;
     });
-  }, [search, source, status, isNew]);
+  }, [search, source, status, isNew, ignoredIds]);
 
   return (
     <motion.div
