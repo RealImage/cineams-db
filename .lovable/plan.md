@@ -39,7 +39,7 @@ Opens at a new page from the row menu (and row click) on the FLM Feeds list. Two
 
 ### After confirming
 
-- A success toast, feed status moves to Auto-Updated / Mapped, and the user returns to the FLM Feeds list.
+- A success toast, feed status changes to "Auto-Updated / Mapped", and the user returns to the FLM Feeds list with the status of the recently updated FLM feed changed.
 
 ## Screens data from the feed
 
