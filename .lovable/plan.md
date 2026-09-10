@@ -25,16 +25,16 @@ Opens at a new page from the row menu (and row click) on the FLM Feeds list. Two
 ```
 
 - Incoming-side fields are read-only; the user selects which fields to copy over, not edit them.
-- Fields that differ between the two sides are highlighted, with a per-field "Use this value" action that copies the incoming value into the pending update.
-- A "Copy all differences" action at the top of the panel.
+- Fields that differ between the two sides are highlighted, each with a checkbox; ticked fields are queued to be copied from the feed into the theatre record.
+- A "Select all differences" action at the top of the panel ticks every differing field.
 - Bottom bar: Cancel, and "Update Theatre" which opens a confirmation dialog listing exactly which fields will change (old value to new value) before committing.
 
 ### Status = Manual, New Theatre = Yes (unmapped)
 
-- Left panel: the same editable incoming FLM details.
+- Left panel: the same read-only incoming FLM details.
 - Right panel: an empty state with two choices.
-  1. **Map to existing theatre** — search box (theatre name, theatre ID, chain, location), matching results listed below, user selects one; the right panel then fills with that theatre's details and behaves exactly like the mapped case above, with the action becoming "Map & Update Theatre".
-  2. **Create New Theatre** — pre-fills a new theatre from the incoming FLM values; the user reviews the editable fields and confirms.
+  1. **Map to existing theatre** — search box (theatre name, theatre ID, chain, location), matching results listed below, user selects one; the right panel then fills with that theatre's details and behaves exactly like the mapped case above (select fields to copy over), with the action becoming "Map & Update Theatre".
+  2. **Create New Theatre** — creates the theatre from the incoming FLM values as-is; the user reviews the summary and confirms.
 - Both paths end in a confirmation dialog summarising the action before it is applied.
 
 ### After confirming
