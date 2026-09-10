@@ -25,8 +25,8 @@ Opens at a new page from the row menu (and row click) on the FLM Feeds list. Two
 ```
 
 - Incoming-side fields are read-only; the user selects which fields to copy over, not edit them.
-- Fields that differ between the two sides are highlighted, each with a checkbox; ticked fields are queued to be copied from the feed into the theatre record.
-- A "Select all differences" action at the top of the panel ticks every differing field.
+- Fields that differ between the two sides are highlighted and auto-selected with a checkbox; the user can uncheck any field they do not want to copy over.
+- A "Clear all" action at the top of the panel unselects every field.
 - Bottom bar: Cancel, and "Update Theatre" which opens a confirmation dialog listing exactly which fields will change (old value to new value) before committing.
 
 ### Status = Manual, New Theatre = Yes (unmapped)
