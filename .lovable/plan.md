@@ -24,7 +24,7 @@ Opens at a new page from the row menu (and row click) on the FLM Feeds list. Two
 +---------------------------+---------------------------+
 ```
 
-- Every field on the incoming side is editable before it is applied.
+- Incoming-side fields are read-only; the user selects which fields to copy over, not edit them.
 - Fields that differ between the two sides are highlighted, with a per-field "Use this value" action that copies the incoming value into the pending update.
 - A "Copy all differences" action at the top of the panel.
 - Bottom bar: Cancel, and "Update Theatre" which opens a confirmation dialog listing exactly which fields will change (old value to new value) before committing.
