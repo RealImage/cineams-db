@@ -57,20 +57,6 @@ export const flmFeeds: FlmFeed[] = [
     isNewTheatre: true,
     receivedOn: "2026-09-05T09:14:00Z",
     status: "Manual",
-    mappedTheatreId: "2",
-    details: {
-      city: "London",
-      state: "England",
-      country: "United Kingdom",
-      postalCode: "WC2H 7NA",
-      timezone: "Europe/London",
-      contact: { name: "Sarah Mitchell", phone: "+44 20 7766 9600", email: "manager@odeon.co.uk" },
-      alternateIds: ["rentrak.com:991288", "urn:uuid:aa11bb22-cc33-4d44-9e55-6f7788990011"],
-      auditoriums: [
-        { id: "1", name: "Screen 1", seatingCapacity: 800, suiteCount: 1, devices: [{ manufacturer: "Dolby", model: "IMS3000", serialNumber: "DOL-31084" }] },
-        { id: "2", name: "Screen 2", seatingCapacity: 350, suiteCount: 1, devices: [{ manufacturer: "Christie", model: "CP4230", serialNumber: "CHR-22910" }] },
-      ],
-    },
   },
   {
     id: "2",
@@ -98,7 +84,21 @@ export const flmFeeds: FlmFeed[] = [
     source: "MACCS",
     isNewTheatre: false,
     receivedOn: "2026-09-04T17:41:00Z",
-    status: "Auto-Updated",
+    status: "Manual",
+    mappedTheatreId: "2",
+    details: {
+      city: "London",
+      state: "England",
+      country: "United Kingdom",
+      postalCode: "WC2H 7NA",
+      timezone: "Europe/London",
+      contact: { name: "Sarah Mitchell", phone: "+44 20 7766 9600", email: "manager@odeon.co.uk" },
+      alternateIds: ["rentrak.com:991288", "urn:uuid:aa11bb22-cc33-4d44-9e55-6f7788990011"],
+      auditoriums: [
+        { id: "1", name: "Screen 1", seatingCapacity: 800, suiteCount: 1, devices: [{ manufacturer: "Dolby", model: "IMS3000", serialNumber: "DOL-31084" }] },
+        { id: "2", name: "Screen 2", seatingCapacity: 350, suiteCount: 1, devices: [{ manufacturer: "Christie", model: "CP4230", serialNumber: "CHR-22910" }] },
+      ],
+    },
   },
   {
     id: "4",

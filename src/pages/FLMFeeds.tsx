@@ -207,7 +207,7 @@ const FLMFeeds = () => {
             )}
             {pagedRows.map((f) => (
               <TableRow key={f.id} className="cursor-pointer" onClick={() => navigate(`/theatres/flm-feeds/${f.id}`)}>
-                <TableCell onClick={(event) => event.stopPropagation()}>
+                <TableCell>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="cursor-default">
@@ -298,7 +298,7 @@ const FLMFeeds = () => {
                     {f.status}
                   </Badge>
                 </TableCell>
-                <TableCell>
+                <TableCell onClick={(event) => event.stopPropagation()}>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
