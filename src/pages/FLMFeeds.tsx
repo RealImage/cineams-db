@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { FlmFeed } from "@/data/flmFeedsData";
-import { FlmDetailSheet } from "@/components/flm/FlmDetailSheet";
 import { MapThirdPartyIdDialog } from "@/components/flm/MapThirdPartyIdDialog";
 import {
   Select,
@@ -51,12 +51,12 @@ const PAGE_SIZE = 50;
 
 const FLMFeeds = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("all");
   const [status, setStatus] = useState("Manual");
   const [isNew, setIsNew] = useState("all");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [detailFeed, setDetailFeed] = useState<FlmFeed | null>(null);
   const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -85,7 +85,10 @@ const FLMFeeds = () => {
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = flmFeeds.filter((f) => {
+    const filtered = flmFeeds.map((f) => {
+      const savedStatus = sessionStorage.getItem(`flm-feed-status:${f.id}`);
+      return savedStatus === "Auto-Updated / Mapped" ? { ...f, status: savedStatus } : f;
+    }).filter((f) => {
       if (ignoredIds.has(f.id)) return false;
       const matchesSearch =
         !q ||
@@ -303,7 +306,7 @@ const FLMFeeds = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setDetailFeed(f)}>
+                      <DropdownMenuItem onClick={() => navigate(`/theatres/flm-feeds/${f.id}`)}>
                         View FLM Details
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => setMapFeed(f)}>
@@ -415,7 +418,6 @@ const FLMFeeds = () => {
         </SheetContent>
       </Sheet>
 
-      <FlmDetailSheet feed={detailFeed} onClose={() => setDetailFeed(null)} />
       <MapThirdPartyIdDialog feed={mapFeed} onClose={() => setMapFeed(null)} />
     </motion.div>
   );
