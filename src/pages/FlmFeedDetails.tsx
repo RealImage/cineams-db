@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Building2, CheckCircle2, Search } from "lucide-react";
 import { flmFeeds, FlmFeed } from "@/data/flmFeedsData";
@@ -115,10 +115,12 @@ const FlmFeedDetails = () => {
 
   const fields = useMemo(() => feed && selectedTheatre ? buildFields(feed, selectedTheatre) : [], [feed, selectedTheatre]);
   const differences = useMemo(() => fields.filter((field) => field.incoming.trim().toLowerCase() !== field.current.trim().toLowerCase()), [fields]);
-  if (!selectionReady && differences.length > 0) {
-    setSelectedFields(new Set(differences.map((field) => field.key)));
-    setSelectionReady(true);
-  }
+  useEffect(() => {
+    if (!selectionReady && differences.length > 0) {
+      setSelectedFields(new Set(differences.map((field) => field.key)));
+      setSelectionReady(true);
+    }
+  }, [differences, selectionReady]);
 
   const matches = useMemo(() => {
     const query = search.trim().toLowerCase();

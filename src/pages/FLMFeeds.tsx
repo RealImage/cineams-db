@@ -85,9 +85,9 @@ const FLMFeeds = () => {
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = flmFeeds.map((f) => {
+    const filtered = flmFeeds.map((f): FlmFeed => {
       const savedStatus = sessionStorage.getItem(`flm-feed-status:${f.id}`);
-      return savedStatus === "Auto-Updated / Mapped" ? { ...f, status: savedStatus } : f;
+      return savedStatus === "Auto-Updated / Mapped" ? { ...f, status: "Auto-Updated / Mapped" } : f;
     }).filter((f) => {
       if (ignoredIds.has(f.id)) return false;
       const matchesSearch =
@@ -206,8 +206,8 @@ const FLMFeeds = () => {
               </TableRow>
             )}
             {pagedRows.map((f) => (
-              <TableRow key={f.id}>
-                <TableCell>
+              <TableRow key={f.id} className="cursor-pointer" onClick={() => navigate(`/theatres/flm-feeds/${f.id}`)}>
+                <TableCell onClick={(event) => event.stopPropagation()}>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="cursor-default">
