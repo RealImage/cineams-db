@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
-type FieldKey = "name" | "displayName" | "address" | "city" | "state" | "country" | "postalCode" | "chain" | "timezone" | "contactName" | "phone" | "email";
+type FieldKey = "sourceTheatreId" | "theatreUuid" | "name" | "displayName" | "address" | "city" | "state" | "country" | "postalCode" | "chain" | "timezone" | "contactName" | "phone" | "email";
 type ComparisonField = { key: FieldKey; label: string; incoming: string; current: string };
 
 const getLocationParts = (feed: FlmFeed) => {
@@ -25,6 +25,8 @@ const buildFields = (feed: FlmFeed, theatre: Theatre): ComparisonField[] => {
   const location = getLocationParts(feed);
   const details = feed.details;
   return [
+    { key: "sourceTheatreId", label: "Source Theatre ID", incoming: feed.theatreIdFeed, current: theatre.thirdPartyId || "Not provided" },
+    { key: "theatreUuid", label: "Theatre UUID", incoming: feed.theatreUuid, current: theatre.uuid },
     { key: "name", label: "Theatre Name", incoming: feed.theatreName, current: theatre.name },
     { key: "displayName", label: "Display Name", incoming: feed.theatreDisplayName, current: theatre.displayName },
     { key: "address", label: "Address", incoming: feed.address, current: theatre.address },
@@ -67,10 +69,26 @@ const IncomingSummary = ({ feed }: { feed: FlmFeed }) => {
   );
 };
 
+const IncomingIdentifiers = ({ feed }: { feed: FlmFeed }) => {
+  const details = feed.details;
+  if (!details?.alternateIds?.length) return null;
+  return (
+    <section className="rounded-md border border-border bg-card">
+      <div className="border-b border-border px-5 py-4">
+        <p className="font-semibold">FLM Feed Identifiers</p>
+        <p className="text-sm text-muted-foreground">Additional identifiers supplied by {feed.source}</p>
+      </div>
+      <div className="p-5">
+        <ReadonlyRow label="Alternate IDs" value={details.alternateIds.join(" · ")} />
+      </div>
+    </section>
+  );
+};
+
 const ScreensSummary = ({ feed }: { feed: FlmFeed }) => {
   const screens = feed.details?.auditoriums ?? [];
   return (
-    <div className="border-t border-border pt-4">
+    <div>
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-semibold">Screens ({screens.length})</p>
         <span className="text-xs text-muted-foreground">Reference only</span>
@@ -97,6 +115,83 @@ const ScreensSummary = ({ feed }: { feed: FlmFeed }) => {
         </Accordion>
       )}
     </div>
+  );
+};
+
+type ComparisonTableProps = {
+  feed: FlmFeed;
+  theatre: Theatre;
+  fields: ComparisonField[];
+  differences: ComparisonField[];
+  selectedFields: Set<FieldKey>;
+  setSelectedFields: React.Dispatch<React.SetStateAction<Set<FieldKey>>>;
+  isActionable: boolean;
+};
+
+const ComparisonTable = ({ feed, theatre, fields, differences, selectedFields, setSelectedFields, isActionable }: ComparisonTableProps) => {
+  const toggleField = (key: FieldKey, checked: boolean) => {
+    setSelectedFields((previous) => {
+      const next = new Set(previous);
+      checked ? next.add(key) : next.delete(key);
+      return next;
+    });
+  };
+
+  return (
+    <section className="rounded-md border border-border bg-card">
+      <div className="grid grid-cols-1 border-b border-border md:grid-cols-2">
+        <div className="border-b border-border px-5 py-4 md:border-b-0 md:border-r">
+          <p className="font-semibold">Incoming FLM Feed</p>
+          <p className="text-sm text-muted-foreground">Read-only details received from {feed.source}</p>
+        </div>
+        <div className="flex items-start justify-between px-5 py-4">
+          <div>
+            <p className="font-semibold">Mapped Theatre (current)</p>
+            <p className="text-sm text-muted-foreground">{theatre.name}</p>
+          </div>
+          {isActionable && differences.length > 0 && (
+            <Button variant="ghost" size="sm" onClick={() => setSelectedFields(new Set())}>
+              Clear all
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {fields.map((field, index) => {
+        const isLast = index === fields.length - 1;
+        const differs = differences.some((item) => item.key === field.key);
+        const selected = selectedFields.has(field.key);
+        return (
+          <div key={field.key} className="grid grid-cols-1 md:grid-cols-2">
+            <div className={cn("border-r border-border px-5 py-3", !isLast && "border-b")}>
+              <p className="text-xs text-muted-foreground">{field.label}</p>
+              <p className="mt-1 text-sm font-medium break-words">{field.incoming || "—"}</p>
+            </div>
+            <div className={cn("px-5 py-3", !isLast && "border-b", differs && selected && "bg-accent/50")}>
+              <div className="grid grid-cols-[24px_1fr] gap-2">
+                <div className="pt-4">
+                  {differs && isActionable ? (
+                    <Checkbox
+                      checked={selected}
+                      onCheckedChange={(checked) => toggleField(field.key, checked === true)}
+                      aria-label={`Copy ${field.label}`}
+                    />
+                  ) : null}
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    {field.label}
+                    {differs && <span className="ml-2 text-primary">Different</span>}
+                  </p>
+                  <p className="mt-1 text-sm font-medium break-words">{field.current || "—"}</p>
+                  {differs && <p className="mt-1 text-xs text-muted-foreground">Incoming: {field.incoming}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </section>
   );
 };
 
@@ -139,13 +234,6 @@ const FlmFeedDetails = () => {
     setCreateMode(false);
     setSelectionReady(false);
   };
-  const toggleField = (key: FieldKey, checked: boolean) => {
-    setSelectedFields((previous) => {
-      const next = new Set(previous);
-      checked ? next.add(key) : next.delete(key);
-      return next;
-    });
-  };
   const finish = () => {
     sessionStorage.setItem(`flm-feed-status:${feed.id}`, "Auto-Updated / Mapped");
     toast({ title: createMode ? "Theatre created" : "Theatre updated", description: `${feed.theatreName} was mapped successfully.` });
@@ -164,38 +252,54 @@ const FlmFeedDetails = () => {
 
       {!isActionable && <div className="rounded-md border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">This feed was processed automatically. Details are read-only.</div>}
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-md border border-border bg-card">
-          <div className="border-b border-border px-5 py-4"><p className="font-semibold">Incoming FLM Feed</p><p className="text-sm text-muted-foreground">Read-only details received from {feed.source}</p></div>
-          <div className="p-5"><IncomingSummary feed={feed} /><ScreensSummary feed={feed} /></div>
-        </section>
-
-        <section className="rounded-md border border-border bg-card">
-          <div className="flex items-center justify-between border-b border-border px-5 py-4">
-            <div><p className="font-semibold">{selectedTheatre ? "Mapped Theatre (current)" : createMode ? "New Theatre Preview" : "Select a Target Theatre"}</p><p className="text-sm text-muted-foreground">{selectedTheatre ? "Select incoming values to copy" : createMode ? "Theatre will use the incoming values" : "Map this feed or create a new theatre"}</p></div>
-            {selectedTheatre && isActionable && differences.length > 0 && <Button variant="ghost" size="sm" onClick={() => setSelectedFields(new Set())}>Clear all</Button>}
-          </div>
-
-          {!selectedTheatre && !createMode && (
-            <div className="space-y-5 p-5">
-              <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, ID, chain, or location" className="pl-9" /></div>
-              {matches.length > 0 && <div className="divide-y divide-border rounded-md border border-border">{matches.map((theatre) => <button key={theatre.id} type="button" className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50" onClick={() => chooseTheatre(theatre)}><span><span className="block text-sm font-medium">{theatre.name}</span><span className="block text-xs text-muted-foreground">{theatre.chainName} · {theatre.city}, {theatre.state}, {theatre.country}</span></span><span className="font-mono text-xs text-muted-foreground">{theatre.uuid}</span></button>)}</div>}
-              {search && matches.length === 0 && <p className="text-center text-sm text-muted-foreground">No matching theatres found.</p>}
-              <div className="flex items-center gap-3 py-2"><div className="h-px flex-1 bg-border" /><span className="text-xs text-muted-foreground">OR</span><div className="h-px flex-1 bg-border" /></div>
-              <Button variant="outline" className="w-full" onClick={() => setCreateMode(true)}><Building2 className="mr-2 h-4 w-4" />Create New Theatre</Button>
+      {selectedTheatre ? (
+        <div className="space-y-4">
+          <ComparisonTable
+            feed={feed}
+            theatre={selectedTheatre}
+            fields={fields}
+            differences={differences}
+            selectedFields={selectedFields}
+            setSelectedFields={setSelectedFields}
+            isActionable={isActionable}
+          />
+          <IncomingIdentifiers feed={feed} />
+          <section className="rounded-md border border-border bg-card">
+            <div className="border-b border-border px-5 py-4">
+              <p className="font-semibold">Screens from FLM Feed</p>
+              <p className="text-sm text-muted-foreground">Auditorium and device summary for reference</p>
             </div>
-          )}
-
-          {createMode && <div className="p-5"><div className="mb-4 flex items-start gap-3 rounded-md border border-border bg-muted/40 p-4"><CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" /><div><p className="text-sm font-medium">Ready to create from incoming details</p><p className="text-xs text-muted-foreground">Review the read-only feed details on the left before confirming.</p></div></div><IncomingSummary feed={feed} /><Button variant="ghost" size="sm" className="mt-3" onClick={() => setCreateMode(false)}>Choose an existing theatre instead</Button></div>}
-
-          {selectedTheatre && (
             <div className="p-5">
-              <div className="mb-4 flex items-center justify-between"><div><p className="text-sm font-medium">{selectedTheatre.name}</p><p className="text-xs text-muted-foreground">{selectedTheatre.uuid}</p></div>{feed.isNewTheatre && <Button variant="ghost" size="sm" onClick={() => { setSelectedTheatre(undefined); setSelectionReady(false); }}>Change</Button>}</div>
-              <div>{fields.map((field) => { const differs = differences.some((item) => item.key === field.key); const selected = selectedFields.has(field.key); return <div key={field.key} className={cn("grid grid-cols-[24px_1fr] gap-2 border-b border-border py-3 last:border-b-0", differs && selected && "bg-accent/50 px-2")}><div className="pt-4">{differs && isActionable ? <Checkbox checked={selected} onCheckedChange={(checked) => toggleField(field.key, checked === true)} aria-label={`Copy ${field.label}`} /> : null}</div><div><p className="text-xs text-muted-foreground">{field.label}{differs && <span className="ml-2 text-primary">Different</span>}</p><p className="mt-1 text-sm font-medium break-words">{field.current || "—"}</p>{differs && <p className="mt-1 text-xs text-muted-foreground">Incoming: {field.incoming}</p>}</div></div>; })}</div>
+              <ScreensSummary feed={feed} />
             </div>
-          )}
-        </section>
-      </div>
+          </section>
+        </div>
+      ) : (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <section className="rounded-md border border-border bg-card">
+            <div className="border-b border-border px-5 py-4"><p className="font-semibold">Incoming FLM Feed</p><p className="text-sm text-muted-foreground">Read-only details received from {feed.source}</p></div>
+            <div className="p-5"><IncomingSummary feed={feed} /><div className="mt-4"><ScreensSummary feed={feed} /></div></div>
+          </section>
+
+          <section className="rounded-md border border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border px-5 py-4">
+              <div><p className="font-semibold">{createMode ? "New Theatre Preview" : "Select a Target Theatre"}</p><p className="text-sm text-muted-foreground">{createMode ? "Theatre will use the incoming values" : "Map this feed or create a new theatre"}</p></div>
+            </div>
+
+            {!selectedTheatre && !createMode && (
+              <div className="space-y-5 p-5">
+                <div className="relative"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search name, ID, chain, or location" className="pl-9" /></div>
+                {matches.length > 0 && <div className="divide-y divide-border rounded-md border border-border">{matches.map((theatre) => <button key={theatre.id} type="button" className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/50" onClick={() => chooseTheatre(theatre)}><span><span className="block text-sm font-medium">{theatre.name}</span><span className="block text-xs text-muted-foreground">{theatre.chainName} · {theatre.city}, {theatre.state}, {theatre.country}</span></span><span className="font-mono text-xs text-muted-foreground">{theatre.uuid}</span></button>)}</div>}
+                {search && matches.length === 0 && <p className="text-center text-sm text-muted-foreground">No matching theatres found.</p>}
+                <div className="flex items-center gap-3 py-2"><div className="h-px flex-1 bg-border" /><span className="text-xs text-muted-foreground">OR</span><div className="h-px flex-1 bg-border" /></div>
+                <Button variant="outline" className="w-full" onClick={() => setCreateMode(true)}><Building2 className="mr-2 h-4 w-4" />Create New Theatre</Button>
+              </div>
+            )}
+
+            {createMode && <div className="p-5"><div className="mb-4 flex items-start gap-3 rounded-md border border-border bg-muted/40 p-4"><CheckCircle2 className="mt-0.5 h-5 w-5 text-primary" /><div><p className="text-sm font-medium">Ready to create from incoming details</p><p className="text-xs text-muted-foreground">Review the read-only feed details on the left before confirming.</p></div></div><IncomingSummary feed={feed} /><Button variant="ghost" size="sm" className="mt-3" onClick={() => setCreateMode(false)}>Choose an existing theatre instead</Button></div>}
+          </section>
+        </div>
+      )}
 
       {isActionable && (selectedTheatre || createMode) && <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-end gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur md:left-64"><Button variant="outline" onClick={() => navigate("/theatres/flm-feeds")}>Cancel</Button><Button disabled={!createMode && selectedChanges.length === 0} onClick={() => setConfirmOpen(true)}>{createMode ? "Create New Theatre" : feed.isNewTheatre ? "Map & Update Theatre" : "Update Theatre"}</Button></div>}
 
