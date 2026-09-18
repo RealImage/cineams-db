@@ -26,6 +26,9 @@ import EditPulseTheatre from "./pages/EditPulseTheatre";
 import EdgeAppliances from "./pages/EdgeAppliances";
 import AddEdgeTheatre from "./pages/AddEdgeTheatre";
 import EditEdgeTheatre from "./pages/EditEdgeTheatre";
+import IcountCameras from "./pages/IcountCameras";
+import AddIcountTheatre from "./pages/AddIcountTheatre";
+import EditIcountTheatre from "./pages/EditIcountTheatre";
 import TaskManagement from "./pages/TaskManagement";
 import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
@@ -80,6 +83,9 @@ const App = () => (
             <Route path="/qube-appliances/edge" element={<EdgeAppliances />} />
             <Route path="/qube-appliances/edge/add/:lookupId" element={<AddEdgeTheatre />} />
             <Route path="/qube-appliances/edge/:id/edit" element={<EditEdgeTheatre />} />
+            <Route path="/qube-appliances/icount-cameras" element={<IcountCameras />} />
+            <Route path="/qube-appliances/icount-cameras/add/:lookupId" element={<AddIcountTheatre />} />
+            <Route path="/qube-appliances/icount-cameras/:id/edit" element={<EditIcountTheatre />} />
             {/* Legacy redirects */}
             <Route path="/wiretap-devices" element={<Navigate to="/qube-appliances/wiretap" replace />} />
             <Route path="/wiretap-devices/add" element={<Navigate to="/qube-appliances/wiretap/add" replace />} />

@@ -8,7 +8,7 @@ import { XIcon, Home, LogOut, ExternalLink, ChevronLeft, ChevronRight } from "lu
 import { NavItem } from "./NavItem";
 import { NavItemWithSubmenu } from "./NavItemWithSubmenu";
 import { Separator } from "@/components/ui/separator";
-import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity, Server, Radio, Zap, Cpu, MonitorSmartphone, ShieldCheck } from "lucide-react";
+import { Building2, LinkIcon, Monitor, Building, FileText, LayoutDashboard, List, Users, Bell, Settings, Map, ClipboardList, HardDrive, ClipboardCheck, Activity, Server, Radio, Zap, Cpu, MonitorSmartphone, ShieldCheck, Camera } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,6 +91,10 @@ export const SidebarNav = ({
     label: "Edge",
     path: "/qube-appliances/edge",
     icon: Zap
+  }, {
+    label: "iCount Cameras",
+    path: "/qube-appliances/icount-cameras",
+    icon: Camera
   }];
   const theatreDeviceManagementSubItems = [{
     label: "Screen Device Management",
