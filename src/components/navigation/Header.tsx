@@ -44,6 +44,9 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path === "/qube-appliances/edge") return "Edge";
     if (path.startsWith("/qube-appliances/edge/add")) return "Add Edge Theatre";
     if (path.startsWith("/qube-appliances/edge/") && path.endsWith("/edit")) return "Edit Edge Theatre";
+    if (path === "/qube-appliances/icount-cameras") return "iCount Cameras";
+    if (path.startsWith("/qube-appliances/icount-cameras/add")) return "Add iCount Cameras Theatre";
+    if (path.startsWith("/qube-appliances/icount-cameras/") && path.endsWith("/edit")) return "Edit iCount Cameras Theatre";
 
     // Fleet Management
     if (path === "/fleet-management/status") return "Fleet Status";
