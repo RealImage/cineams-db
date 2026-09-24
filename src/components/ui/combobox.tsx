@@ -49,45 +49,45 @@ export const Combobox = ({
 }: ComboboxProps) => {
   const [open, setOpen] = React.useState(false);
   const selected = options.find((o) => o.value === value);
+  const showClear = clearable && !!selected && !disabled && !loading;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <button
-          id={id}
-          type="button"
-          role="combobox"
-          aria-expanded={open}
-          aria-invalid={aria["aria-invalid"]}
-          aria-label={aria["aria-label"]}
-          disabled={disabled || loading}
-          className={cn(
-            "flex h-[2.125rem] w-full items-center justify-between gap-1 rounded-sm border border-input bg-card px-2 py-1 text-left text-sm leading-5",
-            "focus:border-primary focus:outline-none aria-[invalid=true]:border-red-500",
-            "disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 disabled:text-muted-foreground",
-            className,
-          )}
-        >
-          <span className={cn("truncate", !selected && "text-grey-300")}>
-            {loading ? "Loading…" : selected ? selected.label : placeholder}
-          </span>
-          <span className="flex shrink-0 items-center gap-0.5">
-            {clearable && selected && !disabled && (
-              <span
-                role="button"
-                tabIndex={0}
-                aria-label="Clear selection"
-                className="rounded-sm p-0.5 text-muted-foreground hover:bg-black/10"
-                onClick={(e) => { e.stopPropagation(); onChange(null); }}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); onChange(null); } }}
-              >
-                <X className="h-3.5 w-3.5" />
-              </span>
+      {/* The clear button is a sibling of the trigger, not nested in it, so each is its own control */}
+      <div className={cn("relative w-full", className)}>
+        <PopoverTrigger asChild>
+          <button
+            id={id}
+            type="button"
+            role="combobox"
+            aria-expanded={open}
+            aria-invalid={aria["aria-invalid"]}
+            aria-label={aria["aria-label"]}
+            disabled={disabled || loading}
+            className={cn(
+              "flex h-[2.125rem] w-full items-center justify-between gap-1 rounded-sm border border-input bg-card px-2 py-1 text-left text-sm leading-5",
+              "focus:border-primary focus:outline-none aria-[invalid=true]:border-red-500",
+              "disabled:cursor-not-allowed disabled:border-grey-300 disabled:bg-grey-100 disabled:text-muted-foreground",
+              showClear && "pr-12",
             )}
-            <ChevronDown className="h-4 w-4 opacity-50" />
-          </span>
-        </button>
-      </PopoverTrigger>
+          >
+            <span className={cn("truncate", !selected && "text-grey-300")}>
+              {loading ? "Loading…" : selected ? selected.label : placeholder}
+            </span>
+            <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+          </button>
+        </PopoverTrigger>
+        {showClear && (
+          <button
+            type="button"
+            aria-label={`Clear ${aria["aria-label"] ?? "selection"}`}
+            className="absolute right-7 top-1/2 -translate-y-1/2 rounded-sm p-0.5 text-muted-foreground hover:bg-black/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+            onClick={() => onChange(null)}
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        )}
+      </div>
       <PopoverContent className="w-[var(--radix-popover-trigger-width)] min-w-[12rem] p-0" align="start">
         <Command>
           <CommandInput placeholder={searchPlaceholder} className="h-9" />
