@@ -12,6 +12,7 @@ import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
 import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
 import DeviceLogsTable from "@/components/wiretap/DeviceLogsTable";
 import { WireTAPDevice } from "@/types/wireTAP";
+import { ApiError } from "@/lib/api";
 import { fromWireTAPDetails, toWireTAPPayload, useCreateWireTAPDevice, useUpdateWireTAPDevice, useWireTAPDevice } from "@/hooks/api/wiretap";
 const EditWireTAPDevice = () => {
   const {
@@ -121,11 +122,12 @@ const EditWireTAPDevice = () => {
       }
     } else {
       // Populate the form from the stored device once it has loaded
-      if (deviceQuery.isError) {
-        toast.error(`Device not found: ${deviceQuery.error.message}`);
+      if (deviceQuery.error instanceof ApiError && deviceQuery.error.status === 404) {
+        toast.error("Device not found");
         navigate("/wiretap-devices");
         return;
       }
+      if (deviceQuery.isError) return; // rendered below with Retry
       const currentDevice = deviceQuery.data;
       if (!currentDevice || hydratedId.current === currentDevice.id) return;
       hydratedId.current = currentDevice.id;
@@ -219,6 +221,14 @@ const EditWireTAPDevice = () => {
   };
   const isLastStep = activeTab === "device-logs";
   const isFirstStep = activeTab === "basic-details";
+  if (!device && deviceQuery.isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center" role="alert">
+        <p className="text-sm text-red-500">Could not load the device: {deviceQuery.error.message}</p>
+        <Button variant="outline" onClick={() => deviceQuery.refetch()}>Retry</Button>
+      </div>
+    );
+  }
   if (!device) {
     return <div>Loading...</div>;
   }

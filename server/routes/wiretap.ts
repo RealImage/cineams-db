@@ -186,7 +186,7 @@ wiretap.put("/:id", async (c) => {
     const rows = await query(
       `UPDATE wiretap_devices SET
          hardware_serial_number = $2, application_serial_number = $3, host_name = $4, cluster_name = $5,
-         theatre_id = CASE WHEN $6::boolean THEN $7 ELSE theatre_id END,
+         theatre_id = CASE WHEN $6::boolean THEN $7 ELSE NULL END,
          mapping_status = CASE WHEN $6::boolean THEN 'Mapped' ELSE 'Unmapped' END,
          no_mapping_reason = $8,
          pull_out_status = CASE WHEN $9::boolean THEN 'Pulled Out'

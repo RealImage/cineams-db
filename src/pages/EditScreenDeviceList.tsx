@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { ArrowLeft, Save, Building2 } from "lucide-react";
@@ -24,8 +24,11 @@ const EditScreenDeviceList = () => {
   const [screens, setScreens] = useState<Screen[]>([]);
   const [dirty, setDirty] = useState<Set<string>>(new Set());
 
+  // Hydrate once per theatre; background refetches must not discard unsaved edits.
+  const hydratedId = useRef<string | null>(null);
   useEffect(() => {
-    if (theatre) {
+    if (theatre && hydratedId.current !== theatre.id) {
+      hydratedId.current = theatre.id;
       setScreens(theatre.screens ?? []);
       setDirty(new Set());
     }

@@ -119,11 +119,18 @@ export default function Index() {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {summaryQuery.isError ? (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="text-sm text-red-600">Could not load pending approvals and conflicts: {summaryQuery.error.message}</p>
+          <Button variant="outline" onClick={() => summaryQuery.refetch()}>Retry</Button>
+        </div>
+      ) : (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4" aria-busy={summaryQuery.isPending}>
         <div onClick={() => navigate("/approvals-conflicts")} className="cursor-pointer">
           <StatCard
             title="Approvals Pending"
             value={summaryQuery.data ? sum(summaryQuery.data.approvals) : 0}
+            description={summaryQuery.isPending ? "Loading…" : undefined}
             icon={<ClipboardCheck className="h-4 w-4" />}
           />
         </div>
@@ -131,10 +138,12 @@ export default function Index() {
           <StatCard
             title="Conflicts Pending"
             value={summaryQuery.data ? sum(summaryQuery.data.conflicts) : 0}
+            description={summaryQuery.isPending ? "Loading…" : undefined}
             icon={<AlertTriangle className="h-4 w-4" />}
           />
         </div>
       </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <DashboardCard title="Theatres by Status">
