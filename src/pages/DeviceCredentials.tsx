@@ -9,21 +9,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDateTime } from "@/lib/dateUtils";
 import {
   CREDENTIALS_MANAGER_PATH,
+  CredentialDeviceInput,
   CredentialDeviceWithStatus,
   ScopedCredential,
   credentialScopes,
-  getCredentialFormat,
 } from "@/data/credentialsManagerData";
 import { ApiError } from "@/lib/api";
 import { QueryState } from "@/components/ui/query-state";
 import {
-  DevicePatch,
   useCredentialDevice,
   useDeviceCredentials,
   useUpdateCredentialDevice,
 } from "@/hooks/api/credentials";
 import { DciBadge, DefaultCredentialsBadge } from "@/components/credentials-manager/badges";
-import { EditCredentialDeviceDialog } from "@/components/credentials-manager/EditCredentialDeviceDialog";
+import { DeviceModelDialog } from "@/components/credentials-manager/DeviceModelDialog";
+import { CredentialFieldsList, RoleBadges } from "@/components/credentials-manager/device-fields";
 import { ScopedCredentialsTab } from "@/components/credentials-manager/ScopedCredentialsTab";
 
 const Field = ({ label, value, className }: { label: string; value: React.ReactNode; className?: string }) => (
@@ -66,7 +66,7 @@ const DeviceCredentialsView = ({
   const [editOpen, setEditOpen] = useState(false);
   const updateDevice = useUpdateCredentialDevice();
 
-  const handleSaveDevice = (patch: DevicePatch) =>
+  const handleSaveDevice = (patch: CredentialDeviceInput) =>
     updateDevice.mutateAsync({ id: device.id, patch }).then(
       (d) => { toast.success(`Updated ${d.brand} ${d.model}`); },
       (err: Error) => { toast.error(`Could not update ${device.brand} ${device.model}: ${err.message}`); throw err; },
@@ -94,18 +94,14 @@ const DeviceCredentialsView = ({
         <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-4">
           <Field label="Brand" value={device.brand} />
           <Field label="Model" value={device.model} />
-          <Field
-            label="Roles"
-            value={device.roles.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {device.roles.map((r) => <Badge key={r} variant="secondary" className="font-normal">{r}</Badge>)}
-              </div>
-            )}
-          />
+          <Field label="Role" value={device.primaryRole && <RoleBadges roles={[device.primaryRole]} />} />
           <Field label="Type" value={device.type} />
+          <Field label="Roles From Certificates" value={device.certificateRoles.length > 0 && <RoleBadges roles={device.certificateRoles} />} />
+          <Field label="Additional Roles" value={device.additionalRoles.length > 0 && <RoleBadges roles={device.additionalRoles} variant="product" />} />
           <Field label="DCI Compliant" value={<DciBadge value={device.dci} />} />
+          <Field label="Serial Numbers" value={device.serialNumberRequired ? "Expected" : "Not expected"} />
           <Field label="Default Credentials" value={<DefaultCredentialsBadge available={device.hasDefaultCredentials} />} />
-          <Field label="Credentials Format" value={getCredentialFormat(device.credentialFormat).label} />
+          <Field label="Credentials Format" className="col-span-2" value={<CredentialFieldsList fields={device.credentialFields} />} />
           <Field label="Updated By" value={device.updatedBy} />
           <Field label="Updated At" value={formatDateTime(device.updatedAt)} />
           <Field
@@ -131,7 +127,7 @@ const DeviceCredentialsView = ({
         </CardContent>
       </Card>
 
-      <EditCredentialDeviceDialog
+      <DeviceModelDialog
         device={device}
         open={editOpen}
         onOpenChange={setEditOpen}

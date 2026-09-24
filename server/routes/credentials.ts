@@ -3,24 +3,30 @@ import type pg from "pg";
 import { query } from "../db";
 import { CURRENT_USER, httpError, notFound } from "../http";
 import {
+  CredentialDeviceInput,
   CredentialDeviceWithStatus,
-  CredentialField,
-  CredentialFormatId,
+  CredentialFieldDef,
+  CredentialValues,
   GLOBAL_REF,
   ScopedCredential,
-  credentialFormats,
+  combineRoles,
   credentialScopes,
+  credentialValueTypes,
   dciOptions,
+  deviceRoleCodes,
   deviceTypes,
   extraChainNames,
-  getCredentialFormat,
+  isNumericValue,
+  makeFieldKey,
 } from "../../src/data/credentialsManagerData";
 
 export const credentials = new Hono();
 
 const DEVICE_SELECT = `
-  SELECT d.id, d.brand, d.model, d.roles, d.type, d.dci, d.translations,
-         d.credential_format AS "credentialFormat", d.updated_by AS "updatedBy", d.updated_at AS "updatedAt",
+  SELECT d.id, d.brand, d.model, d.roles, d.primary_role AS "primaryRole",
+         d.certificate_roles AS "certificateRoles", d.additional_roles AS "additionalRoles",
+         d.type, d.dci, d.translations, d.serial_number_required AS "serialNumberRequired",
+         d.credential_fields AS "credentialFields", d.updated_by AS "updatedBy", d.updated_at AS "updatedAt",
          EXISTS (SELECT 1 FROM device_credentials c
                  WHERE c.device_id = d.id AND c.scope = 'global' AND c.ref = '${GLOBAL_REF}') AS "hasDefaultCredentials"
   FROM credential_devices d`;
@@ -63,51 +69,135 @@ credentials.get("/devices", async (c) =>
 
 credentials.get("/devices/:id", async (c) => c.json(await getDevice(c.req.param("id"))));
 
-/** Partial update of a device's details. Changing the format leaves stored credential values untouched. */
-credentials.patch("/devices/:id", async (c) => {
-  const id = c.req.param("id");
-  const current = await getDevice(id);
-  const body = await readJson(c);
+/**
+ * Validate a device body. With `current`, omitted keys keep their current
+ * value (PATCH); without it, brand, model and type are required (POST).
+ */
+function parseDevice(body: Record<string, unknown>, current?: CredentialDeviceInput): CredentialDeviceInput {
+  const has = (key: keyof CredentialDeviceInput) => body[key] !== undefined;
 
-  const text = (key: "brand" | "model") => {
-    if (body[key] === undefined) return current[key];
-    if (typeof body[key] !== "string" || !body[key].trim()) throw httpError(400, `${key === "brand" ? "Brand" : "Model"} is required`);
-    return body[key].trim();
+  const text = (key: "brand" | "model", label: string) => {
+    if (!has(key)) {
+      if (current) return current[key];
+      throw httpError(400, `${label} is required`);
+    }
+    const v = body[key];
+    if (typeof v !== "string" || !v.trim()) throw httpError(400, `${label} is required`);
+    return v.trim();
   };
-  const list = (key: "roles" | "translations") => {
-    if (body[key] === undefined) return current[key];
-    if (!isStringList(body[key])) throw httpError(400, `${key} must be a list of strings`);
-    return cleanList(body[key]);
+  const list = (key: "certificateRoles" | "additionalRoles" | "translations", label: string) => {
+    if (!has(key)) return current?.[key] ?? [];
+    if (!isStringList(body[key])) throw httpError(400, `${label} must be a list of strings`);
+    return cleanList(body[key] as string[]);
   };
-  const oneOf = <T extends string>(key: string, allowed: readonly T[], fallback: T, label: string): T => {
-    if (body[key] === undefined) return fallback;
+  const roleCodes = (codes: string[], label: string) => {
+    const upper = codes.map((r) => r.toUpperCase());
+    const unknown = upper.filter((r) => !deviceRoleCodes.includes(r));
+    if (unknown.length) throw httpError(400, `${label}: unknown role ${unknown.join(", ")}`);
+    return upper;
+  };
+  const oneOf = <T extends string>(key: "type" | "dci", allowed: readonly T[], label: string, fallback?: T): T => {
+    if (!has(key)) {
+      if (fallback !== undefined) return fallback;
+      throw httpError(400, `${label} is required`);
+    }
     if (!allowed.includes(body[key] as T)) throw httpError(400, `${label} must be one of: ${allowed.join(", ")}`);
     return body[key] as T;
   };
 
-  const next = {
-    brand: text("brand"),
-    model: text("model"),
-    roles: list("roles").map((r) => r.toUpperCase()),
-    translations: list("translations"),
-    type: oneOf("type", deviceTypes, current.type, "Type"),
-    dci: oneOf("dci", dciOptions, current.dci, "DCI"),
-    credentialFormat: oneOf<CredentialFormatId>(
-      "credentialFormat", credentialFormats.map((f) => f.id), current.credentialFormat, "Credentials format"),
-  };
+  let primaryRole = current?.primaryRole ?? null;
+  if (has("primaryRole")) {
+    const v = body.primaryRole;
+    if (v === null || v === "") primaryRole = null;
+    else if (typeof v === "string") primaryRole = roleCodes([v], "Role")[0];
+    else throw httpError(400, "Role must be a role code");
+  }
 
+  let serialNumberRequired = current?.serialNumberRequired ?? false;
+  if (has("serialNumberRequired")) {
+    if (typeof body.serialNumberRequired !== "boolean") throw httpError(400, "serialNumberRequired must be true or false");
+    serialNumberRequired = body.serialNumberRequired;
+  }
+
+  let credentialFields = current?.credentialFields ?? [];
+  if (has("credentialFields")) credentialFields = parseCredentialFields(body.credentialFields);
+
+  return {
+    brand: text("brand", "Brand"),
+    model: text("model", "Model"),
+    primaryRole,
+    // Certificates can carry any role code; additional roles come from the fixed list
+    certificateRoles: list("certificateRoles", "Roles from certificates").map((r) => r.toUpperCase()),
+    additionalRoles: roleCodes(list("additionalRoles", "Additional roles"), "Additional roles"),
+    type: oneOf("type", deviceTypes, "Type", current?.type),
+    dci: oneOf("dci", dciOptions, "DCI", current?.dci ?? "NA"),
+    translations: list("translations", "Translations"),
+    serialNumberRequired,
+    credentialFields,
+  };
+}
+
+/** Validate the credentials format: named, typed fields with unique names; keys kept or generated. */
+function parseCredentialFields(raw: unknown): CredentialFieldDef[] {
+  if (!Array.isArray(raw)) throw httpError(400, "Credentials format must be a list of fields");
+  const fields: CredentialFieldDef[] = [];
+  const names = new Set<string>();
+  for (const item of raw) {
+    const f = item as Partial<CredentialFieldDef>;
+    const name = typeof f?.name === "string" ? f.name.trim() : "";
+    if (!name) throw httpError(400, "Every credential field needs a name");
+    if (names.has(name.toLowerCase())) throw httpError(400, `Credential field "${name}" is listed twice`);
+    names.add(name.toLowerCase());
+    if (!credentialValueTypes.includes(f.valueType as never)) {
+      throw httpError(400, `Value type for "${name}" must be one of: ${credentialValueTypes.join(", ")}`);
+    }
+    const keyOk = typeof f.key === "string" && /^[A-Za-z0-9_]+$/.test(f.key) && !fields.some((x) => x.key === f.key);
+    fields.push({ key: keyOk ? (f.key as string) : makeFieldKey(name, fields), name, valueType: f.valueType! });
+  }
+  return fields;
+}
+
+async function saveDevice(id: string | null, d: CredentialDeviceInput) {
+  const params = [
+    d.brand, d.model, combineRoles(d), d.primaryRole, d.certificateRoles, d.additionalRoles,
+    d.type, d.dci, d.translations, d.serialNumberRequired, JSON.stringify(d.credentialFields), CURRENT_USER,
+  ];
   try {
+    if (id === null) {
+      const [row] = await query<{ id: string }>(
+        `INSERT INTO credential_devices (brand, model, roles, primary_role, certificate_roles, additional_roles,
+           type, dci, translations, serial_number_required, credential_fields, updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+        params,
+      );
+      return row.id;
+    }
     await query(
       `UPDATE credential_devices
-       SET brand = $2, model = $3, roles = $4, translations = $5, type = $6, dci = $7,
-           credential_format = $8, updated_by = $9, updated_at = now()
-       WHERE id = $1`,
-      [id, next.brand, next.model, next.roles, next.translations, next.type, next.dci, next.credentialFormat, CURRENT_USER],
+       SET brand = $1, model = $2, roles = $3, primary_role = $4, certificate_roles = $5, additional_roles = $6,
+           type = $7, dci = $8, translations = $9, serial_number_required = $10, credential_fields = $11,
+           updated_by = $12, updated_at = now()
+       WHERE id = $13`,
+      [...params, id],
     );
+    return id;
   } catch (err) {
-    if (isUniqueViolation(err)) throw httpError(409, `A device ${next.brand} ${next.model} already exists`);
+    if (isUniqueViolation(err)) throw httpError(409, `A device model ${d.brand} ${d.model} already exists`);
     throw err;
   }
+}
+
+/** Add a device model. */
+credentials.post("/devices", async (c) => {
+  const id = await saveDevice(null, parseDevice(await readJson(c)));
+  return c.json(await getDevice(id), 201);
+});
+
+/** Partial update. Removing or renaming credential fields leaves stored values untouched. */
+credentials.patch("/devices/:id", async (c) => {
+  const id = c.req.param("id");
+  const current = await getDevice(id);
+  await saveDevice(id, parseDevice(await readJson(c), current));
   return c.json(await getDevice(id));
 });
 
@@ -140,12 +230,16 @@ function parseCredential(body: Record<string, unknown>, device: CredentialDevice
 
   const raw = body.values;
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) throw httpError(400, "values must be an object");
-  const format = getCredentialFormat(device.credentialFormat);
-  const values: Partial<Record<CredentialField, string>> = {};
-  for (const field of format.fields) {
-    const v = (raw as Record<string, unknown>)[field];
-    if (typeof v !== "string" || !v.trim()) throw httpError(400, `${field} is required for ${format.label} credentials`);
-    values[field] = v.trim();
+  if (device.credentialFields.length === 0) {
+    throw httpError(400, "This device model has no credentials format yet. Add credential fields to the device first.");
+  }
+  const values: CredentialValues = {};
+  for (const field of device.credentialFields) {
+    const v = (raw as Record<string, unknown>)[field.key];
+    const str = typeof v === "number" ? String(v) : typeof v === "string" ? v.trim() : "";
+    if (!str) throw httpError(400, `${field.name} is required`);
+    if (field.valueType === "numeric" && !isNumericValue(str)) throw httpError(400, `${field.name} must be a number`);
+    values[field.key] = str;
   }
   return { scope: scopeInfo.id, scopeLabel: scopeInfo.label, ref, location, values };
 }

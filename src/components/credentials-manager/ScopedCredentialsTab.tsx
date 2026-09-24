@@ -19,9 +19,7 @@ import {
   CredentialScope,
   GLOBAL_REF,
   ScopedCredential,
-  credentialFieldLabels,
   credentialScopes,
-  getCredentialFormat,
 } from "@/data/credentialsManagerData";
 import { useDeleteDeviceCredential, useSaveDeviceCredential } from "@/hooks/api/credentials";
 import { CredentialCell } from "./CredentialValues";
@@ -52,7 +50,7 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
-  const fields = getCredentialFormat(device.credentialFormat).fields;
+  const fields = device.credentialFields;
   const selected = credentials.find((c) => c.id === selectedId) ?? null;
   const saveCredential = useSaveDeviceCredential();
   const deleteCredential = useDeleteDeviceCredential();
@@ -103,9 +101,9 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
       ),
     },
     ...fields.map((f): Column<ScopedCredential> => ({
-      header: credentialFieldLabels[f],
-      accessor: (row) => row.values[f] ?? "",
-      cell: (row) => <CredentialCell field={f} value={row.values[f]} />,
+      header: f.name,
+      accessor: (row) => row.values[f.key] ?? "",
+      cell: (row) => <CredentialCell field={f} value={row.values[f.key]} />,
     })),
     { header: "Updated By", accessor: "updatedBy", filterable: true, filterOptions: optionsFor("updatedBy") },
     { header: "Updated At", accessor: "updatedAt", filterable: true, filterType: "dateRange", cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.updatedAt)}</span> },

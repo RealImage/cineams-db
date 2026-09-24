@@ -2,7 +2,7 @@
 import { chains, theatres } from "./mockData";
 import {
   CredentialDevice,
-  CredentialFormatId,
+  CredentialFieldDef,
   CredentialScope,
   DciCompliance,
   DeviceType,
@@ -10,7 +10,6 @@ import {
   ScopedCredential,
   countryOptions,
   extraChainNames,
-  getCredentialFormat,
 } from "./credentialsManagerData";
 
 const chainOptions = Array.from(
@@ -148,11 +147,15 @@ const rows: SeedRow[] = [
   ["Vista", "Vista", [], "Ticketing System", "NA", [], "", "2014-09-06T18:30:00+05:30"],
 ];
 
-const formatForType = (type: DeviceType, i: number): CredentialFormatId => {
+const SITE_ID: CredentialFieldDef = { key: "siteId", name: "Site ID", valueType: "string" };
+const USERNAME: CredentialFieldDef = { key: "username", name: "Username", valueType: "string" };
+const PASSWORD: CredentialFieldDef = { key: "password", name: "Password", valueType: "string" };
+
+const fieldsForType = (type: DeviceType, i: number): CredentialFieldDef[] => {
   switch (type) {
-    case "TMS": return "siteid_username_password";
-    case "Ticketing System": return i % 2 === 0 ? "siteid_password" : "siteid_username_password";
-    default: return "username_password";
+    case "TMS": return [SITE_ID, USERNAME, PASSWORD];
+    case "Ticketing System": return i % 2 === 0 ? [SITE_ID, PASSWORD] : [SITE_ID, USERNAME, PASSWORD];
+    default: return [USERNAME, PASSWORD];
   }
 };
 
@@ -162,10 +165,14 @@ export const credentialDevices: CredentialDevice[] = rows.map(
     brand,
     model,
     roles,
+    primaryRole: null,
+    certificateRoles: roles,
+    additionalRoles: [],
     type,
     dci,
     translations,
-    credentialFormat: formatForType(type, i),
+    serialNumberRequired: type === "Projector" || type === "Playback Server",
+    credentialFields: fieldsForType(type, i),
     updatedBy,
     updatedAt,
   }),
@@ -175,10 +182,10 @@ export const credentialDevices: CredentialDevice[] = rows.map(
 const editors = ["Ketan Mehta", "Andre Lopes", "Sam Mary", "Vaibhav Shete", "Aarthi Videep"];
 const valuesFor = (device: CredentialDevice, seed: number): ScopedCredential["values"] => {
   const values: ScopedCredential["values"] = {};
-  for (const field of getCredentialFormat(device.credentialFormat).fields) {
-    if (field === "siteId") values.siteId = `SITE-${1000 + seed}`;
-    if (field === "username") values.username = seed % 2 === 0 ? "admin" : "service";
-    if (field === "password") values.password = `Demo@${2000 + seed}`;
+  for (const { key } of device.credentialFields) {
+    if (key === "siteId") values.siteId = `SITE-${1000 + seed}`;
+    if (key === "username") values.username = seed % 2 === 0 ? "admin" : "service";
+    if (key === "password") values.password = `Demo@${2000 + seed}`;
   }
   return values;
 };

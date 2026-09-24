@@ -6,15 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   CredentialDevice,
-  CredentialField,
+  CredentialValues,
   CredentialScope,
   GLOBAL_REF,
   ScopedCredential,
   countryOptions,
-  credentialFieldLabels,
   credentialScopes,
-  getCredentialFormat,
-  secretFields,
+  describeCredentialFields,
+  isNumericValue,
+  isSecretField,
 } from "@/data/credentialsManagerData";
 import { useCredentialRefOptions } from "@/hooks/api/credentials";
 
@@ -41,7 +41,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   const refOptionsQuery = useCredentialRefOptions(open && needsRefOptions);
   const [ref, setRef] = useState("");
   const [location, setLocation] = useState("");
-  const [values, setValues] = useState<Partial<Record<CredentialField, string>>>({});
+  const [values, setValues] = useState<CredentialValues>({});
 
   useEffect(() => {
     if (!open) return;
@@ -51,7 +51,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   }, [open, credential]);
 
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
-  const fields = getCredentialFormat(device.credentialFormat).fields;
+  const fields = device.credentialFields;
   const loadedOptions =
     scope === "global" ? globalRefOptions
     : scope === "chain" ? refOptionsQuery.data?.chains
@@ -64,7 +64,14 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   const optionsLoading = needsRefOptions && !loadedOptions;
   const trimmedRef = ref.trim();
   const duplicate = trimmedRef !== "" && trimmedRef !== credential?.ref && takenRefs.includes(trimmedRef);
-  const canSave = trimmedRef !== "" && !duplicate && !saving && fields.every((f) => (values[f] ?? "").trim() !== "");
+  const valueError = (f: (typeof fields)[number]) => {
+    const v = (values[f.key] ?? "").trim();
+    if (!v) return null; // blank: Save stays disabled, no message needed
+    return f.valueType === "numeric" && !isNumericValue(v) ? `${f.name} must be a number` : null;
+  };
+  const canSave =
+    trimmedRef !== "" && !duplicate && !saving && fields.length > 0 &&
+    fields.every((f) => (values[f.key] ?? "").trim() !== "" && !valueError(f));
 
   const handleSave = () => {
     onSave({
@@ -73,7 +80,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
       scope,
       ref: trimmedRef,
       location: scope === "device" ? location.trim() || undefined : undefined,
-      values: Object.fromEntries(fields.map((f) => [f, values[f]!.trim()])),
+      values: Object.fromEntries(fields.map((f) => [f.key, values[f.key]!.trim()])),
     }).then(() => onOpenChange(false), () => {});
   };
 
@@ -83,7 +90,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
         <DialogHeader>
           <DialogTitle>{credential ? "Edit" : "Add"} {scopeInfo.label.replace(" Credentials", "").toLowerCase()} credentials</DialogTitle>
           <DialogDescription>
-            {device.brand} {device.model} · {getCredentialFormat(device.credentialFormat).label}
+            {device.brand} {device.model} · {describeCredentialFields(device.credentialFields)}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,15 +123,27 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
               <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional, e.g. AMC Lincoln Square · Audi 3" />
             </div>
           )}
+          {fields.length === 0 && (
+            <p className="text-sm text-muted-foreground">
+              This device model has no credentials format yet. Add credential fields to the device model first.
+            </p>
+          )}
           {fields.map((f) => (
-            <div key={f} className="space-y-1">
-              <Label className="text-xs">{credentialFieldLabels[f]}</Label>
+            <div key={f.key} className="space-y-1">
+              <Label htmlFor={`cred-${f.key}`} className="text-xs">
+                {f.name}
+                {f.valueType === "numeric" && <span className="font-normal text-muted-foreground"> (numeric)</span>}
+              </Label>
               <Input
-                type={secretFields.includes(f) ? "password" : "text"}
-                autoComplete={secretFields.includes(f) ? "new-password" : "off"}
-                value={values[f] ?? ""}
-                onChange={(e) => setValues((v) => ({ ...v, [f]: e.target.value }))}
+                id={`cred-${f.key}`}
+                type={isSecretField(f) ? "password" : "text"}
+                inputMode={f.valueType === "numeric" ? "decimal" : undefined}
+                autoComplete={isSecretField(f) ? "new-password" : "off"}
+                value={values[f.key] ?? ""}
+                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                aria-invalid={!!valueError(f)}
               />
+              {valueError(f) && <p className="text-xs text-red-500">{valueError(f)}</p>}
             </div>
           ))}
         </div>

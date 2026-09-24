@@ -4,10 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import {
   CredentialDevice,
-  CredentialField,
+  CredentialFieldDef,
   GLOBAL_REF,
   ScopedCredential,
-  getCredentialFormat,
+  describeCredentialFields,
 } from "@/data/credentialsManagerData";
 import { QueryState } from "@/components/ui/query-state";
 import { CredentialValues } from "./CredentialValues";
@@ -21,7 +21,7 @@ interface Props {
   onManage: (device: CredentialDevice) => void;
 }
 
-const GlobalCredentials = ({ credentials, fields }: { credentials: ScopedCredential[]; fields: readonly CredentialField[] }) => {
+const GlobalCredentials = ({ credentials, fields }: { credentials: ScopedCredential[]; fields: readonly CredentialFieldDef[] }) => {
   const global = credentials
     .filter((c) => c.scope === "global")
     .sort((a, b) => (a.ref === GLOBAL_REF ? -1 : b.ref === GLOBAL_REF ? 1 : a.ref.localeCompare(b.ref)));
@@ -50,7 +50,7 @@ const GlobalCredentials = ({ credentials, fields }: { credentials: ScopedCredent
 /** Read-only view of a device's Global-tab credentials (defaults + country variants). */
 export const DefaultCredentialsDialog = ({ open, onOpenChange, device, credentialsQuery, onManage }: Props) => {
   if (!device) return null;
-  const fields = getCredentialFormat(device.credentialFormat).fields;
+  const fields = device.credentialFields;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -59,7 +59,7 @@ export const DefaultCredentialsDialog = ({ open, onOpenChange, device, credentia
           <DialogTitle className="flex items-center gap-2">
             <KeyRound className="h-4 w-4" /> Default credentials — {device.brand} {device.model}
           </DialogTitle>
-          <DialogDescription>{getCredentialFormat(device.credentialFormat).label}</DialogDescription>
+          <DialogDescription>{describeCredentialFields(device.credentialFields)}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">

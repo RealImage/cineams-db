@@ -2,12 +2,7 @@ import { useState } from "react";
 import { Copy, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import {
-  CredentialField,
-  ScopedCredential,
-  credentialFieldLabels,
-  secretFields,
-} from "@/data/credentialsManagerData";
+import { CredentialFieldDef, ScopedCredential, isSecretField } from "@/data/credentialsManagerData";
 
 const MASK = "••••••••";
 
@@ -19,15 +14,15 @@ const copy = (value: string, what: string) => {
 };
 
 /** Table cell: secrets are always masked; open the view dialog to reveal. */
-export const CredentialCell = ({ field, value }: { field: CredentialField; value?: string }) => {
+export const CredentialCell = ({ field, value }: { field: CredentialFieldDef; value?: string }) => {
   if (!value) return <span className="text-muted-foreground">—</span>;
-  return <code className="text-sm">{secretFields.includes(field) ? MASK : value}</code>;
+  return <code className="text-sm">{isSecretField(field) ? MASK : value}</code>;
 };
 
-const ValueRow = ({ field, value }: { field: CredentialField; value?: string }) => {
-  const secret = secretFields.includes(field);
+const ValueRow = ({ field, value }: { field: CredentialFieldDef; value?: string }) => {
+  const secret = isSecretField(field);
   const [revealed, setRevealed] = useState(false);
-  const label = credentialFieldLabels[field];
+  const label = field.name;
   return (
     <div className="space-y-1">
       <p className="text-xs text-muted-foreground">{label}</p>
@@ -50,8 +45,8 @@ const ValueRow = ({ field, value }: { field: CredentialField; value?: string }) 
   );
 };
 
-export const CredentialValues = ({ credential, fields }: { credential: ScopedCredential; fields: readonly CredentialField[] }) => (
+export const CredentialValues = ({ credential, fields }: { credential: ScopedCredential; fields: readonly CredentialFieldDef[] }) => (
   <div className="grid grid-cols-2 gap-3">
-    {fields.map((f) => <ValueRow key={f} field={f} value={credential.values[f]} />)}
+    {fields.map((f) => <ValueRow key={f.key} field={f} value={credential.values[f.key]} />)}
   </div>
 );

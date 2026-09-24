@@ -6,7 +6,6 @@ import {
   CredentialDevice,
   ScopedCredential,
   credentialScopes,
-  getCredentialFormat,
 } from "@/data/credentialsManagerData";
 import { CredentialValues } from "./CredentialValues";
 
@@ -36,7 +35,7 @@ export const ViewScopedCredentialDialog = ({ open, onOpenChange, device, credent
         </DialogHeader>
 
         <div className="rounded-lg border p-3 space-y-3">
-          <CredentialValues credential={credential} fields={getCredentialFormat(device.credentialFormat).fields} />
+          <CredentialValues credential={credential} fields={device.credentialFields} />
         </div>
         <p className="text-xs text-muted-foreground">
           Updated by {credential.updatedBy} on {formatDateTime(credential.updatedAt)}

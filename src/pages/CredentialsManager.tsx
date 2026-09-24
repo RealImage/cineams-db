@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, KeyRound, Pencil, Search, SquarePen, X } from "lucide-react";
+import { Eye, KeyRound, Pencil, Plus, Search, SquarePen, X } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 import { formatDateTime } from "@/lib/dateUtils";
 import {
+  CredentialDeviceInput,
   CredentialDeviceWithStatus as CredentialDevice,
   dciOptions,
   deviceCredentialsPath,
@@ -19,13 +20,13 @@ import {
 } from "@/data/credentialsManagerData";
 import { QueryState } from "@/components/ui/query-state";
 import {
-  DevicePatch,
+  useCreateCredentialDevice,
   useCredentialDevices,
   useDeviceCredentials,
   useUpdateCredentialDevice,
 } from "@/hooks/api/credentials";
 import { CredentialDeviceSheet } from "@/components/credentials-manager/CredentialDeviceSheet";
-import { EditCredentialDeviceDialog } from "@/components/credentials-manager/EditCredentialDeviceDialog";
+import { DeviceModelDialog } from "@/components/credentials-manager/DeviceModelDialog";
 import { DefaultCredentialsDialog } from "@/components/credentials-manager/DefaultCredentialsDialog";
 import { DciBadge, DefaultCredentialsBadge } from "@/components/credentials-manager/badges";
 
@@ -42,6 +43,8 @@ const CredentialsManager = () => {
   const devicesQuery = useCredentialDevices();
   const devices = devicesQuery.data ?? EMPTY;
   const updateDevice = useUpdateCredentialDevice();
+  const createDevice = useCreateCredentialDevice();
+  const [addOpen, setAddOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -85,7 +88,17 @@ const CredentialsManager = () => {
   const openCredentials = (d: CredentialDevice) => { setSelectedId(d.id); setDetailsOpen(false); setCredentialsOpen(true); };
   const manageCredentials = (d: CredentialDevice) => navigate(deviceCredentialsPath(d.id));
 
-  const handleSaveDevice = (patch: DevicePatch) => {
+  const handleAddDevice = (input: CredentialDeviceInput) =>
+    createDevice.mutateAsync(input).then(
+      (d) => {
+        toast.success(`Added ${d.brand} ${d.model}`);
+        setSelectedId(d.id);
+        setDetailsOpen(true);
+      },
+      (err: Error) => { toast.error(`Could not add ${input.brand} ${input.model}: ${err.message}`); throw err; },
+    );
+
+  const handleSaveDevice = (patch: CredentialDeviceInput) => {
     if (!selected) return Promise.resolve();
     return updateDevice.mutateAsync({ id: selected.id, patch }).then(
       (d) => { toast.success(`Updated ${d.brand} ${d.model}`); },
@@ -163,9 +176,14 @@ const CredentialsManager = () => {
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      <p className="text-muted-foreground">
-        Manage device models, their alternate names and factory default credentials
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-muted-foreground">
+          Manage device models, their alternate names and factory default credentials
+        </p>
+        <Button onClick={() => setAddOpen(true)}>
+          <Plus className="h-4 w-4" /> Add device model
+        </Button>
+      </div>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -243,12 +261,19 @@ const CredentialsManager = () => {
         onEdit={openEdit}
         onViewCredentials={openCredentials}
       />
-      <EditCredentialDeviceDialog
+      <DeviceModelDialog
         device={selected}
         open={editOpen}
         onOpenChange={setEditOpen}
         onSave={handleSaveDevice}
         saving={updateDevice.isPending}
+      />
+      <DeviceModelDialog
+        device={null}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSave={handleAddDevice}
+        saving={createDevice.isPending}
       />
       <DefaultCredentialsDialog
         device={selected}

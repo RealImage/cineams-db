@@ -1,36 +1,87 @@
 export const deviceTypes = [
-  "Playback Server",
   "Projector",
+  "Playback Server",
   "Audio Processor",
-  "TMS",
   "Ticketing System",
+  "TMS",
+  "Others",
 ] as const;
 export type DeviceType = (typeof deviceTypes)[number];
 
 export const dciOptions = ["true", "false", "NA"] as const;
 export type DciCompliance = (typeof dciOptions)[number];
 
-export type CredentialField = "siteId" | "username" | "password";
+/** Device roles (DCI security roles and system roles) a model can carry. */
+export const deviceRoles = [
+  { code: "FM", description: "Forensic Mark" },
+  { code: "FMA", description: "Forensic Mark Inserter (Audio/Sound)" },
+  { code: "FMI", description: "Forensic Mark Inserter (Image/Picture)" },
+  { code: "LD", description: "Link Decryptor (Image/Picture)" },
+  { code: "LE", description: "Link Encryptor (Image/Picture)" },
+  { code: "MD", description: "Media Decryptor" },
+  { code: "MDA", description: "Media Decryptor (Audio/Sound)" },
+  { code: "MDE", description: "MDE" },
+  { code: "MDI", description: "Media Decryptor (Image/Picture)" },
+  { code: "MDS", description: "Media Decryptor (Subtitle)" },
+  { code: "MIC", description: "MIC" },
+  { code: "OBAE", description: "OBAE" },
+  { code: "PR", description: "Projector" },
+  { code: "RMB", description: "RMB" },
+  { code: "SM", description: "Security Manager" },
+  { code: "SMS", description: "SMS" },
+  { code: "SPB", description: "Secure Processing Block (Security Enclosure)" },
+  { code: "TMS", description: "Theater Management System" },
+  { code: "POS", description: "Ticketing System" },
+] as const;
+export const deviceRoleCodes: string[] = deviceRoles.map((r) => r.code);
+export const roleDescription = (code: string) => deviceRoles.find((r) => r.code === code)?.description;
 
-export const credentialFieldLabels: Record<CredentialField, string> = {
-  siteId: "Site ID",
-  username: "Username",
-  password: "Password",
+/** Types for which DCI compliance doesn't apply; an unchecked "Is DCI" stores NA. */
+export const nonDciTypes: DeviceType[] = ["TMS", "Ticketing System", "Others"];
+
+// ---------------------------------------------------------------------------
+// Credentials format: an ordered list of named fields, each numeric or string
+// ---------------------------------------------------------------------------
+
+export const credentialValueTypes = ["string", "numeric"] as const;
+export type CredentialValueType = (typeof credentialValueTypes)[number];
+
+export interface CredentialFieldDef {
+  /** Stable key the values are stored under; survives renaming the field. */
+  key: string;
+  name: string;
+  valueType: CredentialValueType;
+}
+
+/** Values of one credential set, keyed by CredentialFieldDef.key. */
+export type CredentialValues = Record<string, string>;
+
+/** Fields whose values are masked in tables and dialogs (e.g. Password, PIN). */
+export const isSecretField = (field: Pick<CredentialFieldDef, "name">) =>
+  /pass|pin|secret|token|key/i.test(field.name);
+
+export const isNumericValue = (v: string) => /^-?\d+(\.\d+)?$/.test(v.trim());
+
+/** A key for a new field, unique within `fields`. */
+export const makeFieldKey = (name: string, fields: Pick<CredentialFieldDef, "key">[]) => {
+  const base = name.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "field";
+  const taken = new Set(fields.map((f) => f.key));
+  let key = base;
+  for (let n = 2; taken.has(key); n++) key = `${base}_${n}`;
+  return key;
 };
 
-/** Fields shown/masked as secrets in tables and dialogs. */
-export const secretFields: CredentialField[] = ["password"];
+export const describeCredentialFields = (fields: CredentialFieldDef[]) =>
+  fields.length ? fields.map((f) => f.name).join(", ") : "No fields defined";
 
-export const credentialFormats = [
-  { id: "username_password", label: "Username & Password", fields: ["username", "password"] },
-  { id: "siteid_password", label: "Site ID & Password", fields: ["siteId", "password"] },
-  { id: "siteid_username_password", label: "Site ID, Username & Password", fields: ["siteId", "username", "password"] },
-  { id: "password", label: "Password Only", fields: ["password"] },
-] as const satisfies readonly { id: string; label: string; fields: readonly CredentialField[] }[];
-export type CredentialFormatId = (typeof credentialFormats)[number]["id"];
+export const DEFAULT_CREDENTIAL_FIELDS: CredentialFieldDef[] = [
+  { key: "username", name: "Username", valueType: "string" },
+  { key: "password", name: "Password", valueType: "string" },
+];
 
-export const getCredentialFormat = (id: CredentialFormatId) =>
-  credentialFormats.find((f) => f.id === id) ?? credentialFormats[0];
+// ---------------------------------------------------------------------------
+// Scopes
+// ---------------------------------------------------------------------------
 
 export const credentialScopes = [
   { id: "global", label: "Global Credentials", refLabel: "Region" },
@@ -54,7 +105,7 @@ export interface ScopedCredential {
   ref: string;
   /** Device scope only: where that unit is installed. */
   location?: string;
-  values: Partial<Record<CredentialField, string>>;
+  values: CredentialValues;
   updatedBy: string;
   updatedAt: string;
 }
@@ -63,14 +114,24 @@ export interface CredentialDevice {
   id: string;
   brand: string;
   model: string;
+  /** All roles of the model: primary + from certificates + additional (derived). */
   roles: string[];
+  primaryRole: string | null;
+  certificateRoles: string[];
+  additionalRoles: string[];
   type: DeviceType;
   dci: DciCompliance;
   translations: string[];
-  credentialFormat: CredentialFormatId;
+  /** Devices of this model are expected to have a serial number. */
+  serialNumberRequired: boolean;
+  credentialFields: CredentialFieldDef[];
   updatedBy: string;
   updatedAt: string;
 }
+
+/** Combined role list shown in the Roles column. */
+export const combineRoles = (d: Pick<CredentialDevice, "primaryRole" | "certificateRoles" | "additionalRoles">) =>
+  Array.from(new Set([d.primaryRole, ...d.certificateRoles, ...d.additionalRoles].filter((r): r is string => !!r)));
 
 /** Default credentials are the ones the device ships with, i.e. the Global row. */
 export const hasDefaultCredentials = (deviceId: string, credentials: ScopedCredential[]) =>
@@ -78,6 +139,13 @@ export const hasDefaultCredentials = (deviceId: string, credentials: ScopedCrede
 
 /** API shape of a device: the record plus whether a Global/"Global" credential exists. */
 export type CredentialDeviceWithStatus = CredentialDevice & { hasDefaultCredentials: boolean };
+
+/** What the add/edit device form sends; the server derives `roles` and stamps the audit fields. */
+export type CredentialDeviceInput = Pick<
+  CredentialDevice,
+  | "brand" | "model" | "primaryRole" | "certificateRoles" | "additionalRoles" | "type" | "dci"
+  | "translations" | "serialNumberRequired" | "credentialFields"
+>;
 
 /** Fields a credential save sends; the server stamps id (for new rows), updatedBy and updatedAt. */
 export type CredentialInput = Pick<ScopedCredential, "scope" | "ref" | "location" | "values">;

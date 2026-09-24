@@ -1,0 +1,35 @@
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { CredentialFieldDef, roleDescription } from "@/data/credentialsManagerData";
+
+/** Role codes as tags, with the role's description on hover. */
+export const RoleBadges = ({ roles, variant = "secondary" }: { roles: string[]; variant?: "secondary" | "product" }) =>
+  roles.length === 0 ? null : (
+    <div className="flex flex-wrap gap-1">
+      {roles.map((r) => {
+        const description = roleDescription(r);
+        const badge = <Badge key={r} variant={variant} className="font-normal">{r}</Badge>;
+        return description ? (
+          <Tooltip key={r}>
+            <TooltipTrigger asChild><span>{badge}</span></TooltipTrigger>
+            <TooltipContent>{description}</TooltipContent>
+          </Tooltip>
+        ) : badge;
+      })}
+    </div>
+  );
+
+/** The credentials format: each field with its value type. */
+export const CredentialFieldsList = ({ fields }: { fields: CredentialFieldDef[] }) =>
+  fields.length === 0 ? (
+    <span className="text-sm font-normal text-muted-foreground">No fields defined</span>
+  ) : (
+    <div className="flex flex-wrap gap-1">
+      {fields.map((f) => (
+        <Badge key={f.key} variant="outline" className="gap-1 font-normal">
+          {f.name}
+          <span className="text-muted-foreground">{f.valueType === "numeric" ? "Numeric" : "String"}</span>
+        </Badge>
+      ))}
+    </div>
+  );

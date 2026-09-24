@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type {
-  CredentialDevice,
+  CredentialDeviceInput,
   CredentialDeviceWithStatus,
   CredentialInput,
   ScopedCredential,
@@ -15,9 +15,7 @@ export const credentialKeys = {
   refOptions: () => [...credentialKeys.all, "ref-options"] as const,
 };
 
-export type DevicePatch = Partial<
-  Pick<CredentialDevice, "brand" | "model" | "roles" | "type" | "dci" | "translations" | "credentialFormat">
->;
+export type DevicePatch = Partial<CredentialDeviceInput>;
 
 export const useCredentialDevices = () =>
   useQuery({
@@ -46,6 +44,14 @@ export const useCredentialRefOptions = (enabled = true) =>
     enabled,
     staleTime: 5 * 60_000,
   });
+
+export const useCreateCredentialDevice = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (input: CredentialDeviceInput) => api.post<CredentialDeviceWithStatus>("/credentials/devices", input),
+    onSuccess: () => qc.invalidateQueries({ queryKey: credentialKeys.devices() }),
+  });
+};
 
 export const useUpdateCredentialDevice = () => {
   const qc = useQueryClient();

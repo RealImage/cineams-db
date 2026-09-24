@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDateTime } from "@/lib/dateUtils";
-import { CredentialDevice, getCredentialFormat } from "@/data/credentialsManagerData";
+import { CredentialDevice } from "@/data/credentialsManagerData";
+import { CredentialFieldsList, RoleBadges } from "./device-fields";
 import { DciBadge, DefaultCredentialsBadge } from "./badges";
 
 interface Props {
@@ -45,16 +46,14 @@ export const CredentialDeviceSheet = ({ device, hasDefaults, open, onOpenChange,
                 <Field label="Model" value={device.model} />
                 <Field label="Type" value={device.type} />
                 <Field label="DCI Compliant" value={<DciBadge value={device.dci} />} />
-                <Field
-                  label="Roles"
-                  value={device.roles.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {device.roles.map((r) => <Badge key={r} variant="secondary">{r}</Badge>)}
-                    </div>
-                  )}
-                />
+                <Field label="Role" value={device.primaryRole && <RoleBadges roles={[device.primaryRole]} />} />
+                <Field label="Serial Numbers" value={device.serialNumberRequired ? "Expected" : "Not expected"} />
+                <Field label="Roles From Certificates" value={device.certificateRoles.length > 0 && <RoleBadges roles={device.certificateRoles} />} />
+                <Field label="Additional Roles" value={device.additionalRoles.length > 0 && <RoleBadges roles={device.additionalRoles} variant="product" />} />
                 <Field label="Default Credentials" value={<DefaultCredentialsBadge available={hasDefaults} />} />
-                <Field label="Credentials Format" value={getCredentialFormat(device.credentialFormat).label} />
+                <div className="col-span-2">
+                  <Field label="Credentials Format" value={<CredentialFieldsList fields={device.credentialFields} />} />
+                </div>
               </div>
             </section>
 
