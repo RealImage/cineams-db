@@ -101,13 +101,17 @@ approvals.get("/company-claims", async (c) =>
 
 const reviewClaim = (status: "Accepted" | "Rejected") => async (c: Context) => {
   const id = c.req.param("id");
-  const [row] = await query<{ status: string }>("SELECT status FROM company_claims WHERE id = $1", [id]);
-  if (!row) throw notFound("Company claim");
-  if (row.status !== "Pending") throw httpError(409, `This claim was already ${row.status.toLowerCase()}`);
-  await query(
-    "UPDATE company_claims SET status = $2, reviewed_at = now(), reviewed_by = $3 WHERE id = $1",
+  // Conditional on Pending so concurrent reviews can't both succeed
+  const updated = await query(
+    `UPDATE company_claims SET status = $2, reviewed_at = now(), reviewed_by = $3
+     WHERE id = $1 AND status = 'Pending' RETURNING id`,
     [id, status, CURRENT_USER],
   );
+  if (updated.length === 0) {
+    const [row] = await query<{ status: string }>("SELECT status FROM company_claims WHERE id = $1", [id]);
+    if (!row) throw notFound("Company claim");
+    throw httpError(409, `This claim was already ${row.status.toLowerCase()}`);
+  }
   const [claim] = await query<CompanyClaim>(`${CLAIM_SELECT} WHERE id = $1`, [id]);
   return c.json(claim);
 };

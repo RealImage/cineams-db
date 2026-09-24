@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { query } from "../db";
+import { query, transaction } from "../db";
 import { CURRENT_USER, httpError, notFound } from "../http";
 import type { WireTAPDevice, WireTAPDeviceDetail, WireTAPTheatreOption } from "../../src/types/wireTAP";
 
@@ -46,16 +46,24 @@ wiretap.post("/inventory", async (c) => {
   if (!Array.isArray(ids) || ids.length === 0 || !ids.every((i) => typeof i === "string")) {
     throw httpError(400, "ids must be a non-empty array of device ids");
   }
-  const rows = await query<{ id: string }>(
-    `UPDATE wiretap_devices SET in_inventory = true, updated_by = $2
-     WHERE id = ANY($1) AND NOT in_inventory RETURNING id`,
-    [ids, CURRENT_USER],
-  );
-  if (rows.length !== ids.length) {
-    const found = new Set(rows.map((r) => r.id));
-    throw notFound(`New device ${ids.filter((i) => !found.has(i)).join(", ")}`);
-  }
-  return c.json({ added: rows.length });
+  const unique = Array.from(new Set(ids as string[]));
+  // Lock and validate every id before updating, so a bad id rolls back the whole request
+  const added = await transaction(async (client) => {
+    const { rows: found } = await client.query<{ id: string }>(
+      "SELECT id FROM wiretap_devices WHERE id = ANY($1) AND NOT in_inventory FOR UPDATE",
+      [unique],
+    );
+    if (found.length !== unique.length) {
+      const ok = new Set(found.map((r) => r.id));
+      throw notFound(`New device ${unique.filter((i) => !ok.has(i)).join(", ")}`);
+    }
+    await client.query(
+      "UPDATE wiretap_devices SET in_inventory = true, updated_by = $2 WHERE id = ANY($1)",
+      [unique, CURRENT_USER],
+    );
+    return found.length;
+  });
+  return c.json({ added });
 });
 
 /** Theatres a device can be mapped to. */
