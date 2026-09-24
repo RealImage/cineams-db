@@ -1,16 +1,17 @@
-# Restore the dashboard database
+# Support the database locally and in Lovable
 
-## Goal
-Bring the existing PostgreSQL-backed dashboard back online without changing the dashboard design or data model.
+## Confirmed cause
+Your Docker database is running on your computer, but the Lovable preview runs elsewhere. In the preview, `127.0.0.1:5432` points to the preview environment—not your computer—so both dashboard requests fail with `ECONNREFUSED`.
 
 ## Plan
-1. Start a PostgreSQL 16 service using the project's existing database settings. Docker is unavailable in this preview environment, so use the native PostgreSQL runtime instead.
-2. Run the existing migrations and seed process to create and populate the required tables.
-3. Confirm the API health check succeeds, then verify `/api/theatres/stats` and `/api/approvals/summary` return data instead of HTTP 500.
-4. Reload the dashboard and verify its cards and lists render normally, with no repeated failed requests.
+1. Preserve the existing local setup: local development continues using the `cineams-db` Docker container and the current local `DATABASE_URL` default.
+2. Enable Lovable Cloud for a hosted PostgreSQL database that the preview and published app can reach.
+3. Apply the existing schema migrations and seed data to the hosted database, adapting only incompatible SQL if required.
+4. Configure the preview API to use the hosted database through a protected environment secret, while retaining the local fallback for development on your computer.
+5. Verify the health endpoint, theatre statistics, and approvals summary all return data.
+6. Reload the dashboard in the Lovable preview and confirm the cards and lists render without repeated HTTP 500 errors.
 
-## Technical details
-- Confirmed failure: `ECONNREFUSED 127.0.0.1:5432`.
-- The API is running, but no process is listening on PostgreSQL port 5432.
-- The project already contains the schema migrations, seed data, and database commands needed for recovery.
-- No iCount Cameras code or dashboard presentation will be changed.
+## Scope
+- No dashboard or iCount Cameras presentation changes.
+- Local Docker remains supported.
+- Database credentials will not be committed to the project.
