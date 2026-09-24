@@ -34,12 +34,16 @@ In development, Vite proxies `/api` to the API server on `API_PORT`.
 | Command | What it does |
 |---|---|
 | `npm run dev` | Web app and API together, with reload |
-| `npm run dev:web` / `npm run dev:api` | Either one on its own |
+| `npm run dev:web` | Web app only |
+| `npm run dev:api` | API only, with reload |
 | `npm run build` | Production build of the web app into `dist/` |
+| `npm run build:dev` | Build with `--mode development` (development env and mode flags) |
+| `npm run preview` | Serve the built `dist/` locally |
 | `npm run start:api` | Run the API without watching |
 | `npm run typecheck` | Type-check the app and the server |
 | `npm run lint` | ESLint |
-| `npm run db:up` / `db:down` | Start or stop the Postgres container |
+| `npm run db:up` | Start the Postgres container |
+| `npm run db:down` | Stop the Postgres container (data is kept in the `pgdata` volume) |
 | `npm run db:migrate` | Apply pending migrations |
 | `npm run db:seed` | Load sample data |
 | `npm run db:seed:one -- <name>` | Run one seeder (e.g. `credentials`) |
