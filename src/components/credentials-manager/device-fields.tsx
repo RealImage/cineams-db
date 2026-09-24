@@ -11,7 +11,7 @@ export const RoleBadges = ({ roles, variant = "secondary" }: { roles: string[]; 
         const badge = <Badge key={r} variant={variant} className="font-normal">{r}</Badge>;
         return description ? (
           <Tooltip key={r}>
-            <TooltipTrigger asChild><span>{badge}</span></TooltipTrigger>
+            <TooltipTrigger asChild><span aria-label={`${r}: ${description}`}>{badge}</span></TooltipTrigger>
             <TooltipContent>{description}</TooltipContent>
           </Tooltip>
         ) : badge;

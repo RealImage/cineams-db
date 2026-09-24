@@ -29,6 +29,7 @@ import { CredentialDeviceSheet } from "@/components/credentials-manager/Credenti
 import { DeviceModelDialog } from "@/components/credentials-manager/DeviceModelDialog";
 import { DefaultCredentialsDialog } from "@/components/credentials-manager/DefaultCredentialsDialog";
 import { DciBadge, DefaultCredentialsBadge } from "@/components/credentials-manager/badges";
+import { RoleBadges } from "@/components/credentials-manager/device-fields";
 
 const ALL = "all";
 const MAX_TRANSLATIONS_SHOWN = 2;
@@ -114,9 +115,7 @@ const CredentialsManager = () => {
       accessor: (row) => row.roles.join(", "),
       cell: (row) =>
         row.roles.length ? (
-          <div className="flex flex-wrap gap-1">
-            {row.roles.map((r) => <Badge key={r} variant="secondary" className="font-normal">{r}</Badge>)}
-          </div>
+          <RoleBadges roles={row.roles} />
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
