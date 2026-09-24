@@ -3,6 +3,16 @@ import pg from "pg";
 export const DATABASE_URL =
   process.env.DATABASE_URL ?? "postgres://cineams:cineams@localhost:5432/cineams";
 
+/** DATABASE_URL without credentials, safe to print. */
+export function describeDatabase(url = DATABASE_URL) {
+  try {
+    const { hostname, port, pathname } = new URL(url);
+    return `${hostname}${port ? `:${port}` : ""}${pathname}`;
+  } catch {
+    return "(unparseable DATABASE_URL)";
+  }
+}
+
 export function createClient() {
   return new pg.Client({ connectionString: DATABASE_URL });
 }

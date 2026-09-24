@@ -1,8 +1,9 @@
 // Loads the frontend mock data (src/data) into Postgres so the DB matches what
-// the UI shows today. Idempotent: truncates all seeded tables first.
-// Usage: npm run db:seed
+// the UI shows today.
+// Usage: npm run db:seed              seed an empty database
+//        npm run db:seed -- --force   replace existing data (see SEEDED_TABLES)
 import type pg from "pg";
-import { createClient, insertMany, DATABASE_URL } from "./client";
+import { createClient, insertMany, describeDatabase } from "./client";
 import { theatres, chains, companies, tdlDevices } from "../src/data/mockData";
 import { wireTapDevices } from "../src/data/wireTapDevices";
 import { newWireTapDevices } from "../src/data/newWireTapDevices";
@@ -15,7 +16,16 @@ import { companyClaimsData } from "../src/data/companyClaimsData";
 import { partnersData } from "../src/data/partnersData";
 import { generateScreenTimeSeries } from "../src/data/environmentTimeSeriesData";
 
-const SENSOR_SCREEN_LIMIT = 25; // screens that get a month of sensor history
+const SENSOR_SCREEN_LIMIT = 25;
+
+// Tables this script populates. A forced re-seed truncates them with CASCADE,
+// which also empties rows that reference them (e.g. suites, closures).
+const SEEDED_TABLES = [
+  "companies", "chains", "theatres", "theatre_mappings", "screens", "screen_devices",
+  "screen_ip_addresses", "tdl_devices", "wiretap_devices", "theatre_appliance_configs",
+  "screen_appliances", "icount_cameras", "screen_sensor_readings", "screen_sensor_thresholds",
+  "flm_feeds", "company_claims", "partner_requests",
+]; // screens that get a month of sensor history
 
 type ApplianceTheatre = {
   theatreId: string;
@@ -39,7 +49,7 @@ class Seeder {
   private theatreIds = new Set<string>();
   private screenIds = new Set<string>();
 
-  constructor(private client: pg.Client) {}
+  constructor(private client: pg.Client, private force: boolean) {}
 
   async run() {
     await this.truncate();
@@ -57,11 +67,23 @@ class Seeder {
   }
 
   private async truncate() {
-    const { rows } = await this.client.query<{ tablename: string }>(
-      `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'schema_migrations'`,
+    const { rows } = await this.client.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM pg_tables WHERE schemaname = 'public' AND tablename = ANY($1)`,
+      [SEEDED_TABLES],
     );
-    if (rows.length === 0) throw new Error("No tables found — run `npm run db:migrate` first.");
-    await this.client.query(`TRUNCATE ${rows.map((r) => r.tablename).join(", ")} RESTART IDENTITY CASCADE`);
+    if (rows[0].n !== SEEDED_TABLES.length) throw new Error("Schema missing — run `npm run db:migrate` first.");
+
+    const { rows: existing } = await this.client.query<{ has_data: boolean }>(
+`SELECT EXISTS (SELECT 1 FROM companies) OR EXISTS (SELECT 1 FROM chains) OR EXISTS (SELECT 1 FROM theatres) OR EXISTS (SELECT 1 FROM theatre_mappings) OR EXISTS (SELECT 1 FROM screens) OR EXISTS (SELECT 1 FROM screen_devices) OR EXISTS (SELECT 1 FROM screen_ip_addresses) OR EXISTS (SELECT 1 FROM tdl_devices) OR EXISTS (SELECT 1 FROM wiretap_devices) OR EXISTS (SELECT 1 FROM theatre_appliance_configs) OR EXISTS (SELECT 1 FROM screen_appliances) OR EXISTS (SELECT 1 FROM icount_cameras) OR EXISTS (SELECT 1 FROM screen_sensor_readings) OR EXISTS (SELECT 1 FROM screen_sensor_thresholds) OR EXISTS (SELECT 1 FROM flm_feeds) OR EXISTS (SELECT 1 FROM company_claims) OR EXISTS (SELECT 1 FROM partner_requests) AS has_data`,
+    );
+    if (!existing[0].has_data) return;
+    if (!this.force) {
+      throw new Error(
+        "Database already has data. Re-seeding replaces it (and dependent rows); " +
+        "run `npm run db:seed -- --force` or `npm run db:reset`.",
+      );
+    }
+    await this.client.query(`TRUNCATE ${SEEDED_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
   }
 
   private async organizations() {
@@ -231,18 +253,20 @@ class Seeder {
 
   private async wiretap() {
     const devices = [...wireTapDevices, ...newWireTapDevices];
-    // Devices reference theatres that only exist as a snapshot on the device.
+    // Device theatreIds collide with core theatre IDs (e.g. "1" is a different
+    // theatre on the device), so key on the snapshot's UUID instead.
+    const theatreIdByUuid = new Map(theatres.map((t) => [t.uuid, t.id]));
     for (const d of devices) {
-      if (this.theatreIds.has(d.theatreId)) continue;
-      await this.client.query(
-        `INSERT INTO theatres (id, uuid, name, address, alternate_names) VALUES ($1, $2, $3, $4, $5)`,
-        [d.theatreId, d.theatreUUID, d.theatreName, d.theatreAddress, d.theatreAlternateNames ?? []],
+      if (theatreIdByUuid.has(d.theatreUUID)) continue;
+      const { rows } = await this.client.query<{ id: string }>(
+        `INSERT INTO theatres (uuid, name, address, alternate_names) VALUES ($1, $2, $3, $4) RETURNING id`,
+        [d.theatreUUID, d.theatreName, d.theatreAddress, d.theatreAlternateNames ?? []],
       );
-      this.theatreIds.add(d.theatreId);
+      theatreIdByUuid.set(d.theatreUUID, rows[0].id);
     }
     await insertMany(this.client, "wiretap_devices", devices.map((d) => ({
       id: d.id,
-      theatre_id: d.theatreId,
+      theatre_id: theatreIdByUuid.get(d.theatreUUID),
       hardware_serial_number: d.hardwareSerialNumber,
       application_serial_number: d.applicationSerialNumber,
       host_name: d.hostName,
@@ -450,7 +474,7 @@ async function main() {
   await client.connect();
   try {
     await client.query("BEGIN");
-    await new Seeder(client).run();
+    await new Seeder(client, process.argv.includes("--force")).run();
     await client.query("COMMIT");
     const { rows } = await client.query(`
       SELECT table_name AS table,
@@ -458,7 +482,7 @@ async function main() {
       FROM information_schema.tables
       WHERE table_schema = 'public' AND table_type = 'BASE TABLE' AND table_name <> 'schema_migrations'
       ORDER BY table_name`);
-    console.log(`Seeded ${DATABASE_URL}`);
+    console.log(`Seeded ${describeDatabase()}`);
     console.table(rows);
   } catch (err) {
     await client.query("ROLLBACK");

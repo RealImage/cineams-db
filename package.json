@@ -15,7 +15,7 @@
     "db:seed": "tsx --env-file-if-exists=.env db/seed.ts",
     "db:reset": "tsx --env-file-if-exists=.env db/migrate.ts --reset && npm run db:seed",
     "db:setup": "npm run db:up && npm run db:migrate && npm run db:seed",
-    "db:psql": "docker compose exec db psql -U cineams -d cineams"
+    "db:psql": "docker compose exec db sh -c 'psql -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" \"$@\"' psql"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

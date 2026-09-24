@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createClient, DATABASE_URL } from "./client";
+import { createClient, describeDatabase } from "./client";
 
 const migrationsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
@@ -40,7 +40,7 @@ async function main() {
       }
       count++;
     }
-    console.log(count ? `Applied ${count} migration(s) to ${DATABASE_URL}` : "Schema is up to date.");
+    console.log(count ? `Applied ${count} migration(s) to ${describeDatabase()}` : "Schema is up to date.");
   } finally {
     await client.end();
   }
