@@ -289,7 +289,7 @@ const EditWireTAPDevice = () => {
                   To modify these settings, please edit the theatre configuration.{" "}
                   {formData.theatreId ? (
                     <a
-                      href={`https://cineams-db.lovable.app/theatre/${formData.theatreId}/edit`}
+                      href={`/theatre/${encodeURIComponent(formData.theatreId)}/edit`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-primary underline hover:text-primary/80 font-medium"
