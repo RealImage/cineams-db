@@ -25,3 +25,6 @@ dist-ssr
 
 # Local env
 .env
+
+# Lovable is no longer used; keep its tooling files out of the repo
+.lovable/
