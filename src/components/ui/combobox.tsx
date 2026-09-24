@@ -105,8 +105,13 @@ export const Combobox = ({
                   className="gap-2"
                 >
                   <Check className={cn("h-4 w-4 shrink-0", o.value === value ? "opacity-100" : "opacity-0")} />
-                  <span className="truncate">{o.label}</span>
-                  {o.description && <span className="ml-auto truncate pl-2 text-xs text-muted-foreground">{o.description}</span>}
+                  {/* With a description, the label (e.g. a role code) keeps its width and the description truncates */}
+                  <span className={cn(o.description ? "shrink-0" : "truncate")}>{o.label}</span>
+                  {o.description && (
+                    <span className="ml-auto min-w-0 truncate pl-2 text-xs text-muted-foreground" title={o.description}>
+                      {o.description}
+                    </span>
+                  )}
                 </CommandItem>
               ))}
             </CommandGroup>

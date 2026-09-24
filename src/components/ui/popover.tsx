@@ -4,7 +4,15 @@ import * as PopoverPrimitive from "@radix-ui/react-popover"
 
 import { cn } from "@/lib/utils"
 
-const Popover = PopoverPrimitive.Root
+/**
+ * Modal by default: a popover opened from inside a dialog or sheet is portalled
+ * outside it, and the dialog's scroll lock would otherwise swallow wheel and
+ * touch scrolling on the popover's lists. A modal popover takes over the lock
+ * for itself, so its content scrolls. Pass modal={false} to opt out.
+ */
+const Popover = ({ modal = true, ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) => (
+  <PopoverPrimitive.Root modal={modal} {...props} />
+)
 
 const PopoverTrigger = PopoverPrimitive.Trigger
 
