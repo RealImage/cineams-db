@@ -82,12 +82,17 @@ export const FilterGroup = ({
   title: string;
   children: React.ReactNode;
   className?: string;
-}) => (
-  <div className={cn("flex flex-col gap-2", className)}>
-    <span className="text-xs font-medium uppercase leading-4 tracking-[.04em] text-muted-foreground">{title}</span>
-    {children}
-  </div>
-);
+}) => {
+  // role="group" + aria-labelledby gives controls without their own label
+  // (most selects/inputs in the drawers) the group title as their name context.
+  const headingId = React.useId();
+  return (
+    <div role="group" aria-labelledby={headingId} className={cn("flex flex-col gap-2", className)}>
+      <span id={headingId} className="text-xs font-medium uppercase leading-4 tracking-[.04em] text-muted-foreground">{title}</span>
+      {children}
+    </div>
+  );
+};
 
 /** The toolbar trigger that opens the drawer, with an applied-filter count. */
 export const FilterButton = ({
