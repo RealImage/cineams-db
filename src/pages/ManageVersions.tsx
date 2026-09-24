@@ -37,7 +37,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { MoreHorizontal, Star, Eye, Copy, AlertTriangle, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { MoreHorizontal, Star, Eye, Copy, AlertTriangle, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { toast } from "sonner";
 import { formatDateTime } from "@/lib/dateUtils";
 import { ViewVersionDetailsDialog } from "@/components/fleet/ViewVersionDetailsDialog";
@@ -57,6 +61,22 @@ interface VersionItem {
   deprecatedBy?: string;
   isDefault?: boolean;
 }
+
+interface VersionFilters {
+  status: string;
+  defaultVersion: string;
+  addedBy: string;
+  releasedFrom: string;
+  releasedTo: string;
+}
+
+const EMPTY_FILTERS: VersionFilters = {
+  status: "all",
+  defaultVersion: "all",
+  addedBy: "all",
+  releasedFrom: "",
+  releasedTo: "",
+};
 
 // Mock versions data - extended for pagination demo
 const getMockVersions = (imageId: string): VersionItem[] => [
@@ -192,9 +212,10 @@ const ManageVersions = () => {
   const [deprecateDialogOpen, setDeprecateDialogOpen] = useState(false);
   const [versionToDeprecate, setVersionToDeprecate] = useState<string>("");
   
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(5);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState<VersionFilters>(EMPTY_FILTERS);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [draft, setDraft] = useFilterDraft(filters, filterOpen);
 
   const imageData = getMockImageData(imageId || "1");
 
@@ -204,23 +225,52 @@ const ManageVersions = () => {
     }
   }, [imageId]);
 
-  // Pagination calculations
-  const totalItems = versions.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
-  const startIndex = (currentPage - 1) * rowsPerPage;
-  const endIndex = startIndex + rowsPerPage;
-  
-  const paginatedVersions = useMemo(() => {
-    return versions.slice(startIndex, endIndex);
-  }, [versions, startIndex, endIndex]);
+  const addedByOptions = useMemo(() => [...new Set(versions.map((v) => v.addedBy))].sort(), [versions]);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  // Search + filters apply to the full list; pagination slices the result.
+  const filteredVersions = useMemo(() => {
+    const q = searchTerm.trim().toLowerCase();
+    return versions.filter((v) => {
+      if (
+        q &&
+        ![v.version, v.status, v.releaseNotes, v.internalNotes, v.addedBy, v.imageUrl, v.deprecationNotes ?? "", v.deprecatedBy ?? ""]
+          .join(" ")
+          .toLowerCase()
+          .includes(q)
+      )
+        return false;
+      if (filters.status !== "all" && v.status !== filters.status) return false;
+      if (filters.defaultVersion === "yes" && !v.isDefault) return false;
+      if (filters.defaultVersion === "no" && v.isDefault) return false;
+      if (filters.addedBy !== "all" && v.addedBy !== filters.addedBy) return false;
+      const released = v.releaseDate.slice(0, 10);
+      if (filters.releasedFrom && released < filters.releasedFrom) return false;
+      if (filters.releasedTo && released > filters.releasedTo) return false;
+      return true;
+    });
+  }, [versions, searchTerm, filters]);
 
-  const handleRowsPerPageChange = (value: string) => {
-    setRowsPerPage(Number(value));
-    setCurrentPage(1);
+  const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
+  const {
+    page: currentPage,
+    setPage,
+    pageSize,
+    setPageSize,
+    totalPages,
+    totalItems,
+    pageItems: paginatedVersions,
+  } = usePagination(filteredVersions, resetKey);
+
+  const activeFilterCount =
+    (filters.status !== "all" ? 1 : 0) +
+    (filters.defaultVersion !== "all" ? 1 : 0) +
+    (filters.addedBy !== "all" ? 1 : 0) +
+    (filters.releasedFrom ? 1 : 0) +
+    (filters.releasedTo ? 1 : 0);
+
+  const clearFilters = () => {
+    setFilters(EMPTY_FILTERS);
+    setDraft(EMPTY_FILTERS);
   };
 
   const handleViewDetails = (version: VersionItem) => {
@@ -273,34 +323,6 @@ const ManageVersions = () => {
     }
   };
 
-  const getPageNumbers = () => {
-    const pages: (number | string)[] = [];
-    const maxVisiblePages = 5;
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push("...");
-        pages.push(totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1);
-        pages.push("...");
-        for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
-      } else {
-        pages.push(1);
-        pages.push("...");
-        for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push("...");
-        pages.push(totalPages);
-      }
-    }
-    return pages;
-  };
-
   return (
     <div className="space-y-6">
       {/* Breadcrumb */}
@@ -323,6 +345,23 @@ const ManageVersions = () => {
         View and manage versions for {imageData.agentOsName} ({imageData.provider})
       </p>
 
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search version, status, notes, added by..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <span className="text-sm text-muted-foreground ml-auto">
+          {filteredVersions.length} version{filteredVersions.length !== 1 ? "s" : ""}
+        </span>
+        <FilterButton count={activeFilterCount} onClick={() => setFilterOpen(true)} />
+      </div>
+
       {/* Table */}
       <div className="rounded-md border">
         <Table>
@@ -337,6 +376,13 @@ const ManageVersions = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
+            {paginatedVersions.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                  No versions match the current search or filters.
+                </TableCell>
+              </TableRow>
+            )}
             {paginatedVersions.map((v) => (
               <TableRow key={v.version}>
                 <TableCell className="font-medium">
@@ -401,83 +447,80 @@ const ManageVersions = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Rows per page:</span>
-            <Select value={String(rowsPerPage)} onValueChange={handleRowsPerPageChange}>
-              <SelectTrigger className="w-[70px] h-8">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="5">5</SelectItem>
-                <SelectItem value="10">10</SelectItem>
-                <SelectItem value="20">20</SelectItem>
-                <SelectItem value="50">50</SelectItem>
-              </SelectContent>
-            </Select>
-            <span className="text-sm text-muted-foreground ml-4">
-              {startIndex + 1}-{Math.min(endIndex, totalItems)} of {totalItems}
-            </span>
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setPage}
+        handleRowsPerPageChange={setPageSize}
+      />
+
+      <FilterDrawer
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        description="Narrow down versions by status, default, author and release date."
+        onApply={() => setFilters(draft)}
+        onClear={clearFilters}
+      >
+        <FilterGroup title="Status">
+          <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
+            <SelectTrigger aria-label="Status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="stable">Stable</SelectItem>
+              <SelectItem value="deprecated">Deprecated</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+        <FilterGroup title="Default version">
+          <Select value={draft.defaultVersion} onValueChange={(v) => setDraft((d) => ({ ...d, defaultVersion: v }))}>
+            <SelectTrigger aria-label="Default version">
+              <SelectValue placeholder="Default version" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All versions</SelectItem>
+              <SelectItem value="yes">Default only</SelectItem>
+              <SelectItem value="no">Non-default only</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+        <FilterGroup title="Added by">
+          <Select value={draft.addedBy} onValueChange={(v) => setDraft((d) => ({ ...d, addedBy: v }))}>
+            <SelectTrigger aria-label="Added by">
+              <SelectValue placeholder="Added by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Anyone</SelectItem>
+              {addedByOptions.map((name) => (
+                <SelectItem key={name} value={name}>
+                  {name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+        <FilterGroup title="Release date">
+          <div className="grid grid-cols-2 gap-2">
+            <Input
+              type="date"
+              aria-label="Released from"
+              value={draft.releasedFrom}
+              max={draft.releasedTo || undefined}
+              onChange={(e) => setDraft((d) => ({ ...d, releasedFrom: e.target.value }))}
+            />
+            <Input
+              type="date"
+              aria-label="Released to"
+              value={draft.releasedTo}
+              min={draft.releasedFrom || undefined}
+              onChange={(e) => setDraft((d) => ({ ...d, releasedTo: e.target.value }))}
+            />
           </div>
-
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handlePageChange(1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            {getPageNumbers().map((page, index) => (
-              typeof page === "number" ? (
-                <Button
-                  key={index}
-                  variant={currentPage === page ? "default" : "outline"}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handlePageChange(page)}
-                >
-                  {page}
-                </Button>
-              ) : (
-                <span key={index} className="px-2 text-muted-foreground">...</span>
-              )
-            ))}
-
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => handlePageChange(totalPages)}
-              disabled={currentPage === totalPages}
-            >
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+        </FilterGroup>
+      </FilterDrawer>
 
       <ViewVersionDetailsDialog
         open={viewDetailsOpen}

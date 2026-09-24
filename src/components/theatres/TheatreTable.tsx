@@ -4,6 +4,7 @@ import { Column } from "@/components/ui/data-table"; // Import Column type from 
 import { Theatre } from "@/types";
 import { useTheatreColumns, useEnhancedColumns } from "./TheatreColumns";
 import { getTheatreActions, useTheatreActions } from "./TheatreActions";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 type TheatreTableProps = {
   theatres: Theatre[];
@@ -25,7 +26,7 @@ export const TheatreTable = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [paginationState, setPaginationState] = useState({
     page: 1,
-    pageSize: 10,
+    pageSize: DEFAULT_PAGE_SIZE,
     searchTerm: "",
     sortColumn: "",
     sortDirection: null as "asc" | "desc" | null,
@@ -184,7 +185,7 @@ export const TheatreTable = ({
       onSearchChange={handleSearchChange}
       onSortChange={handleSortChange}
       onFilterChange={handleFilterChange}
-      pageSize={10}
+      pageSize={DEFAULT_PAGE_SIZE}
     />
   );
 };

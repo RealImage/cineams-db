@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterButton } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -13,8 +15,6 @@ import { theatres as mockTheatres } from "@/data/mockData";
 import { Theatre } from "@/types";
 import { TheatreLogsDialog } from "@/components/TheatreLogsDialog";
 import { ScreenDeviceFilterPanel, ScreenDeviceFilters } from "@/components/screen-device-management/ScreenDeviceFilterPanel";
-
-const PAGE_SIZE = 25;
 
 const defaultFilters: ScreenDeviceFilters = {
   location: "all",
@@ -29,7 +29,6 @@ const ScreenDeviceManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<ScreenDeviceFilters>(defaultFilters);
-  const [page, setPage] = useState(1);
   const [logsTheatre, setLogsTheatre] = useState<Theatre | undefined>(undefined);
 
   const chains = useMemo(() => [...new Set(mockTheatres.map((t) => t.chainName))].sort(), []);
@@ -93,8 +92,8 @@ const ScreenDeviceManagement = () => {
     return r;
   }, [searchTerm, filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
+  const { page, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginated } = usePagination(filtered, resetKey);
 
   const activeFilterCount =
     (filters.location !== "all" ? 1 : 0) +
@@ -114,10 +113,7 @@ const ScreenDeviceManagement = () => {
         <Input
           placeholder="Search by Theatre ID, Third Party ID, Theatre Name, Screen Name or Screen ID..."
           value={searchTerm}
-          onChange={(e) => {
-            setSearchTerm(e.target.value);
-            setPage(1);
-          }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
         <span className="text-sm text-muted-foreground ml-auto">
@@ -209,26 +205,14 @@ const ScreenDeviceManagement = () => {
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Page {page} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={page === totalPages}
-              onClick={() => setPage((p) => p + 1)}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
       <ScreenDeviceFilterPanel
         open={filtersOpen}
@@ -237,14 +221,8 @@ const ScreenDeviceManagement = () => {
         locations={locations}
         filters={filters}
         defaultFilters={defaultFilters}
-        onApply={(f) => {
-          setFilters(f);
-          setPage(1);
-        }}
-        onClear={() => {
-          setFilters(defaultFilters);
-          setPage(1);
-        }}
+        onApply={setFilters}
+        onClear={() => setFilters(defaultFilters)}
       />
 
       <TheatreLogsDialog

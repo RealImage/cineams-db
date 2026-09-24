@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink } from "@/components/ui/pagination";
+import { PAGE_SIZE_OPTIONS } from "@/lib/pagination";
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -11,6 +12,7 @@ interface PaginationControlsProps {
   rowsPerPage: number;
   handlePageChange: (page: number) => void;
   handleRowsPerPageChange: (pageSize: number) => void;
+  className?: string;
 }
 
 export function PaginationControls({
@@ -19,7 +21,8 @@ export function PaginationControls({
   totalItems,
   rowsPerPage,
   handlePageChange,
-  handleRowsPerPageChange
+  handleRowsPerPageChange,
+  className,
 }: PaginationControlsProps) {
   // Generate page numbers for pagination
   const getPageNumbers = () => {
@@ -59,18 +62,18 @@ export function PaginationControls({
   };
   
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t">
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mt-4 pt-4 border-t ${className ?? ""}`}>
       <div className="flex items-center space-x-2">
-        <span className="text-sm text-muted-foreground">Rows per page:</span>
+        <span className="text-sm text-muted-foreground">Rows per page</span>
         <Select 
           value={rowsPerPage.toString()}
           onValueChange={(value) => handleRowsPerPageChange(parseInt(value))}
         >
-          <SelectTrigger className="h-8 w-[70px]">
+          <SelectTrigger className="w-[84px]">
             <SelectValue>{rowsPerPage}</SelectValue>
           </SelectTrigger>
           <SelectContent align="end">
-            {[10, 25, 50, 100].map((size) => (
+            {PAGE_SIZE_OPTIONS.map((size) => (
               <SelectItem key={size} value={size.toString()}>
                 {size}
               </SelectItem>
@@ -81,7 +84,9 @@ export function PaginationControls({
       
       <div className="flex items-center justify-between sm:justify-end w-full sm:w-auto">
         <p className="text-sm text-muted-foreground mr-4">
-          Showing {Math.min((currentPage - 1) * rowsPerPage + 1, totalItems)} to {Math.min(currentPage * rowsPerPage, totalItems)} of {totalItems} entries
+          {totalItems === 0
+            ? "No entries"
+            : `Showing ${(currentPage - 1) * rowsPerPage + 1}–${Math.min(currentPage * rowsPerPage, totalItems)} of ${totalItems.toLocaleString()}`}
         </p>
         
         <Pagination>
@@ -139,7 +144,7 @@ export function PaginationControls({
                 variant="outline"
                 size="icon"
                 onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages}
                 className="h-8 w-8 p-0"
               >
                 <ChevronRight className="h-4 w-4" />
@@ -150,7 +155,7 @@ export function PaginationControls({
                 variant="outline"
                 size="icon"
                 onClick={() => handlePageChange(totalPages)}
-                disabled={currentPage === totalPages}
+                disabled={currentPage >= totalPages}
                 className="h-8 w-8 p-0"
               >
                 <ChevronsRight className="h-4 w-4" />

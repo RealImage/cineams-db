@@ -2,9 +2,10 @@
 import { useState, useMemo, useCallback } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FilterButton } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
@@ -13,8 +14,6 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { EnvironmentFilterPanel, type EnvironmentFilters } from "@/components/environment-manager/EnvironmentFilterPanel";
 import { ScreenDetailDialog } from "@/components/environment-manager/ScreenDetailDialog";
 import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus, type EnvironmentScreenRecord } from "@/data/environmentManagerData";
-
-const PAGE_SIZE = 100;
 
 const defaultFilters: EnvironmentFilters = {
   chain: "all",
@@ -66,7 +65,6 @@ const chartConfig = {
 
 const EnvironmentManager = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<EnvironmentFilters>(defaultFilters);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
@@ -117,28 +115,26 @@ const EnvironmentManager = () => {
     return result;
   }, [searchTerm, filters, selectedBar]);
 
-  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  const paginatedData = filteredData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const resetKey = useMemo(() => [searchTerm, filters, selectedBar], [searchTerm, filters, selectedBar]);
+  const { page: currentPage, setPage: setCurrentPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginatedData } =
+    usePagination(filteredData, resetKey);
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "all").length + (selectedBar ? 1 : 0);
 
   const handleApplyFilters = (next: EnvironmentFilters) => {
     setFilters(next);
-    setCurrentPage(1);
   };
 
   const handleBarClick = useCallback((data: { activePayload?: { payload?: { range?: string } }[] } | null) => {
     if (data && data.activePayload) {
       const clickedRange = data.activePayload[0]?.payload?.range ?? null;
       setSelectedBar((prev) => (prev === clickedRange ? null : clickedRange));
-      setCurrentPage(1);
     }
   }, []);
 
   const clearAll = () => {
     setFilters(defaultFilters);
     setSelectedBar(null);
-    setCurrentPage(1);
   };
 
   return (
@@ -189,7 +185,7 @@ const EnvironmentManager = () => {
         <Input
           placeholder="Search theatre name or location..."
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
         {selectedBar && (
@@ -199,7 +195,7 @@ const EnvironmentManager = () => {
               type="button"
               aria-label="Remove score filter"
               className="hover:text-destructive"
-              onClick={() => { setSelectedBar(null); setCurrentPage(1); }}
+              onClick={() => setSelectedBar(null)}
             >
               <X className="h-3 w-3" />
             </button>
@@ -273,15 +269,14 @@ const EnvironmentManager = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Page {currentPage} of {totalPages}</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>Previous</Button>
-            <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>Next</Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setCurrentPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
       {/* Filter Panel */}
       <EnvironmentFilterPanel

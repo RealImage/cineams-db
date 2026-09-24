@@ -10,6 +10,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 
 const timezones = [
   "UTC", "America/New_York", "America/Chicago", "America/Denver", "America/Los_Angeles",
@@ -81,6 +83,9 @@ type FormatType = "xlsx" | "csv" | "pdf";
 
 export default function Reports() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string[]>([]);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [categoryDraft, setCategoryDraft] = useFilterDraft(categoryFilter, filtersOpen);
   
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
@@ -97,27 +102,55 @@ export default function Reports() {
     toast.success(`Exported ${reportName} report as ${format.toUpperCase()}`);
   };
   
-  // Filter reports based on search term
-  const filteredCategories = searchTerm 
-    ? reportCategories.map(category => ({
-        ...category,
-        reports: category.reports.filter(report => 
-          report.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      })).filter(category => category.reports.length > 0)
-    : reportCategories;
+  // Filter reports by category, then by search term
+  const term = searchTerm.toLowerCase();
+  const filteredCategories = reportCategories
+    .filter(category => categoryFilter.length === 0 || categoryFilter.includes(category.name))
+    .map(category => ({
+      ...category,
+      reports: term ? category.reports.filter(report => report.toLowerCase().includes(term)) : category.reports,
+    }))
+    .filter(category => category.reports.length > 0);
+
+  const toggleCategoryDraft = (name: string) =>
+    setCategoryDraft(draft => (draft.includes(name) ? draft.filter(c => c !== name) : [...draft, name]));
   
   return (
     <div className="flex flex-col gap-6">
-      <div className="relative">
-        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="Search for reports..."
-          className="pl-8 w-full md:w-1/2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
+      <div className="flex items-center gap-2">
+        <div className="relative w-full md:w-1/2">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search for reports..."
+            className="pl-8 w-full"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+        <FilterButton count={categoryFilter.length > 0 ? 1 : 0} onClick={() => setFiltersOpen(true)} />
       </div>
+
+      <FilterDrawer
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        onApply={() => setCategoryFilter(categoryDraft)}
+        onClear={() => { setCategoryDraft([]); setCategoryFilter([]); }}
+      >
+        <FilterGroup title="Category">
+          <div className="flex flex-col gap-1">
+            {reportCategories.map(category => (
+              <label key={category.name} className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-1 text-sm hover:bg-black/[.03]">
+                <Checkbox
+                  checked={categoryDraft.includes(category.name)}
+                  onCheckedChange={() => toggleCategoryDraft(category.name)}
+                />
+                <span>{category.name}</span>
+                <span className="ml-auto text-xs text-muted-foreground">{category.reports.length}</span>
+              </label>
+            ))}
+          </div>
+        </FilterGroup>
+      </FilterDrawer>
       
       {filteredCategories.length > 0 ? (
         filteredCategories.map((category) => (
@@ -203,7 +236,7 @@ export default function Reports() {
         ))
       ) : (
         <div className="text-center py-10">
-          <p className="text-muted-foreground">No reports match your search criteria.</p>
+          <p className="text-muted-foreground">No reports match your search or filters.</p>
         </div>
       )}
     </div>

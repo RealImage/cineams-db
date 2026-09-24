@@ -7,20 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ScreenFilterPanel, type ScreenFilters } from "@/components/screen-manager/ScreenFilterPanel";
 import { FilterButton } from "@/components/ui/filter-drawer";
 import { EditScreenDialog } from "@/components/screen-manager/EditScreenDialog";
 import { screenManagerData, ScreenRecord } from "@/data/screenManagerData";
 
-const PAGE_SIZE = 100;
-
 const defaultFilters: ScreenFilters = { chain: "all", location: "all", pulseStatus: "all", lionisStatus: "all" };
 
 const ScreenManager = () => {
   const [data, setData] = useState<ScreenRecord[]>(screenManagerData);
   const [searchTerm, setSearchTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [editScreen, setEditScreen] = useState<ScreenRecord | null>(null);
   const [filters, setFilters] = useState<ScreenFilters>(defaultFilters);
@@ -47,8 +46,9 @@ const ScreenManager = () => {
     return result;
   }, [data, searchTerm, filters]);
 
-  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  const paginatedData = filteredData.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
+  const { page: currentPage, setPage: setCurrentPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginatedData } =
+    usePagination(filteredData, resetKey);
 
   // Stats
   const theatreCount = new Set(data.map((s) => s.theatreName)).size;
@@ -61,7 +61,6 @@ const ScreenManager = () => {
 
   const handleApplyFilters = (next: ScreenFilters) => {
     setFilters(next);
-    setCurrentPage(1);
   };
 
   const handleSave = (updated: ScreenRecord) => {
@@ -86,7 +85,7 @@ const ScreenManager = () => {
         <Input
           placeholder="Search theatre name or location..."
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
         <span className="text-sm text-muted-foreground ml-auto">
@@ -167,21 +166,14 @@ const ScreenManager = () => {
       </div>
 
       {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={currentPage === 1} onClick={() => setCurrentPage((p) => p - 1)}>
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" disabled={currentPage === totalPages} onClick={() => setCurrentPage((p) => p + 1)}>
-              Next
-            </Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setCurrentPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
       {/* Filter Panel */}
       <ScreenFilterPanel
@@ -192,7 +184,7 @@ const ScreenManager = () => {
         filters={filters}
         defaultFilters={defaultFilters}
         onApply={handleApplyFilters}
-        onClear={() => { setFilters(defaultFilters); setCurrentPage(1); }}
+        onClear={() => setFilters(defaultFilters)}
       />
 
       {/* Edit Dialog */}

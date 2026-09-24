@@ -8,6 +8,7 @@ import { Filters } from "./filters";
 import { PaginationControls } from "./pagination";
 import { DataTableProps, Action, Filter, SortDirection, SortConfig } from "./types";
 import debounce from 'lodash/debounce';
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export function DataTable<T extends { id: string }>({
   data,
@@ -16,7 +17,7 @@ export function DataTable<T extends { id: string }>({
   searchPlaceholder = "Search...",
   onRowClick,
   actions,
-  pageSize = 10,
+  pageSize = DEFAULT_PAGE_SIZE,
   serverSide = false,
   totalCount,
   onPaginationChange,
@@ -74,13 +75,13 @@ export function DataTable<T extends { id: string }>({
     
     // Apply text search
     if (searchTerm) {
-      filtered = filtered.filter((item) => {
-        return Object.entries(item).some(([key, value]) => {
-          // Only search through string values
-          return typeof value === "string" && 
-                 value.toLowerCase().includes(searchTerm.toLowerCase());
-        });
-      });
+      const term = searchTerm.toLowerCase();
+      // Match text and numbers, including inside arrays (e.g. roles, alternate names)
+      const matches = (value: unknown): boolean =>
+        typeof value === "string" || typeof value === "number"
+          ? String(value).toLowerCase().includes(term)
+          : Array.isArray(value) && value.some(matches);
+      filtered = filtered.filter((item) => Object.values(item).some(matches));
     }
     
     // Apply active filters
@@ -140,16 +141,22 @@ export function DataTable<T extends { id: string }>({
   
   // Calculate pagination values
   const totalItems = serverSide ? totalCount || 0 : filteredData.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
-  
+  const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+
+  // Pages that search/filter themselves pass a new `data` list: go back to
+  // page 1 when its size changes, and never sit past the last page.
+  useEffect(() => {
+    if (!serverSide) setCurrentPage(1);
+  }, [data.length, serverSide]);
+  useEffect(() => {
+    if (!serverSide && currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages, serverSide]);
+
   const paginatedData = useMemo(() => {
     if (serverSide) return data;
-    
-    return filteredData.slice(
-      (currentPage - 1) * rowsPerPage,
-      currentPage * rowsPerPage
-    );
-  }, [filteredData, currentPage, rowsPerPage, serverSide, data]);
+    const page = Math.min(currentPage, totalPages);
+    return filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  }, [filteredData, currentPage, totalPages, rowsPerPage, serverSide, data]);
   
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -224,7 +231,15 @@ export function DataTable<T extends { id: string }>({
   
   // Generate filter options for a column
   const getFilterOptions = (column: typeof columns[0], columnKey: keyof T) => {
-    if (!column.filterOptions) return [];
+    // No explicit options: offer the column's distinct values
+    if (!column.filterOptions) {
+      const values = new Set<string>();
+      data.forEach((row) => {
+        const v = row[columnKey];
+        if (v !== null && v !== undefined && v !== "") values.add(String(v));
+      });
+      return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
 
     if (typeof column.filterOptions === 'function') {
       return column.filterOptions(data);
@@ -276,16 +291,14 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
       
-      {totalPages > 0 && (
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          rowsPerPage={rowsPerPage}
-          handlePageChange={handlePageChange}
-          handleRowsPerPageChange={handleRowsPerPageChange}
-        />
-      )}
+      <PaginationControls
+        currentPage={Math.min(currentPage, totalPages)}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={rowsPerPage}
+        handlePageChange={handlePageChange}
+        handleRowsPerPageChange={handleRowsPerPageChange}
+      />
     </div>
   );
 }

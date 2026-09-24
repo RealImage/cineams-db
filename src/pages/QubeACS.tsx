@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterButton } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -15,8 +17,6 @@ import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDi
 import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
 import SystemConstantsDialog from "@/components/qube-acs/SystemConstantsDialog";
 
-const PAGE_SIZE = 100;
-
 const QubeACS = () => {
   const navigate = useNavigate();
   const [data] = useState(qubeAcsTheatres);
@@ -24,7 +24,6 @@ const QubeACS = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [constantsOpen, setConstantsOpen] = useState(false);
-  const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [filters, setFilters] = useState<QubeAcsFilters>(emptyQubeAcsFilters);
   const [detailTheatre, setDetailTheatre] = useState<QubeAcsTheatre | null>(null);
@@ -53,8 +52,8 @@ const QubeACS = () => {
     return r;
   }, [data, searchTerm, filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
+  const { page, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginated } = usePagination(filtered, resetKey);
 
   const activeFilterCount =
     (filters.chain !== "all" ? 1 : 0) +
@@ -78,7 +77,7 @@ const QubeACS = () => {
         <Input
           placeholder="Search by theatre name, ID, chain or location..."
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
         <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
@@ -167,15 +166,14 @@ const QubeACS = () => {
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
       <QubeAcsFilterPanel
         open={filtersOpen}
@@ -183,8 +181,8 @@ const QubeACS = () => {
         chains={chains}
         locations={locations}
         filters={filters}
-        onChange={(f) => { setFilters(f); setPage(1); }}
-        onClear={() => { setFilters(emptyQubeAcsFilters); setPage(1); }}
+        onChange={setFilters}
+        onClear={() => setFilters(emptyQubeAcsFilters)}
       />
 
       <AddTheatreLookupDialog open={addOpen} onOpenChange={setAddOpen} />

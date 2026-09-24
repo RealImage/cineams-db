@@ -34,6 +34,10 @@ interface Props {
   credentials: ScopedCredential[]; // already filtered to this device + scope
 }
 
+/** Distinct values of a field, for a column's filter options. */
+const optionsFor = (key: "ref" | "updatedBy") => (rows: ScopedCredential[]) =>
+  Array.from(new Set(rows.map((r) => r[key]))).sort((a, b) => a.localeCompare(b));
+
 const scopeHints: Record<CredentialScope, string> = {
   global: "Defaults the device ships with. Add a country row where the default differs by region.",
   chain: "Overrides the global credentials for every theatre in a chain.",
@@ -76,6 +80,9 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
     {
       header: scopeInfo.refLabel,
       accessor: "ref",
+      // Serial numbers are unique per row, so search covers the device tab.
+      filterable: scope !== "device",
+      filterOptions: optionsFor("ref"),
       cell: (row) => (
         <div>
           <p className="font-medium">{row.ref}</p>
@@ -88,8 +95,8 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
       accessor: (row) => row.values[f] ?? "",
       cell: (row) => <CredentialCell field={f} value={row.values[f]} />,
     })),
-    { header: "Updated By", accessor: "updatedBy" },
-    { header: "Updated At", accessor: "updatedAt", cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.updatedAt)}</span> },
+    { header: "Updated By", accessor: "updatedBy", filterable: true, filterOptions: optionsFor("updatedBy") },
+    { header: "Updated At", accessor: "updatedAt", filterable: true, filterType: "dateRange", cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.updatedAt)}</span> },
   ];
 
   const actions = [
@@ -112,7 +119,13 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
           No {scopeInfo.label.toLowerCase()} for this device yet.
         </div>
       ) : (
-        <DataTable data={rows} columns={columns} searchable={false} actions={actions} onRowClick={openView} />
+        <DataTable
+          data={rows}
+          columns={columns}
+          searchPlaceholder={`Search ${scopeInfo.label.toLowerCase()}...`}
+          actions={actions}
+          onRowClick={openView}
+        />
       )}
 
       <ViewScopedCredentialDialog open={viewOpen} onOpenChange={setViewOpen} device={device} credential={selected} onEdit={openEdit} />
