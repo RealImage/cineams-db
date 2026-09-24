@@ -144,7 +144,8 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
 
             <div className="space-y-1 flex-1">
               <span className="text-xs text-muted-foreground">Value</span>
-              <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
+              {/* Non-modal: the trigger is the search input, so focus must stay in it while typing */}
+              <Popover modal={false} open={popoverOpen} onOpenChange={setPopoverOpen}>
                 <PopoverTrigger asChild>
                   <Input
                     placeholder={`Search ${parameterType.toLowerCase()}...`}
@@ -153,7 +154,14 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
                     onFocus={() => setPopoverOpen(true)}
                   />
                 </PopoverTrigger>
-                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                <PopoverContent
+                  className="p-0 w-[--radix-popover-trigger-width]"
+                  align="start"
+                  onOpenAutoFocus={(e) => e.preventDefault()}
+                  // Keep wheel/touch scrolling from reaching the sheet's scroll lock, so the list scrolls
+                  onWheel={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                >
                   <Command>
                     <CommandList>
                       <CommandEmpty>No results found.</CommandEmpty>
