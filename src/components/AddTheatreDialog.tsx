@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Theatre } from "@/types";
 import { toast } from "sonner";
 import { useCreateTheatre } from "@/hooks/api/theatres";
+import { common } from "@/i18n/common";
 
 interface AddTheatreDialogProps {
   open: boolean;
@@ -110,10 +111,10 @@ export const AddTheatreDialog = ({
           
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {common.cancel}
             </Button>
             <Button type="submit" disabled={createTheatre.isPending}>
-              {createTheatre.isPending ? "Creating…" : "Create Theatre"}
+              {createTheatre.isPending ? common.saving : common.save}
             </Button>
           </DialogFooter>
         </form>

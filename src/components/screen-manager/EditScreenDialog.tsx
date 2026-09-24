@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { ScreenRecord } from "@/data/screenManagerData";
 import { toast } from "sonner";
 import { useUpdatePulseScreen } from "@/hooks/api/screenPulse";
+import { common } from "@/i18n/common";
 
 interface EditScreenDialogProps {
   open: boolean;
@@ -177,9 +178,9 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSaved }: EditSc
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{common.cancel}</Button>
           <Button onClick={handleSave} disabled={updateScreen.isPending}>
-            {updateScreen.isPending ? "Saving…" : "Save Changes"}
+            {updateScreen.isPending ? common.saving : common.save}
           </Button>
         </DialogFooter>
       </DialogContent>

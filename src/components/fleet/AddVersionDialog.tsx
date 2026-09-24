@@ -15,6 +15,7 @@ import { toast } from "sonner";
 
 import type { ImageItem } from "@/data/fleetData";
 import type { AddVersionInput } from "@/hooks/api/fleet";
+import { common } from "@/i18n/common";
 
 interface AddVersionDialogProps {
   open: boolean;
@@ -124,10 +125,8 @@ export function AddVersionDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={saving}>{saving ? "Adding…" : "Add Version"}</Button>
+          <Button variant="outline" onClick={handleClose}>{common.cancel}</Button>
+          <Button onClick={handleSubmit} disabled={saving}>{saving ? common.saving : common.save}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

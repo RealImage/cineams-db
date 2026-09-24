@@ -19,6 +19,7 @@ import {
 } from "@/data/credentialsManagerData";
 import { RoleMultiSelect, TagInput } from "./form-controls";
 import { Combobox } from "@/components/ui/combobox";
+import { common } from "@/i18n/common";
 
 interface Props {
   open: boolean;
@@ -252,8 +253,8 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
         </div>
 
         <DialogFooter className="border-t border-border px-5 py-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>Cancel</Button>
-          <Button onClick={handleSave} disabled={saving}>{saving ? "Saving…" : device ? "Save" : "Add device model"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>{common.cancel}</Button>
+          <Button onClick={handleSave} disabled={saving}>{saving ? common.saving : common.save}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

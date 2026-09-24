@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
 import { TheatreMapping } from "@/types";
+import { common } from "@/i18n/common";
 
 interface EditTheatreMappingDialogProps {
   open: boolean;
@@ -95,7 +96,7 @@ export const EditTheatreMappingDialog = ({
               {isReadOnly ? "Close" : "Cancel"}
             </Button>
             {!isReadOnly && (
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit">{common.save}</Button>
             )}
           </DialogFooter>
         </form>
