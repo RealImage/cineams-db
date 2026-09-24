@@ -1,23 +1,21 @@
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { formatDate } from "@/lib/dateUtils";
 import { ExternalLink, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
-import { wireTapDevices } from "@/data/wireTapDevices";
+import { useWireTAPDevices } from "@/hooks/api/wiretap";
 import { isDeviceOfflineTooLong } from "@/components/wiretap/StatusIcons";
 import { Button } from "@/components/ui/button";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 
 export const WireTAPMonitoringWidget = () => {
-  const [offlineDevices, setOfflineDevices] = useState<typeof wireTapDevices>([]);
+  const { data: devices = [] } = useWireTAPDevices();
 
-  useEffect(() => {
-    // Filter devices that have been offline for more than 24 hours
-    const offline = wireTapDevices.filter(device => 
-      device.activationStatus === "Active" && isDeviceOfflineTooLong(device.updatedAt)
-    );
-    setOfflineDevices(offline);
-  }, []);
+  // Active devices that have been offline for more than 24 hours
+  const offlineDevices = useMemo(
+    () => devices.filter((device) => device.activationStatus === "Active" && isDeviceOfflineTooLong(device.updatedAt)),
+    [devices],
+  );
 
   return (
     <DashboardCard 

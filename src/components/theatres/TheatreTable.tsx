@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table";
-import { Column } from "@/components/ui/data-table"; // Import Column type from data-table
+import type { Filter } from "@/components/ui/data-table/types";
 import { Theatre } from "@/types";
 import { useTheatreColumns, useEnhancedColumns } from "./TheatreColumns";
 import { getTheatreActions, useTheatreActions } from "./TheatreActions";
@@ -29,7 +29,7 @@ export const TheatreTable = ({
     searchTerm: "",
     sortColumn: "",
     sortDirection: null as "asc" | "desc" | null,
-    filters: [] as any[]
+    filters: [] as Filter<Theatre>[]
   });
   
   const columns = useTheatreColumns();
@@ -65,7 +65,7 @@ export const TheatreTable = ({
   };
   
   // Handle filter change
-  const handleFilterChange = (filters: any[]) => {
+  const handleFilterChange = (filters: Filter<Theatre>[]) => {
     setPaginationState(prev => ({
       ...prev,
       filters,

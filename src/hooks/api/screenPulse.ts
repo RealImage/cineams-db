@@ -51,6 +51,10 @@ export const useUpdatePulseScreen = () => {
   return useMutation({
     mutationFn: ({ id, ...body }: ScreenInstallUpdate & { id: string }) =>
       api.patch<ScreenRecord>(`/screen-pulse/screens/${encodeURIComponent(id)}`, body),
-    onSuccess: () => qc.invalidateQueries({ queryKey: screenPulseKeys.all }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: screenPulseKeys.all });
+      // Pulse installs are shared with Qube Appliances → Pulse
+      qc.invalidateQueries({ queryKey: ["appliances", "pulse"] });
+    },
   });
 };

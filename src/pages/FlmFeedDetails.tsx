@@ -135,7 +135,8 @@ const ComparisonTable = ({ feed, theatre, fields, differences, selectedFields, s
   const toggleField = (key: FieldKey, checked: boolean) => {
     setSelectedFields((previous) => {
       const next = new Set(previous);
-      checked ? next.add(key) : next.delete(key);
+      if (checked) next.add(key);
+      else next.delete(key);
       return next;
     });
   };
