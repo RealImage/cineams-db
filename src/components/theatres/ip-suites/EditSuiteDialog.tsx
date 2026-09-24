@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { common } from "@/i18n/common";
 
 interface SuiteDevice {
   id: string;
@@ -205,10 +206,8 @@ export const EditSuiteDialog = ({ open, onOpenChange, suite, availableDevices, o
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Update Suite</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>{common.cancel}</Button>
+            <Button type="submit">{common.save}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

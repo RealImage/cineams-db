@@ -3,6 +3,7 @@ import { SlidersHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { common } from "@/i18n/common";
 
 /**
  * The one filter surface for every list page: a right-hand overlay panel
@@ -59,14 +60,14 @@ export const FilterDrawer = ({
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-border px-5 py-3">
-        <Button variant="ghost" onClick={onClear}>Clear all</Button>
+        <Button variant="ghost" onClick={onClear}>{common.clearAll}</Button>
         <Button
           onClick={() => {
             onApply();
             onOpenChange(false);
           }}
         >
-          Apply filters
+          {common.applyFilters}
         </Button>
       </div>
     </SheetContent>

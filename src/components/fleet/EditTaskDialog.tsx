@@ -23,6 +23,7 @@ import { Combobox } from "@/components/ui/combobox";
 import type { FleetTask } from "@/pages/TaskManagement";
 import { FLEET_TIMEZONES as timezones, type FleetTaskOptions } from "@/data/fleetData";
 import { useFleetTaskOptions } from "@/hooks/api/fleet";
+import { common } from "@/i18n/common";
 
 export interface TaskData {
   taskType: FleetTask["taskType"];
@@ -279,9 +280,9 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {common.cancel}
             </Button>
-            <Button type="submit">Save Changes</Button>
+            <Button type="submit">{common.save}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

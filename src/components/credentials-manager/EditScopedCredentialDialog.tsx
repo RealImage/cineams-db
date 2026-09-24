@@ -17,6 +17,7 @@ import {
   isSecretField,
 } from "@/data/credentialsManagerData";
 import { useCredentialRefOptions } from "@/hooks/api/credentials";
+import { common } from "@/i18n/common";
 
 export type CredentialDraft = Omit<ScopedCredential, "id" | "updatedBy" | "updatedAt"> & { id?: string };
 
@@ -150,8 +151,8 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={!canSave}>{saving ? "Saving…" : "Save"}</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{common.cancel}</Button>
+          <Button onClick={handleSave} disabled={!canSave}>{saving ? common.saving : common.save}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

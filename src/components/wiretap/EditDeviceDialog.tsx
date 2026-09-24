@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { common } from "@/i18n/common";
 
 interface EditDeviceDialogProps {
   isOpen: boolean;
@@ -190,9 +191,9 @@ export function EditDeviceDialog({ isOpen, onOpenChange, device, onSubmit }: Edi
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              Cancel
+              {common.cancel}
             </Button>
-            <Button type="submit">Update Device</Button>
+            <Button type="submit">{common.save}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

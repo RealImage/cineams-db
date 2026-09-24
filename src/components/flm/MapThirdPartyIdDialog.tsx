@@ -14,6 +14,7 @@ import { Combobox } from "@/components/ui/combobox";
 import { FlmFeed } from "@/data/flmFeedsData";
 import { useToast } from "@/hooks/use-toast";
 import { useMapFlmThirdPartyId } from "@/hooks/api/flm";
+import { common } from "@/i18n/common";
 
 const domainOptions = [
   "amcnetworks.com",
@@ -103,11 +104,9 @@ export const MapThirdPartyIdDialog = ({ feed, onClose }: MapThirdPartyIdDialogPr
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>{common.cancel}</Button>
             <Button type="submit" disabled={!domain || !identifier.trim() || mapId.isPending}>
-              {mapId.isPending ? "Mapping…" : "Map ID"}
+              {mapId.isPending ? common.saving : common.save}
             </Button>
           </DialogFooter>
         </form>

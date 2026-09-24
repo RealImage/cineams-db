@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
+import { common } from "@/i18n/common";
 
 interface AddDeviceDialogProps {
   open: boolean;
@@ -287,10 +288,8 @@ export const AddDeviceDialog = ({ open, onOpenChange, onSave }: AddDeviceDialogP
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Add Device</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>{common.cancel}</Button>
+            <Button type="submit">{common.save}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

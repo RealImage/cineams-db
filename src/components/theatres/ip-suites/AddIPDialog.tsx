@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Combobox } from "@/components/ui/combobox";
+import { common } from "@/i18n/common";
 
 interface AddIPDialogProps {
   open: boolean;
@@ -140,10 +141,8 @@ export const AddIPDialog = ({ open, onOpenChange, onSave }: AddIPDialogProps) =>
           </div>
 
           <DialogFooter className="mt-6">
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            <Button type="submit">Add IP</Button>
+            <Button type="button" variant="outline" onClick={handleClose}>{common.cancel}</Button>
+            <Button type="submit">{common.save}</Button>
           </DialogFooter>
         </form>
       </DialogContent>
