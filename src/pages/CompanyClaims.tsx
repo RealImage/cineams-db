@@ -4,16 +4,22 @@ import { CompanyClaim, companyClaimsData } from "@/data/companyClaimsData";
 import { ClaimDetailSheet } from "@/components/company-claims/ClaimDetailSheet";
 import { formatDate } from "@/lib/dateUtils";
 
+/** Distinct values of a field, for a column's filter options. */
+const optionsFor = (key: keyof CompanyClaim) => (rows: CompanyClaim[]) =>
+  Array.from(new Set(rows.map((r) => String(r[key])))).sort((a, b) => a.localeCompare(b));
+
 const columns: Column<CompanyClaim>[] = [
   { header: "Company", accessor: "company", sortable: true },
-  { header: "Location", accessor: "location", sortable: true },
-  { header: "Company Type", accessor: "companyType", sortable: true, filterable: true },
+  { header: "Location", accessor: "location", sortable: true, filterable: true, filterOptions: optionsFor("location") },
+  { header: "Company Type", accessor: "companyType", sortable: true, filterable: true, filterOptions: optionsFor("companyType") },
   { header: "Chain Claims", accessor: "chainClaims", sortable: true },
   { header: "Theatre Claims", accessor: "theatreClaims", sortable: true },
   {
     header: "Last Claimed On",
     accessor: "lastClaimedOn",
     sortable: true,
+    filterable: true,
+    filterType: "dateRange",
     cell: (row) => formatDate(row.lastClaimedOn),
   },
 ];
@@ -38,7 +44,6 @@ const CompanyClaims = () => {
         searchable
         searchPlaceholder="Search claims..."
         onRowClick={handleRowClick}
-        pageSize={10}
       />
       <ClaimDetailSheet
         claim={selectedClaim}

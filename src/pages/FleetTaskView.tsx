@@ -415,8 +415,6 @@ const FleetTaskView = () => {
             columns={deviceColumns}
             searchPlaceholder="Search by serial number, node ID, or theatre..."
             searchable={true}
-            showFilters={false}
-            pageSize={25}
             actions={(appliance) => {
               const actions: Action<TaskAppliance>[] = [
                 {

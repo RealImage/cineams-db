@@ -4,14 +4,21 @@ import { PartnerRequest, partnersData } from "@/data/partnersData";
 import { PartnerDetailSheet } from "@/components/partners/PartnerDetailSheet";
 import { formatDate } from "@/lib/dateUtils";
 
+/** Distinct values of a field, for a column's filter options. */
+const optionsFor = (key: keyof PartnerRequest) => (rows: PartnerRequest[]) =>
+  Array.from(new Set(rows.map((r) => String(r[key])))).sort((a, b) => a.localeCompare(b));
+
 const columns: Column<PartnerRequest>[] = [
   { header: "Company", accessor: "company", sortable: true },
-  { header: "Location", accessor: "location", sortable: true },
-  { header: "Requested By", accessor: "requestedBy", sortable: true },
+  { header: "Company Role", accessor: "companyRole", sortable: true, filterable: true, filterOptions: optionsFor("companyRole") },
+  { header: "Location", accessor: "location", sortable: true, filterable: true, filterOptions: optionsFor("location") },
+  { header: "Requested By", accessor: "requestedBy", sortable: true, filterable: true, filterOptions: optionsFor("requestedBy") },
   {
     header: "Request Created On",
     accessor: "requestCreatedOn",
     sortable: true,
+    filterable: true,
+    filterType: "dateRange",
     cell: (row) => formatDate(row.requestCreatedOn),
   },
 ];
@@ -36,7 +43,6 @@ const Partners = () => {
         searchable
         searchPlaceholder="Search partners..."
         onRowClick={handleRowClick}
-        pageSize={10}
       />
       <PartnerDetailSheet
         partner={selectedPartner}

@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon, Filter, X } from "lucide-react";
+import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertTriangle, Activity, XCircle, Clock, AlertOctagon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,15 +8,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, Action } from "@/components/ui/data-table/types";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { formatDate, formatDateTime, formatTime } from "@/lib/dateUtils";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 
 // Types
@@ -138,6 +136,26 @@ const generateVersionChartData = (nodes: FleetNode[], defaultVersion: string): V
   return Array.from(versionMap.values()).sort((a, b) => a.version.localeCompare(b.version));
 };
 
+interface FleetFilters {
+  locations: string[];
+  chain: string;
+  theatreName: string;
+  theatreId: string;
+  statuses: string[];
+  versions: string[];
+  deprecatedOnly: boolean;
+}
+
+const EMPTY_FLEET_FILTERS: FleetFilters = {
+  locations: [],
+  chain: "",
+  theatreName: "",
+  theatreId: "",
+  statuses: [],
+  versions: [],
+  deprecatedOnly: false,
+};
+
 const chartConfig: ChartConfig = {
   active: { label: "Active", color: "hsl(var(--chart-1))" },
   inactive: { label: "Inactive", color: "hsl(var(--chart-2))" },
@@ -151,16 +169,20 @@ const FleetStatus = () => {
   const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Filter State
-  const [locationSearch, setLocationSearch] = useState<string>("");
-  const [selectedLocations, setSelectedLocations] = useState<string[]>([]);
-  const [chainFilter, setChainFilter] = useState<string>("");
-  const [theatreNameFilter, setTheatreNameFilter] = useState<string>("");
-  const [theatreIdFilter, setTheatreIdFilter] = useState<string>("");
-  const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [versionFilters, setVersionFilters] = useState<string[]>([]);
-  const [deprecatedOnly, setDeprecatedOnly] = useState(false);
+  // Filter State (applied) + drawer draft
+  const [filters, setFilters] = useState<FleetFilters>(EMPTY_FLEET_FILTERS);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [draft, setDraft] = useFilterDraft(filters, isFilterOpen);
+  const [locationSearch, setLocationSearch] = useState<string>("");
+  const {
+    locations: selectedLocations,
+    chain: chainFilter,
+    theatreName: theatreNameFilter,
+    theatreId: theatreIdFilter,
+    statuses: statusFilters,
+    versions: versionFilters,
+    deprecatedOnly,
+  } = filters;
 
   // View State
   const [viewMode, setViewMode] = useState<"visual" | "table" | "list">("table");
@@ -246,11 +268,11 @@ const FleetStatus = () => {
   }, [fleetData]);
 
   const filteredLocations = useMemo(() => {
-    if (!locationSearch) return allLocations.filter(loc => !selectedLocations.includes(loc));
+    if (!locationSearch) return allLocations.filter(loc => !draft.locations.includes(loc));
     return allLocations.filter(loc => 
-      loc.toLowerCase().includes(locationSearch.toLowerCase()) && !selectedLocations.includes(loc)
+      loc.toLowerCase().includes(locationSearch.toLowerCase()) && !draft.locations.includes(loc)
     );
-  }, [allLocations, locationSearch, selectedLocations]);
+  }, [allLocations, locationSearch, draft.locations]);
 
   // Active filters for pill display
   const activeFilters = useMemo(() => {
@@ -263,13 +285,13 @@ const FleetStatus = () => {
       filters.push({ key: "chain", label: "Chain", value: chainFilter });
     }
     if (theatreNameFilter) {
-      filters.push({ key: "theatreName", label: "Theatre Name", value: theatreNameFilter });
+      filters.push({ key: "theatreName", label: "Theatre name", value: theatreNameFilter });
     }
     if (theatreIdFilter) {
       filters.push({ key: "theatreId", label: "Theatre ID", value: theatreIdFilter });
     }
     statusFilters.forEach(status => {
-      filters.push({ key: `status-${status}`, label: "Agent / OS Status", value: status });
+      filters.push({ key: `status-${status}`, label: "Agent / OS status", value: status });
     });
     versionFilters.forEach(version => {
       filters.push({ key: `version-${version}`, label: "Version", value: version });
@@ -282,24 +304,32 @@ const FleetStatus = () => {
   }, [selectedLocations, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly]);
 
   const removeFilter = (key: string) => {
-    if (key.startsWith("location-")) {
-      const loc = key.replace("location-", "");
-      setSelectedLocations(prev => prev.filter(l => l !== loc));
-    } else if (key === "chain") {
-      setChainFilter("");
-    } else if (key === "theatreName") {
-      setTheatreNameFilter("");
-    } else if (key === "theatreId") {
-      setTheatreIdFilter("");
-    } else if (key.startsWith("status-")) {
-      const status = key.replace("status-", "");
-      setStatusFilters(prev => prev.filter(s => s !== status));
-    } else if (key.startsWith("version-")) {
-      const version = key.replace("version-", "");
-      setVersionFilters(prev => prev.filter(v => v !== version));
-    } else if (key === "deprecated") {
-      setDeprecatedOnly(false);
-    }
+    setFilters(prev => {
+      if (key.startsWith("location-")) {
+        const loc = key.replace("location-", "");
+        return { ...prev, locations: prev.locations.filter(l => l !== loc) };
+      }
+      if (key === "chain") return { ...prev, chain: "" };
+      if (key === "theatreName") return { ...prev, theatreName: "" };
+      if (key === "theatreId") return { ...prev, theatreId: "" };
+      if (key.startsWith("status-")) {
+        const status = key.replace("status-", "");
+        return { ...prev, statuses: prev.statuses.filter(s => s !== status) };
+      }
+      if (key.startsWith("version-")) {
+        const version = key.replace("version-", "");
+        return { ...prev, versions: prev.versions.filter(v => v !== version) };
+      }
+      if (key === "deprecated") return { ...prev, deprecatedOnly: false };
+      return prev;
+    });
+  };
+
+  const toggleDraftValue = (field: "statuses" | "versions", value: string, checked: boolean) => {
+    setDraft(d => ({
+      ...d,
+      [field]: checked ? [...d[field], value] : d[field].filter(v => v !== value),
+    }));
   };
 
   const handleRefresh = () => {
@@ -312,14 +342,14 @@ const FleetStatus = () => {
 
   const handleResetFilters = () => {
     setLocationSearch("");
-    setSelectedLocations([]);
-    setChainFilter("");
-    setTheatreNameFilter("");
-    setTheatreIdFilter("");
-    setStatusFilters([]);
-    setVersionFilters([]);
-    setDeprecatedOnly(false);
+    setFilters(EMPTY_FLEET_FILTERS);
+    setDraft(EMPTY_FLEET_FILTERS);
     setActiveKPI(null);
+  };
+
+  const handleApplyFilters = () => {
+    setLocationSearch("");
+    setFilters(draft);
   };
 
   const toggleKPI = (kpi: string) => {
@@ -329,7 +359,7 @@ const FleetStatus = () => {
   // Table columns
   const columns: Column<FleetNode>[] = [
     { accessor: "nodeId", header: "Node ID", sortable: true },
-    { accessor: "theatreChain", header: "Theatre Chain", sortable: true, filterable: true, filterOptions: uniqueValues.chains },
+    { accessor: "theatreChain", header: "Theatre Chain", sortable: true },
     { accessor: "theatreName", header: "Theatre Name", sortable: true, cell: (row) => (
       <HoverCard>
         <HoverCardTrigger asChild>
@@ -363,7 +393,7 @@ const FleetStatus = () => {
         {row.version === "v4.1.9" && <Badge variant="default" className="text-xs bg-green-600">Recommended</Badge>}
       </div>
     )},
-    { accessor: "status", header: "Status", sortable: true, filterable: true, filterOptions: ["Active", "Inactive", "Unresponsive"], cell: (row) => (
+    { accessor: "status", header: "Status", sortable: true, cell: (row) => (
       <Badge variant={row.status === "Active" ? "default" : row.status === "Inactive" ? "secondary" : "destructive"}>
         {row.status}
       </Badge>
@@ -411,7 +441,7 @@ const FleetStatus = () => {
 
       {selectedImage && (
         <>
-          {/* A2. Filter Bar with Applied Filters Pills */}
+          {/* A2. Applied filter chips + the page's single filter trigger */}
           <div id="fleet-filter-panel" className="sticky top-16 z-10 bg-background border rounded-lg p-4">
             <div className="flex items-center justify-between gap-4">
               <div className="flex-1 flex items-center gap-2 flex-wrap">
@@ -428,6 +458,7 @@ const FleetStatus = () => {
                         <button 
                           onClick={() => removeFilter(filter.key)}
                           className="ml-1 hover:bg-muted rounded p-0.5"
+                          aria-label={`Remove ${filter.label} filter`}
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -439,180 +470,134 @@ const FleetStatus = () => {
                       onClick={handleResetFilters}
                       className="text-xs text-muted-foreground"
                     >
-                      Clear All
+                      Clear all
                     </Button>
                   </>
                 ) : (
                   <span className="text-sm text-muted-foreground">No filters applied</span>
                 )}
               </div>
-              
-              <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Filter className="h-4 w-4 mr-2" />
-                    Filters
-                    {activeFilters.length > 0 && (
-                      <Badge variant="secondary" className="ml-2 px-1.5 py-0.5 text-xs">
-                        {activeFilters.length}
-                      </Badge>
-                    )}
-                  </Button>
-                </SheetTrigger>
-                <SheetContent className="w-[400px] sm:w-[450px]">
-                  <SheetHeader>
-                    <SheetTitle>Filters</SheetTitle>
-                  </SheetHeader>
-                  <ScrollArea className="h-[calc(100vh-120px)] mt-6 pr-4">
-                    <div className="space-y-6">
-                      {/* Theatre Location - Smart Search */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Theatre Location</Label>
-                        <div className="space-y-2">
-                          <Input 
-                            placeholder="Search city, state, or country..." 
-                            value={locationSearch}
-                            onChange={(e) => setLocationSearch(e.target.value)}
-                          />
-                          {selectedLocations.length > 0 && (
-                            <div className="flex flex-wrap gap-1">
-                              {selectedLocations.map(loc => (
-                                <Badge key={loc} variant="secondary" className="flex items-center gap-1">
-                                  {loc}
-                                  <button 
-                                    onClick={() => setSelectedLocations(prev => prev.filter(l => l !== loc))}
-                                    className="hover:bg-muted rounded p-0.5"
-                                  >
-                                    <X className="h-3 w-3" />
-                                  </button>
-                                </Badge>
-                              ))}
-                            </div>
-                          )}
-                          {locationSearch && filteredLocations.length > 0 && (
-                            <div className="border rounded-md max-h-40 overflow-y-auto">
-                              {filteredLocations.slice(0, 10).map(loc => (
-                                <button
-                                  key={loc}
-                                  className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
-                                  onClick={() => {
-                                    setSelectedLocations(prev => [...prev, loc]);
-                                    setLocationSearch("");
-                                  }}
-                                >
-                                  {loc}
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Theatre Hierarchy */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Theatre Hierarchy</Label>
-                        <div className="space-y-3">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Theatre Chain</Label>
-                            <Select value={chainFilter || "all"} onValueChange={(v) => setChainFilter(v === "all" ? "" : v)}>
-                              <SelectTrigger><SelectValue placeholder="All Chains" /></SelectTrigger>
-                              <SelectContent className="bg-popover z-50">
-                                <SelectItem value="all">All Chains</SelectItem>
-                                {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Theatre Name</Label>
-                            <Input 
-                              placeholder="Search theatre name..." 
-                              value={theatreNameFilter} 
-                              onChange={(e) => setTheatreNameFilter(e.target.value)}
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-muted-foreground">Theatre ID</Label>
-                            <Input 
-                              placeholder="Search theatre ID..." 
-                              value={theatreIdFilter} 
-                              onChange={(e) => setTheatreIdFilter(e.target.value)}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Agent / OS Status Multi-select */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Agent / OS Status</Label>
-                        <div className="space-y-2">
-                          {["Active", "Inactive", "Unresponsive"].map(status => (
-                            <div key={status} className="flex items-center gap-2">
-                              <Checkbox 
-                                id={`status-${status}`}
-                                checked={statusFilters.includes(status)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) setStatusFilters([...statusFilters, status]);
-                                  else setStatusFilters(statusFilters.filter(s => s !== status));
-                                }}
-                              />
-                              <Label htmlFor={`status-${status}`} className="text-sm cursor-pointer">{status}</Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Version Multi-select */}
-                      <div className="space-y-3">
-                        <Label className="text-sm font-medium">Version</Label>
-                        <div className="space-y-2">
-                          {uniqueValues.versions.map(version => (
-                            <div key={version} className="flex items-center gap-2">
-                              <Checkbox 
-                                id={`version-${version}`}
-                                checked={versionFilters.includes(version)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) setVersionFilters([...versionFilters, version]);
-                                  else setVersionFilters(versionFilters.filter(v => v !== version));
-                                }}
-                              />
-                              <Label htmlFor={`version-${version}`} className="text-sm cursor-pointer flex items-center gap-1">
-                                {version}
-                                {(version === "v3.9.2" || version === "v3.8.1") && (
-                                  <Badge variant="destructive" className="text-xs">Deprecated</Badge>
-                                )}
-                              </Label>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Deprecated Toggle */}
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2">
-                          <Checkbox 
-                            id="deprecated-only"
-                            checked={deprecatedOnly} 
-                            onCheckedChange={(checked) => setDeprecatedOnly(!!checked)} 
-                          />
-                          <Label htmlFor="deprecated-only" className="text-sm cursor-pointer">Deprecated only</Label>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button variant="outline" className="flex-1" onClick={handleResetFilters}>
-                          Reset All
-                        </Button>
-                        <Button className="flex-1" onClick={() => setIsFilterOpen(false)}>
-                          Apply Filters
-                        </Button>
-                      </div>
-                    </div>
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
+              <FilterButton count={activeFilters.length} onClick={() => setIsFilterOpen(true)} />
             </div>
           </div>
+
+          <FilterDrawer
+            open={isFilterOpen}
+            onOpenChange={setIsFilterOpen}
+            onApply={handleApplyFilters}
+            onClear={handleResetFilters}
+          >
+            <FilterGroup title="Theatre location">
+              <Input 
+                placeholder="Search city, state, or country..." 
+                aria-label="Search theatre location"
+                value={locationSearch}
+                onChange={(e) => setLocationSearch(e.target.value)}
+              />
+              {draft.locations.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {draft.locations.map(loc => (
+                    <Badge key={loc} variant="secondary" className="flex items-center gap-1">
+                      {loc}
+                      <button 
+                        onClick={() => setDraft(d => ({ ...d, locations: d.locations.filter(l => l !== loc) }))}
+                        className="hover:bg-muted rounded p-0.5"
+                        aria-label={`Remove ${loc}`}
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+              {locationSearch && filteredLocations.length > 0 && (
+                <div className="border rounded-md max-h-40 overflow-y-auto">
+                  {filteredLocations.slice(0, 10).map(loc => (
+                    <button
+                      key={loc}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors"
+                      onClick={() => {
+                        setDraft(d => ({ ...d, locations: [...d.locations, loc] }));
+                        setLocationSearch("");
+                      }}
+                    >
+                      {loc}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </FilterGroup>
+
+            <FilterGroup title="Theatre chain">
+              <Select value={draft.chain || "all"} onValueChange={(v) => setDraft(d => ({ ...d, chain: v === "all" ? "" : v }))}>
+                <SelectTrigger aria-label="Theatre chain"><SelectValue placeholder="All chains" /></SelectTrigger>
+                <SelectContent className="bg-popover z-50">
+                  <SelectItem value="all">All chains</SelectItem>
+                  {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </FilterGroup>
+
+            <FilterGroup title="Theatre name">
+              <Input 
+                placeholder="Search theatre name..." 
+                aria-label="Theatre name"
+                value={draft.theatreName} 
+                onChange={(e) => setDraft(d => ({ ...d, theatreName: e.target.value }))}
+              />
+            </FilterGroup>
+
+            <FilterGroup title="Theatre ID">
+              <Input 
+                placeholder="Search theatre ID..." 
+                aria-label="Theatre ID"
+                value={draft.theatreId} 
+                onChange={(e) => setDraft(d => ({ ...d, theatreId: e.target.value }))}
+              />
+            </FilterGroup>
+
+            <FilterGroup title="Agent / OS status">
+              {["Active", "Inactive", "Unresponsive"].map(status => (
+                <div key={status} className="flex items-center gap-2">
+                  <Checkbox 
+                    id={`status-${status}`}
+                    checked={draft.statuses.includes(status)}
+                    onCheckedChange={(checked) => toggleDraftValue("statuses", status, !!checked)}
+                  />
+                  <Label htmlFor={`status-${status}`} className="text-sm cursor-pointer">{status}</Label>
+                </div>
+              ))}
+            </FilterGroup>
+
+            <FilterGroup title="Version">
+              {uniqueValues.versions.map(version => (
+                <div key={version} className="flex items-center gap-2">
+                  <Checkbox 
+                    id={`version-${version}`}
+                    checked={draft.versions.includes(version)}
+                    onCheckedChange={(checked) => toggleDraftValue("versions", version, !!checked)}
+                  />
+                  <Label htmlFor={`version-${version}`} className="text-sm cursor-pointer flex items-center gap-1">
+                    {version}
+                    {(version === "v3.9.2" || version === "v3.8.1") && (
+                      <Badge variant="destructive" className="text-xs">Deprecated</Badge>
+                    )}
+                  </Label>
+                </div>
+              ))}
+            </FilterGroup>
+
+            <FilterGroup title="Deprecated">
+              <div className="flex items-center gap-2">
+                <Checkbox 
+                  id="deprecated-only"
+                  checked={draft.deprecatedOnly} 
+                  onCheckedChange={(checked) => setDraft(d => ({ ...d, deprecatedOnly: !!checked }))} 
+                />
+                <Label htmlFor="deprecated-only" className="text-sm cursor-pointer">Deprecated only</Label>
+              </div>
+            </FilterGroup>
+          </FilterDrawer>
 
           {/* A3. Fleet Summary KPI Strip */}
           <div id="fleet-kpi-strip" className="grid grid-cols-5 gap-4">
@@ -753,7 +738,7 @@ const FleetStatus = () => {
 
           {/* A6. View Toggle + Action Bar */}
           <div id="view-action-bar" className="flex items-center justify-between py-2">
-            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as any)}>
+            <ToggleGroup type="single" value={viewMode} onValueChange={(v) => v && setViewMode(v as typeof viewMode)}>
               <ToggleGroupItem value="visual" aria-label="Visual view">
                 <LayoutGrid className="h-4 w-4" />
               </ToggleGroupItem>

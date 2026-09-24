@@ -7,6 +7,7 @@ import { Plus, Eye, Edit, XCircle, ArrowRight } from "lucide-react";
 import { AddTaskDialog } from "@/components/fleet/AddTaskDialog";
 import { useNavigate } from "react-router-dom";
 import { formatDate } from "@/lib/dateUtils";
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export interface FleetTask {
   id: string;
@@ -128,7 +129,7 @@ const TaskManagement = () => {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   // Search state
   const [searchTerm, setSearchTerm] = useState("");

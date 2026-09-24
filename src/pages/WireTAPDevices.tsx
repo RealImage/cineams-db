@@ -15,12 +15,14 @@ import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
 import { FetchNewDevicesDialog } from "@/components/wiretap/FetchNewDevicesDialog";
 import { ConnectivityStatusOverlay } from "@/components/wiretap/ConnectivityStatusOverlay";
-import { WireTAPFilterPanel, AppliedFilterPills, WireTAPFilters, emptyFilters } from "@/components/wiretap/WireTAPFilterPanel";
+import { WireTAPFilterPanel, AppliedFilterPills, WireTAPFilters, emptyFilters, countWireTAPFilters } from "@/components/wiretap/WireTAPFilterPanel";
+import { FilterButton } from "@/components/ui/filter-drawer";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
   const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
   const [filters, setFilters] = useState<WireTAPFilters>({ ...emptyFilters });
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
   const [isDeactivateDialogOpen, setIsDeactivateDialogOpen] = useState(false);
   const [isFetchNewDevicesDialogOpen, setIsFetchNewDevicesDialogOpen] = useState(false);
@@ -151,13 +153,12 @@ const WireTAPDevices = () => {
         </p>
         <div className="flex flex-col items-end gap-2">
           <div className="flex items-center gap-2">
-            <WireTAPFilterPanel devices={devices} filters={filters} onFiltersChange={setFilters} />
             <Button onClick={handleFetchNewDevices} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" /> Fetch New Devices
+              <RefreshCw className="h-4 w-4 mr-2" /> Fetch new devices
             </Button>
           </div>
           <p className="text-sm text-muted-foreground">
-            Last Fetched on: {format(lastFetchedDate, "dd MMM yyyy hh:mm a")}
+            Last fetched on {format(lastFetchedDate, "dd MMM yyyy hh:mm a")}
           </p>
         </div>
       </div>
@@ -172,8 +173,17 @@ const WireTAPDevices = () => {
         actions={getActions}
         onRowClick={handleViewConnectivity}
         showFilters={false}
+        toolbar={<FilterButton count={countWireTAPFilters(filters)} onClick={() => setFiltersOpen(true)} />}
       />
       
+      <WireTAPFilterPanel
+        open={filtersOpen}
+        onOpenChange={setFiltersOpen}
+        devices={devices}
+        filters={filters}
+        onFiltersChange={setFilters}
+      />
+
       <ConnectivityStatusOverlay
         device={currentDevice}
         isOpen={isConnectivityOverlayOpen}

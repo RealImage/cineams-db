@@ -2,20 +2,82 @@
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Monitor, Eye, EyeOff, Thermometer, Projector, Building2 } from "lucide-react";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 
+type Coverage = "All screens" | "Some screens" | "No screens";
+
+interface MonitoredTheatre {
+  id: string;
+  name: string;
+  city: string;
+  country: string;
+  screens: number;
+  environment: number;
+  projection: number;
+  environmentCoverage: Coverage;
+  projectionCoverage: Coverage;
+}
+
+const coverageOf = (monitored: number, screens: number): Coverage =>
+  monitored === 0 ? "No screens" : monitored >= screens ? "All screens" : "Some screens";
+
+const coverageOptions: Coverage[] = ["All screens", "Some screens", "No screens"];
+
 // Mock data for monitored theatres
-const monitoredTheatres = [
-  { id: 1, name: "AMC Empire 25", city: "New York", country: "USA", screens: 25, environment: 20, projection: 18 },
-  { id: 2, name: "Odeon Leicester Square", city: "London", country: "UK", screens: 14, environment: 12, projection: 14 },
-  { id: 3, name: "PVR Phoenix", city: "Mumbai", country: "India", screens: 11, environment: 11, projection: 9 },
-  { id: 4, name: "CGV Yongsan", city: "Seoul", country: "South Korea", screens: 18, environment: 15, projection: 16 },
-  { id: 5, name: "Cinépolis Diana", city: "Mexico City", country: "Mexico", screens: 16, environment: 10, projection: 12 },
-  { id: 6, name: "Village Cinemas Crown", city: "Melbourne", country: "Australia", screens: 12, environment: 8, projection: 10 },
-  { id: 7, name: "Pathé Schouwburgplein", city: "Rotterdam", country: "Netherlands", screens: 7, environment: 7, projection: 5 },
+const monitoredTheatres: MonitoredTheatre[] = [
+  { id: "1", name: "AMC Empire 25", city: "New York", country: "USA", screens: 25, environment: 20, projection: 18 },
+  { id: "2", name: "Odeon Leicester Square", city: "London", country: "UK", screens: 14, environment: 12, projection: 14 },
+  { id: "3", name: "PVR Phoenix", city: "Mumbai", country: "India", screens: 11, environment: 11, projection: 9 },
+  { id: "4", name: "CGV Yongsan", city: "Seoul", country: "South Korea", screens: 18, environment: 15, projection: 16 },
+  { id: "5", name: "Cinépolis Diana", city: "Mexico City", country: "Mexico", screens: 16, environment: 10, projection: 12 },
+  { id: "6", name: "Village Cinemas Crown", city: "Melbourne", country: "Australia", screens: 12, environment: 8, projection: 10 },
+  { id: "7", name: "Pathé Schouwburgplein", city: "Rotterdam", country: "Netherlands", screens: 7, environment: 7, projection: 5 },
+].map((t) => ({
+  ...t,
+  environmentCoverage: coverageOf(t.environment, t.screens),
+  projectionCoverage: coverageOf(t.projection, t.screens),
+}));
+
+/** Distinct values of a field, for a column's filter options. */
+const optionsFor = (key: "city" | "country") => (rows: MonitoredTheatre[]) =>
+  Array.from(new Set(rows.map((r) => r[key]))).sort((a, b) => a.localeCompare(b));
+
+const theatreColumns: Column<MonitoredTheatre>[] = [
+  { header: "Theatre", accessor: "name", sortable: true, cell: (t) => <span className="font-medium">{t.name}</span> },
+  { header: "City", accessor: "city", sortable: true, filterable: true, filterOptions: optionsFor("city") },
+  { header: "Country", accessor: "country", sortable: true, filterable: true, filterOptions: optionsFor("country") },
+  {
+    header: "Screens",
+    accessor: "screens",
+    sortable: true,
+    cell: (t) => <Badge variant="secondary">{t.screens}</Badge>,
+  },
+  {
+    // Filter on coverage; the cell still shows the monitored screen count.
+    header: "Environment",
+    accessor: "environmentCoverage",
+    filterable: true,
+    filterOptions: coverageOptions,
+    cell: (t) => (
+      <Badge variant="outline" className="border-primary/50 text-primary" title={t.environmentCoverage}>
+        {t.environment}
+      </Badge>
+    ),
+  },
+  {
+    header: "Projection",
+    accessor: "projectionCoverage",
+    filterable: true,
+    filterOptions: coverageOptions,
+    cell: (t) => (
+      <Badge variant="outline" className="border-accent-foreground/30 text-accent-foreground" title={t.projectionCoverage}>
+        {t.projection}
+      </Badge>
+    ),
+  },
 ];
 
 const totalScreens = monitoredTheatres.reduce((sum, t) => sum + t.screens, 0);
@@ -92,40 +154,7 @@ export default function PulseDashboard() {
 
       {/* Theatres Table */}
       <DashboardCard title="Monitored Theatres">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Theatre</TableHead>
-              <TableHead>City</TableHead>
-              <TableHead>Country</TableHead>
-              <TableHead className="text-center">Screens</TableHead>
-              <TableHead className="text-center">Environment</TableHead>
-              <TableHead className="text-center">Projection</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {monitoredTheatres.map((theatre) => (
-              <TableRow key={theatre.id}>
-                <TableCell className="font-medium">{theatre.name}</TableCell>
-                <TableCell>{theatre.city}</TableCell>
-                <TableCell>{theatre.country}</TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="secondary">{theatre.screens}</Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="outline" className="border-primary/50 text-primary">
-                    {theatre.environment}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Badge variant="outline" className="border-accent-foreground/30 text-accent-foreground">
-                    {theatre.projection}
-                  </Badge>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataTable data={monitoredTheatres} columns={theatreColumns} searchPlaceholder="Search theatres..." />
       </DashboardCard>
 
       {/* Environment Monitoring Histogram */}

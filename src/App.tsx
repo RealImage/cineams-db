@@ -12,6 +12,8 @@ import TheatresDashboard from "./pages/TheatresDashboard";
 import EditTheatre from "./pages/EditTheatre";
 import Chains from "./pages/Chains";
 import TDLDevices from "./pages/TDLDevices";
+import CredentialsManager from "./pages/CredentialsManager";
+import DeviceCredentials from "./pages/DeviceCredentials";
 import ScreenDeviceManagement from "./pages/ScreenDeviceManagement";
 import EditScreenDeviceList from "./pages/EditScreenDeviceList";
 import WireTAPDevices from "./pages/WireTAPDevices";
@@ -69,6 +71,8 @@ const App = () => (
             <Route path="/theatre-device-management/screen-devices" element={<ScreenDeviceManagement />} />
             <Route path="/theatre-device-management/screen-devices/:id/edit" element={<EditScreenDeviceList />} />
             <Route path="/theatre-device-management/tdl-devices" element={<TDLDevices />} />
+            <Route path="/theatre-device-management/credentials-manager" element={<CredentialsManager />} />
+            <Route path="/theatre-device-management/credentials-manager/:id/credentials" element={<DeviceCredentials />} />
             {/* Qube Appliances Routes */}
             <Route path="/qube-appliances" element={<Navigate to="/qube-appliances/wiretap" replace />} />
             <Route path="/qube-appliances/wiretap" element={<WireTAPDevices />} />

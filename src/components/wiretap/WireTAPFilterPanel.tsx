@@ -1,11 +1,9 @@
 import { useState, useMemo } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Separator } from "@/components/ui/separator";
-import { SlidersHorizontal, FilterX, X, Search } from "lucide-react";
+import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
+import { X, Search } from "lucide-react";
 import { WireTAPDevice } from "@/types/wireTAP";
 
 export interface WireTAPFilters {
@@ -36,9 +34,10 @@ interface FilterSectionProps {
   selected: string[];
   onChange: (values: string[]) => void;
   smartSearch?: boolean;
+  searchPlaceholder?: string;
 }
 
-const FilterSection = ({ label, options, selected, onChange, smartSearch }: FilterSectionProps) => {
+const FilterSection = ({ label, options, selected, onChange, smartSearch, searchPlaceholder }: FilterSectionProps) => {
   const [search, setSearch] = useState("");
 
   const filtered = useMemo(() => {
@@ -55,13 +54,12 @@ const FilterSection = ({ label, options, selected, onChange, smartSearch }: Filt
   };
 
   return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium">{label}</label>
+    <FilterGroup title={label}>
       {smartSearch && (
         <div className="relative">
           <Search className="absolute left-2 top-2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder={`Search ${label.toLowerCase()}...`}
+            placeholder={searchPlaceholder ?? `Search ${label.toLowerCase()}...`}
             value={search}
             onChange={e => setSearch(e.target.value)}
             className="pl-7 h-8 text-sm"
@@ -83,20 +81,25 @@ const FilterSection = ({ label, options, selected, onChange, smartSearch }: Filt
           <p className="text-sm text-muted-foreground text-center py-2">No matches</p>
         )}
       </div>
-    </div>
+    </FilterGroup>
   );
 };
 
+/** Number of applied filter values (for the toolbar FilterButton badge). */
+export const countWireTAPFilters = (filters: WireTAPFilters) =>
+  Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+
 interface WireTAPFilterPanelProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   devices: WireTAPDevice[];
+  /** Applied filters; the drawer edits a draft copy until "Apply filters". */
   filters: WireTAPFilters;
   onFiltersChange: (filters: WireTAPFilters) => void;
 }
 
-export const WireTAPFilterPanel = ({ devices, filters, onFiltersChange }: WireTAPFilterPanelProps) => {
-  const [open, setOpen] = useState(false);
-
-  const activeCount = Object.values(filters).reduce((sum, arr) => sum + arr.length, 0);
+export const WireTAPFilterPanel = ({ open, onOpenChange, devices, filters, onFiltersChange }: WireTAPFilterPanelProps) => {
+  const [draft, setDraft] = useFilterDraft(filters, open);
 
   const options = useMemo(() => {
     const unique = (fn: (d: WireTAPDevice) => string) =>
@@ -115,55 +118,30 @@ export const WireTAPFilterPanel = ({ devices, filters, onFiltersChange }: WireTA
   }, [devices]);
 
   const updateFilter = (key: keyof WireTAPFilters) => (values: string[]) => {
-    onFiltersChange({ ...filters, [key]: values });
+    setDraft(d => ({ ...d, [key]: values }));
   };
 
-  const clearAll = () => onFiltersChange({ ...emptyFilters });
+  const clearAll = () => {
+    setDraft({ ...emptyFilters });
+    onFiltersChange({ ...emptyFilters });
+  };
 
   return (
-    <>
-      <Button variant="outline" size="icon" className="relative" onClick={() => setOpen(true)}>
-        <SlidersHorizontal className="h-4 w-4" />
-        {activeCount > 0 && (
-          <Badge variant="secondary" className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-            {activeCount}
-          </Badge>
-        )}
-      </Button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent className="overflow-y-auto sm:max-w-md">
-          <SheetHeader>
-            <div className="flex items-center justify-between">
-              <SheetTitle>Filters</SheetTitle>
-              {activeCount > 0 && (
-                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={clearAll}>
-                  <FilterX className="h-3 w-3 mr-1" /> Clear all
-                </Button>
-              )}
-            </div>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-5">
-            <FilterSection label="Connectivity Type" options={options.connectivityType} selected={filters.connectivityType} onChange={updateFilter("connectivityType")} />
-            <Separator />
-            <FilterSection label="Theatre Chain" options={options.theatreChain} selected={filters.theatreChain} onChange={updateFilter("theatreChain")} smartSearch />
-            <Separator />
-            <FilterSection label="Storage Capacity" options={options.storageCapacity} selected={filters.storageCapacity} onChange={updateFilter("storageCapacity")} />
-            <Separator />
-            <FilterSection label="Appliance Type" options={options.applianceType} selected={filters.applianceType} onChange={updateFilter("applianceType")} />
-            <Separator />
-            <FilterSection label="Activation Status" options={options.activationStatus} selected={filters.activationStatus} onChange={updateFilter("activationStatus")} />
-            <Separator />
-            <FilterSection label="Mapping Status" options={options.mappingStatus} selected={filters.mappingStatus} onChange={updateFilter("mappingStatus")} />
-            <Separator />
-            <FilterSection label="Internet Connectivity" options={options.internetConnectivity} selected={filters.internetConnectivity} onChange={updateFilter("internetConnectivity")} />
-            <Separator />
-            <FilterSection label="VPN Status" options={options.vpnStatus} selected={filters.vpnStatus} onChange={updateFilter("vpnStatus")} />
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+    <FilterDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      onApply={() => onFiltersChange(draft)}
+      onClear={clearAll}
+    >
+      <FilterSection label="Connectivity type" options={options.connectivityType} selected={draft.connectivityType} onChange={updateFilter("connectivityType")} />
+      <FilterSection label="Theatre" options={options.theatreChain} selected={draft.theatreChain} onChange={updateFilter("theatreChain")} smartSearch searchPlaceholder="Search theatres..." />
+      <FilterSection label="Storage" options={options.storageCapacity} selected={draft.storageCapacity} onChange={updateFilter("storageCapacity")} />
+      <FilterSection label="Appliance type" options={options.applianceType} selected={draft.applianceType} onChange={updateFilter("applianceType")} />
+      <FilterSection label="Activation" options={options.activationStatus} selected={draft.activationStatus} onChange={updateFilter("activationStatus")} />
+      <FilterSection label="Mapping" options={options.mappingStatus} selected={draft.mappingStatus} onChange={updateFilter("mappingStatus")} />
+      <FilterSection label="Internet" options={options.internetConnectivity} selected={draft.internetConnectivity} onChange={updateFilter("internetConnectivity")} />
+      <FilterSection label="VPN" options={options.vpnStatus} selected={draft.vpnStatus} onChange={updateFilter("vpnStatus")} />
+    </FilterDrawer>
   );
 };
 
@@ -173,10 +151,10 @@ interface AppliedFilterPillsProps {
 }
 
 const filterLabels: Record<keyof WireTAPFilters, string> = {
-  connectivityType: "Connectivity Type",
+  connectivityType: "Connectivity type",
   theatreChain: "Theatre",
   storageCapacity: "Storage",
-  applianceType: "Appliance Type",
+  applianceType: "Appliance type",
   activationStatus: "Activation",
   mappingStatus: "Mapping",
   internetConnectivity: "Internet",

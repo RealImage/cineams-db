@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Search, MoreHorizontal, Copy, SlidersHorizontal, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Search, MoreHorizontal, Copy, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -12,15 +12,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Label } from "@/components/ui/label";
+import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { FlmFeed } from "@/data/flmFeedsData";
 import { MapThirdPartyIdDialog } from "@/components/flm/MapThirdPartyIdDialog";
 import {
@@ -47,19 +41,25 @@ import { flmFeeds } from "@/data/flmFeedsData";
 import { formatDate, formatTime } from "@/lib/dateUtils";
 
 const SOURCES = ["MACCS", "DCIP", "Qube Radar", "Cinergy", "Sony", "KDMx"];
-const PAGE_SIZE = 50;
+
+interface FlmFeedFilters {
+  source: string;
+  status: string;
+  isNew: string;
+}
+
+const EMPTY_FILTERS: FlmFeedFilters = { source: "all", status: "all", isNew: "all" };
 
 const FLMFeeds = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [source, setSource] = useState("all");
-  const [status, setStatus] = useState("Manual");
-  const [isNew, setIsNew] = useState("all");
+  const [filters, setFilters] = useState<FlmFeedFilters>({ ...EMPTY_FILTERS, status: "Manual" });
   const [filterOpen, setFilterOpen] = useState(false);
+  const [draft, setDraft] = useFilterDraft(filters, filterOpen);
+  const { source, status, isNew } = filters;
   const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
   const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
-  const [page, setPage] = useState(1);
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -77,11 +77,16 @@ const FLMFeeds = () => {
   };
 
   const clearFilters = () => {
-    setSource("all");
-    setStatus("all");
-    setIsNew("all");
-    setPage(1);
+    setFilters(EMPTY_FILTERS);
+    setDraft(EMPTY_FILTERS);
   };
+
+  const applyFilters = () => {
+    setFilters(draft);
+  };
+
+  const removeFilter = (key: keyof FlmFeedFilters) =>
+    setFilters((prev) => ({ ...prev, [key]: "all" }));
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -107,21 +112,21 @@ const FLMFeeds = () => {
     );
   }, [search, source, status, isNew, ignoredIds]);
 
-  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const currentPage = Math.min(page, totalPages);
-  const pagedRows = rows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const resetKey = useMemo(() => [search, filters], [search, filters]);
+  const { page: currentPage, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: pagedRows } =
+    usePagination(rows, resetKey);
 
   const activeFilters: { key: string; label: string; onRemove: () => void }[] = [];
   if (source !== "all")
-    activeFilters.push({ key: "source", label: `Source: ${source}`, onRemove: () => setSource("all") });
+    activeFilters.push({ key: "source", label: `Source: ${source}`, onRemove: () => removeFilter("source") });
   if (isNew !== "all")
     activeFilters.push({
       key: "isNew",
-      label: isNew === "yes" ? "New Theatre: Yes" : "New Theatre: No",
-      onRemove: () => setIsNew("all"),
+      label: isNew === "yes" ? "New theatre: Yes" : "New theatre: No",
+      onRemove: () => removeFilter("isNew"),
     });
   if (status !== "all")
-    activeFilters.push({ key: "status", label: `Status: ${status}`, onRemove: () => setStatus("all") });
+    activeFilters.push({ key: "status", label: `Status: ${status}`, onRemove: () => removeFilter("status") });
 
   return (
     <motion.div
@@ -140,17 +145,11 @@ const FLMFeeds = () => {
             <Input
               placeholder="Search name, UUID, chain, source ID..."
               value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
+              onChange={(e) => setSearch(e.target.value)}
               className="pl-8 w-[280px]"
             />
           </div>
-          <Button variant="outline" onClick={() => setFilterOpen(true)}>
-            <SlidersHorizontal className="mr-2 h-4 w-4" />
-            Filter
-          </Button>
+          <FilterButton count={activeFilters.length} onClick={() => setFilterOpen(true)} />
         </div>
       </div>
 
@@ -163,10 +162,7 @@ const FLMFeeds = () => {
                 variant="ghost"
                 size="icon"
                 className="h-4 w-4 hover:bg-transparent"
-                onClick={() => {
-                  f.onRemove();
-                  setPage(1);
-                }}
+                onClick={f.onRemove}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -329,94 +325,62 @@ const FLMFeeds = () => {
         </Table>
       </div>
 
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {pagedRows.length === 0 ? 0 : (currentPage - 1) * PAGE_SIZE + 1}–
-          {(currentPage - 1) * PAGE_SIZE + pagedRows.length} of {rows.length} records
-        </p>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage <= 1}
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-          >
-            <ChevronLeft className="mr-1 h-4 w-4" />
-            Previous
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            Page {currentPage} of {totalPages}
-          </span>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={currentPage >= totalPages}
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          >
-            Next
-            <ChevronRight className="ml-1 h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <PaginationControls
+        currentPage={currentPage}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
-      <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-        <SheetContent side="right" className="w-[340px] sm:w-[380px]">
-          <SheetHeader>
-            <SheetTitle>Filter FLM Feeds</SheetTitle>
-            <SheetDescription>Narrow down feed records by source, theatre type, and status.</SheetDescription>
-          </SheetHeader>
-          <div className="space-y-5 py-6">
-            <div className="space-y-2">
-              <Label>Source</Label>
-              <Select value={source} onValueChange={(v) => { setSource(v); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Source" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Sources</SelectItem>
-                  {SOURCES.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>New Theatre</Label>
-              <Select value={isNew} onValueChange={(v) => { setIsNew(v); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="New Theatre" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Theatres</SelectItem>
-                  <SelectItem value="yes">New Only</SelectItem>
-                  <SelectItem value="no">Existing Only</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={status} onValueChange={(v) => { setStatus(v); setPage(1); }}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="Auto-Updated">Auto-Updated</SelectItem>
-                  <SelectItem value="Manual">Manual</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <SheetFooter className="flex-row justify-between gap-2">
-            <Button variant="outline" onClick={clearFilters}>
-              Clear All
-            </Button>
-            <Button onClick={() => setFilterOpen(false)}>Apply</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
+      <FilterDrawer
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        description="Narrow down feed records by source, theatre type, and status."
+        onApply={applyFilters}
+        onClear={clearFilters}
+      >
+        <FilterGroup title="Source">
+          <Select value={draft.source} onValueChange={(v) => setDraft((d) => ({ ...d, source: v }))}>
+            <SelectTrigger aria-label="Source">
+              <SelectValue placeholder="Source" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sources</SelectItem>
+              {SOURCES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {s}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+        <FilterGroup title="New theatre">
+          <Select value={draft.isNew} onValueChange={(v) => setDraft((d) => ({ ...d, isNew: v }))}>
+            <SelectTrigger aria-label="New theatre">
+              <SelectValue placeholder="New theatre" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All theatres</SelectItem>
+              <SelectItem value="yes">New only</SelectItem>
+              <SelectItem value="no">Existing only</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+        <FilterGroup title="Status">
+          <Select value={draft.status} onValueChange={(v) => setDraft((d) => ({ ...d, status: v }))}>
+            <SelectTrigger aria-label="Status">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="Auto-Updated">Auto-Updated</SelectItem>
+              <SelectItem value="Manual">Manual</SelectItem>
+            </SelectContent>
+          </Select>
+        </FilterGroup>
+      </FilterDrawer>
 
       <MapThirdPartyIdDialog feed={mapFeed} onClose={() => setMapFeed(null)} />
     </motion.div>

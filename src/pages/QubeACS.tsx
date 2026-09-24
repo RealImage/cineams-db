@@ -1,21 +1,21 @@
 import { useMemo, useState } from "react";
-import { Filter, Plus, Copy, Check, MoreHorizontal, Eye, Pencil, Settings2 } from "lucide-react";
+import { Plus, Copy, Check, MoreHorizontal, Eye, Pencil, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { FilterButton } from "@/components/ui/filter-drawer";
+import { usePagination } from "@/hooks/use-pagination";
+import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { qubeAcsTheatres, QubeAcsTheatre } from "@/data/qubeAcsData";
-import { QubeAcsFilterPanel, QubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
+import { QubeAcsFilterPanel, QubeAcsFilters, emptyQubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
 import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDialog";
 import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
 import SystemConstantsDialog from "@/components/qube-acs/SystemConstantsDialog";
-
-const PAGE_SIZE = 100;
 
 const QubeACS = () => {
   const navigate = useNavigate();
@@ -24,9 +24,8 @@ const QubeACS = () => {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [constantsOpen, setConstantsOpen] = useState(false);
-  const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<QubeAcsFilters>({ chain: "all", location: "all" });
+  const [filters, setFilters] = useState<QubeAcsFilters>(emptyQubeAcsFilters);
   const [detailTheatre, setDetailTheatre] = useState<QubeAcsTheatre | null>(null);
 
   const openDetails = (t: QubeAcsTheatre) => setDetailTheatre(t);
@@ -53,8 +52,8 @@ const QubeACS = () => {
     return r;
   }, [data, searchTerm, filters]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
+  const { page, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginated } = usePagination(filtered, resetKey);
 
   const activeFilterCount =
     (filters.chain !== "all" ? 1 : 0) +
@@ -78,18 +77,10 @@ const QubeACS = () => {
         <Input
           placeholder="Search by theatre name, ID, chain or location..."
           value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
+          onChange={(e) => setSearchTerm(e.target.value)}
           className="max-w-md"
         />
-        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
+        <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
         <span className="text-sm text-muted-foreground">
           {filtered.length} theatre{filtered.length !== 1 ? "s" : ""}
         </span>
@@ -175,15 +166,14 @@ const QubeACS = () => {
         </div>
       </div>
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">Page {page} of {totalPages}</span>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => p - 1)}>Previous</Button>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => p + 1)}>Next</Button>
-          </div>
-        </div>
-      )}
+      <PaginationControls
+        currentPage={page}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={pageSize}
+        handlePageChange={setPage}
+        handleRowsPerPageChange={setPageSize}
+      />
 
       <QubeAcsFilterPanel
         open={filtersOpen}
@@ -191,8 +181,8 @@ const QubeACS = () => {
         chains={chains}
         locations={locations}
         filters={filters}
-        onChange={(f) => { setFilters(f); setPage(1); }}
-        onClear={() => { setFilters({ chain: "all", location: "all" }); setPage(1); }}
+        onChange={setFilters}
+        onClear={() => setFilters(emptyQubeAcsFilters)}
       />
 
       <AddTheatreLookupDialog open={addOpen} onOpenChange={setAddOpen} />

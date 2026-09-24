@@ -1,10 +1,10 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Plus, Edit, Trash2, FileCheck, Filter, Search, Upload, Archive } from "lucide-react";
+import { FilterButton } from "@/components/ui/filter-drawer";
+import { Plus, Edit, Search, Upload, Archive } from "lucide-react";
 import { tdlDevices as mockDevices } from "@/data/mockData";
 import { TDLDevice } from "@/types";
 import { toast } from "sonner";
@@ -83,11 +83,17 @@ const TDLDevices = () => {
     return result;
   }, [searchFiltered, filters]);
 
-  const { activeCount, filterContent, removeFilter, formatFilterValue, clearAll } = TDLFilterPanel({
-    devices,
-    filters,
-    onFiltersChange: setFilters,
-  });
+  const activeCount = Object.keys(filters).length;
+
+  const removeFilter = (key: keyof TDLFilters) => {
+    setFilters((prev) => {
+      const next = { ...prev };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const clearAll = () => setFilters({});
 
   const columns: Column<TDLDevice>[] = [
     { header: "Manufacturer / Make", accessor: "manufacturer" as keyof TDLDevice },
@@ -177,32 +183,19 @@ const TDLDevices = () => {
             className="pl-8"
           />
         </div>
-        <Sheet open={filterOpen} onOpenChange={setFilterOpen}>
-          <SheetTrigger asChild>
-            <Button variant="outline" className="relative">
-              <Filter className="h-4 w-4 mr-2" /> Filters
-              {activeCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
-                  {activeCount}
-                </span>
-              )}
-            </Button>
-          </SheetTrigger>
-          <SheetContent className="w-[340px] sm:w-[380px] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle>Filter Devices</SheetTitle>
-            </SheetHeader>
-            {filterContent}
-          </SheetContent>
-        </Sheet>
+        <FilterButton count={activeCount} onClick={() => setFilterOpen(true)} />
       </div>
 
       {/* Applied filter badges */}
-      <TDLFilterBadges
+      <TDLFilterBadges filters={filters} onRemove={removeFilter} onClearAll={clearAll} />
+
+      <TDLFilterPanel
+        open={filterOpen}
+        onOpenChange={setFilterOpen}
+        devices={devices}
         filters={filters}
-        onRemove={removeFilter}
-        onClearAll={clearAll}
-        formatValue={formatFilterValue}
+        onApply={setFilters}
+        onClear={clearAll}
       />
 
       <DataTable

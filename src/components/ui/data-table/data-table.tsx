@@ -8,6 +8,7 @@ import { Filters } from "./filters";
 import { PaginationControls } from "./pagination";
 import { DataTableProps, Action, Filter, SortDirection, SortConfig } from "./types";
 import debounce from 'lodash/debounce';
+import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 
 export function DataTable<T extends { id: string }>({
   data,
@@ -16,7 +17,7 @@ export function DataTable<T extends { id: string }>({
   searchPlaceholder = "Search...",
   onRowClick,
   actions,
-  pageSize = 10,
+  pageSize = DEFAULT_PAGE_SIZE,
   serverSide = false,
   totalCount,
   onPaginationChange,
@@ -24,14 +25,13 @@ export function DataTable<T extends { id: string }>({
   onSortChange,
   onFilterChange,
   showFilters = true,
+  toolbar,
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: null });
   const [activeFilters, setActiveFilters] = useState<Filter<T>[]>([]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [useSheetFilter, setUseSheetFilter] = useState(window.innerWidth < 768);
   
   // Keep the latest onSearchChange without recreating the debounced function
   const onSearchChangeRef = useRef<typeof onSearchChange>(onSearchChange);
@@ -75,13 +75,13 @@ export function DataTable<T extends { id: string }>({
     
     // Apply text search
     if (searchTerm) {
-      filtered = filtered.filter((item) => {
-        return Object.entries(item).some(([key, value]) => {
-          // Only search through string values
-          return typeof value === "string" && 
-                 value.toLowerCase().includes(searchTerm.toLowerCase());
-        });
-      });
+      const term = searchTerm.toLowerCase();
+      // Match text and numbers, including inside arrays (e.g. roles, alternate names)
+      const matches = (value: unknown): boolean =>
+        typeof value === "string" || typeof value === "number"
+          ? String(value).toLowerCase().includes(term)
+          : Array.isArray(value) && value.some(matches);
+      filtered = filtered.filter((item) => Object.values(item).some(matches));
     }
     
     // Apply active filters
@@ -141,16 +141,22 @@ export function DataTable<T extends { id: string }>({
   
   // Calculate pagination values
   const totalItems = serverSide ? totalCount || 0 : filteredData.length;
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
-  
+  const totalPages = Math.max(1, Math.ceil(totalItems / rowsPerPage));
+
+  // Pages that search/filter themselves pass a new `data` list: go back to
+  // page 1 when its size changes, and never sit past the last page.
+  useEffect(() => {
+    if (!serverSide) setCurrentPage(1);
+  }, [data.length, serverSide]);
+  useEffect(() => {
+    if (!serverSide && currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages, serverSide]);
+
   const paginatedData = useMemo(() => {
     if (serverSide) return data;
-    
-    return filteredData.slice(
-      (currentPage - 1) * rowsPerPage,
-      currentPage * rowsPerPage
-    );
-  }, [filteredData, currentPage, rowsPerPage, serverSide, data]);
+    const page = Math.min(currentPage, totalPages);
+    return filteredData.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  }, [filteredData, currentPage, totalPages, rowsPerPage, serverSide, data]);
   
   // Handle page change
   const handlePageChange = (newPage: number) => {
@@ -208,33 +214,15 @@ export function DataTable<T extends { id: string }>({
     }
   };
   
-  // Handle filter change
-  const handleFilterChange = (column: keyof T, value: string | string[] | { from?: Date; to?: Date }) => {
-    const newFilters = activeFilters.filter(filter => filter.column !== column);
-    
-    if (value !== "" && !(Array.isArray(value) && value.length === 0) && 
-        !(typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to)) {
-      newFilters.push({ column, value });
-    }
-    
+  // Commit a full set of filters (FilterDrawer Apply / Clear all)
+  const applyFilters = (newFilters: Filter<T>[]) => {
     setActiveFilters(newFilters);
-    
     if (serverSide && onFilterChange) {
       onFilterChange(newFilters);
     }
-    
-    // Reset to first page when filter changes
     setCurrentPage(1);
   };
-  
-  // Clear all filters
-  const clearAllFilters = () => {
-    setActiveFilters([]);
-    if (serverSide && onFilterChange) {
-      onFilterChange([]);
-    }
-  };
-  
+
   // Get row actions
   const getRowActions = (row: T) => {
     if (!actions) return [];
@@ -243,7 +231,15 @@ export function DataTable<T extends { id: string }>({
   
   // Generate filter options for a column
   const getFilterOptions = (column: typeof columns[0], columnKey: keyof T) => {
-    if (!column.filterOptions) return [];
+    // No explicit options: offer the column's distinct values
+    if (!column.filterOptions) {
+      const values = new Set<string>();
+      data.forEach((row) => {
+        const v = row[columnKey];
+        if (v !== null && v !== undefined && v !== "") values.add(String(v));
+      });
+      return Array.from(values).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+    }
 
     if (typeof column.filterOptions === 'function') {
       return column.filterOptions(data);
@@ -251,19 +247,6 @@ export function DataTable<T extends { id: string }>({
     
     return column.filterOptions;
   };
-  
-  // Get active filter count
-  const getActiveFilterCount = () => activeFilters.length;
-  
-  // Check screen size to determine filter UI type
-  useEffect(() => {
-    const handleResize = () => {
-      setUseSheetFilter(window.innerWidth < 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
   
   // Show actions column flag
   const showActions = Boolean(actions && actions.length > 0);
@@ -276,19 +259,15 @@ export function DataTable<T extends { id: string }>({
           setSearchTerm={setSearchTerm}
           searchPlaceholder={searchPlaceholder}
         >
-          {showFilters && (
+          {showFilters && columns.some((c) => c.filterable) && (
             <Filters
               columns={columns}
               activeFilters={activeFilters}
-              handleFilterChange={handleFilterChange}
-              clearAllFilters={clearAllFilters}
+              applyFilters={applyFilters}
               getFilterOptions={getFilterOptions}
-              showFilters={filtersOpen}
-              setShowFilters={setFiltersOpen}
-              useSheetFilter={useSheetFilter}
-              getActiveFilterCount={getActiveFilterCount}
             />
           )}
+          {toolbar}
         </SearchExport>
       )}
       
@@ -312,16 +291,14 @@ export function DataTable<T extends { id: string }>({
         </div>
       </div>
       
-      {totalPages > 0 && (
-        <PaginationControls
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          rowsPerPage={rowsPerPage}
-          handlePageChange={handlePageChange}
-          handleRowsPerPageChange={handleRowsPerPageChange}
-        />
-      )}
+      <PaginationControls
+        currentPage={Math.min(currentPage, totalPages)}
+        totalPages={totalPages}
+        totalItems={totalItems}
+        rowsPerPage={rowsPerPage}
+        handlePageChange={handlePageChange}
+        handleRowsPerPageChange={handleRowsPerPageChange}
+      />
     </div>
   );
 }

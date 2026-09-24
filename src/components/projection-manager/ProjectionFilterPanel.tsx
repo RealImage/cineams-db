@@ -1,8 +1,5 @@
-
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 
 export interface ProjectionFilters {
   chain: string;
@@ -17,56 +14,74 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   chains: string[];
   locations: string[];
+  /** Applied filters. */
   filters: ProjectionFilters;
-  onFilterChange: (key: string, value: string) => void;
+  /** The empty/default filter set, used to reset the draft on "Clear all". */
+  defaultFilters: ProjectionFilters;
+  onApply: (filters: ProjectionFilters) => void;
   onClear: () => void;
 }
 
-export const ProjectionFilterPanel = ({ open, onOpenChange, chains, locations, filters, onFilterChange, onClear }: Props) => (
-  <Sheet open={open} onOpenChange={onOpenChange}>
-    <SheetContent side="right" className="w-[320px] sm:w-[380px] overflow-y-auto">
-      <SheetHeader>
-        <SheetTitle>Filter Screens</SheetTitle>
-      </SheetHeader>
-      <div className="space-y-5 mt-6">
-        <FilterSelect label="Chain Name" value={filters.chain} onChange={(v) => onFilterChange("chain", v)} options={chains} />
-        <FilterSelect label="Location" value={filters.location} onChange={(v) => onFilterChange("location", v)} options={locations} />
-        <FilterSelect
-          label="Score Range"
-          value={filters.scoreRange}
-          onChange={(v) => onFilterChange("scoreRange", v)}
-          options={["good", "average", "poor"]}
-          optionLabels={{ good: "Good (71-100)", average: "Average (41-70)", poor: "Poor (1-40)" }}
-        />
-        <FilterSelect
-          label="Projection Quality"
-          value={filters.projectionQuality}
-          onChange={(v) => onFilterChange("projectionQuality", v)}
-          options={["within_limits", "outside_limits"]}
-          optionLabels={{ within_limits: "Within Recommended Limits", outside_limits: "Outside Recommended Limits" }}
-        />
-        <FilterSelect
-          label="Sound Quality"
-          value={filters.soundQuality}
-          onChange={(v) => onFilterChange("soundQuality", v)}
-          options={["within_limits", "outside_limits"]}
-          optionLabels={{ within_limits: "Within Recommended Limits", outside_limits: "Outside Recommended Limits" }}
-        />
-        <Button variant="outline" className="w-full" onClick={onClear}>Clear All Filters</Button>
-      </div>
-    </SheetContent>
-  </Sheet>
-);
+const qualityLabels = { within_limits: "Within recommended limits", outside_limits: "Outside recommended limits" };
+
+export const ProjectionFilterPanel = ({
+  open,
+  onOpenChange,
+  chains,
+  locations,
+  filters,
+  defaultFilters,
+  onApply,
+  onClear,
+}: Props) => {
+  const [draft, setDraft] = useFilterDraft(filters, open);
+  const set = (key: keyof ProjectionFilters, value: string) => setDraft((prev) => ({ ...prev, [key]: value }));
+
+  return (
+    <FilterDrawer
+      open={open}
+      onOpenChange={onOpenChange}
+      onApply={() => onApply(draft)}
+      onClear={() => {
+        setDraft(defaultFilters);
+        onClear();
+      }}
+    >
+      <FilterSelect title="Chain" value={draft.chain} onChange={(v) => set("chain", v)} options={chains} />
+      <FilterSelect title="Location" value={draft.location} onChange={(v) => set("location", v)} options={locations} />
+      <FilterSelect
+        title="Score range"
+        value={draft.scoreRange}
+        onChange={(v) => set("scoreRange", v)}
+        options={["good", "average", "poor"]}
+        optionLabels={{ good: "Good (71-100)", average: "Average (41-70)", poor: "Poor (1-40)" }}
+      />
+      <FilterSelect
+        title="Projection quality"
+        value={draft.projectionQuality}
+        onChange={(v) => set("projectionQuality", v)}
+        options={["within_limits", "outside_limits"]}
+        optionLabels={qualityLabels}
+      />
+      <FilterSelect
+        title="Sound quality"
+        value={draft.soundQuality}
+        onChange={(v) => set("soundQuality", v)}
+        options={["within_limits", "outside_limits"]}
+        optionLabels={qualityLabels}
+      />
+    </FilterDrawer>
+  );
+};
 
 const FilterSelect = ({
-  label, value, onChange, options, optionLabels,
+  title, value, onChange, options, optionLabels,
 }: {
-  label: string; value: string; onChange: (v: string) => void; options: string[]; optionLabels?: Record<string, string>;
+  title: string; value: string; onChange: (v: string) => void; options: string[]; optionLabels?: Record<string, string>;
 }) => (
-  <div className="space-y-1.5">
-    <Label className="text-xs font-medium">{label}</Label>
+  <FilterGroup title={title}>
     <Select value={value} onValueChange={onChange}>
-      <SelectTrigger><SelectValue /></SelectTrigger>
+      <SelectTrigger aria-label={title}><SelectValue /></SelectTrigger>
       <SelectContent>
         <SelectItem value="all">All</SelectItem>
         {options.map((o) => (
@@ -74,5 +89,5 @@ const FilterSelect = ({
         ))}
       </SelectContent>
     </Select>
-  </div>
+  </FilterGroup>
 );

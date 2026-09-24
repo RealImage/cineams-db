@@ -9,6 +9,10 @@ import { Chain } from "@/types";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/dateUtils";
 
+/** Distinct values of a field, for a column's filter options. */
+const optionsFor = (key: keyof Chain) => (rows: Chain[]) =>
+  Array.from(new Set(rows.map((r) => String(r[key])))).sort((a, b) => a.localeCompare(b));
+
 const Chains = () => {
   const [chains, setChains] = useState<Chain[]>(mockChains);
   
@@ -28,19 +32,26 @@ const Chains = () => {
   const columns: Column<Chain>[] = [
     {
       header: "Chain Name",
-      accessor: "name" as keyof Chain
+      accessor: "name" as keyof Chain,
+      sortable: true,
     },
     {
       header: "Company",
-      accessor: "companyName" as keyof Chain
+      accessor: "companyName" as keyof Chain,
+      sortable: true,
+      filterable: true,
+      filterOptions: optionsFor("companyName"),
     },
     {
       header: "Theatre Count",
-      accessor: "theatreCount" as keyof Chain
+      accessor: "theatreCount" as keyof Chain,
+      sortable: true,
     },
     {
       header: "Status",
       accessor: "status" as keyof Chain,
+      filterable: true,
+      filterOptions: optionsFor("status"),
       cell: (row: Chain) => (
         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
           row.status === "Active" 
@@ -54,6 +65,9 @@ const Chains = () => {
     {
       header: "Last Updated",
       accessor: "updatedAt" as keyof Chain,
+      sortable: true,
+      filterable: true,
+      filterType: "dateRange",
       cell: (row: Chain) => formatDate(row.updatedAt)
     }
   ];

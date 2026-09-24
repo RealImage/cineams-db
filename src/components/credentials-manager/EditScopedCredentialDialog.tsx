@@ -1,0 +1,126 @@
+import { useEffect, useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  CredentialDevice,
+  CredentialField,
+  CredentialScope,
+  GLOBAL_REF,
+  ScopedCredential,
+  chainOptions,
+  countryOptions,
+  credentialFieldLabels,
+  credentialScopes,
+  getCredentialFormat,
+  secretFields,
+  theatreOptions,
+} from "@/data/credentialsManagerData";
+
+export type CredentialDraft = Omit<ScopedCredential, "id" | "updatedBy" | "updatedAt"> & { id?: string };
+
+interface Props {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  device: CredentialDevice;
+  scope: CredentialScope;
+  /** Existing row to edit; null to add a new one. */
+  credential: ScopedCredential | null;
+  /** Refs already used in this scope, to prevent duplicates. */
+  takenRefs: string[];
+  onSave: (draft: CredentialDraft) => void;
+}
+
+const refOptions: Partial<Record<CredentialScope, string[]>> = {
+  global: [GLOBAL_REF, ...countryOptions],
+  chain: chainOptions,
+  theatre: theatreOptions,
+};
+
+export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, credential, takenRefs, onSave }: Props) => {
+  const [ref, setRef] = useState("");
+  const [location, setLocation] = useState("");
+  const [values, setValues] = useState<Partial<Record<CredentialField, string>>>({});
+
+  useEffect(() => {
+    if (!open) return;
+    setRef(credential?.ref ?? "");
+    setLocation(credential?.location ?? "");
+    setValues(credential?.values ?? {});
+  }, [open, credential]);
+
+  const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
+  const fields = getCredentialFormat(device.credentialFormat).fields;
+  const options = refOptions[scope];
+  const trimmedRef = ref.trim();
+  const duplicate = trimmedRef !== "" && trimmedRef !== credential?.ref && takenRefs.includes(trimmedRef);
+  const canSave = trimmedRef !== "" && !duplicate && fields.every((f) => (values[f] ?? "").trim() !== "");
+
+  const handleSave = () => {
+    onSave({
+      id: credential?.id,
+      deviceId: device.id,
+      scope,
+      ref: trimmedRef,
+      location: scope === "device" ? location.trim() || undefined : undefined,
+      values: Object.fromEntries(fields.map((f) => [f, values[f]!.trim()])),
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>{credential ? "Edit" : "Add"} {scopeInfo.label.replace(" Credentials", "").toLowerCase()} credentials</DialogTitle>
+          <DialogDescription>
+            {device.brand} {device.model} · {getCredentialFormat(device.credentialFormat).label}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid grid-cols-1 gap-4 py-2">
+          <div className="space-y-1">
+            <Label className="text-xs">{scopeInfo.refLabel}</Label>
+            {options ? (
+              <Select value={ref} onValueChange={setRef}>
+                <SelectTrigger><SelectValue placeholder={`Select ${scopeInfo.refLabel.toLowerCase()}`} /></SelectTrigger>
+                <SelectContent>
+                  {options.map((o) => (
+                    <SelectItem key={o} value={o} disabled={o !== credential?.ref && takenRefs.includes(o)}>{o}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. ICMP-12345" />
+            )}
+            {duplicate && <p className="text-xs text-destructive">Credentials for {trimmedRef} already exist.</p>}
+          </div>
+          {scope === "device" && (
+            <div className="space-y-1">
+              <Label className="text-xs">Installed At</Label>
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Optional, e.g. AMC Lincoln Square · Audi 3" />
+            </div>
+          )}
+          {fields.map((f) => (
+            <div key={f} className="space-y-1">
+              <Label className="text-xs">{credentialFieldLabels[f]}</Label>
+              <Input
+                type={secretFields.includes(f) ? "password" : "text"}
+                autoComplete={secretFields.includes(f) ? "new-password" : "off"}
+                value={values[f] ?? ""}
+                onChange={(e) => setValues((v) => ({ ...v, [f]: e.target.value }))}
+              />
+            </div>
+          ))}
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button onClick={handleSave} disabled={!canSave}>Save</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};

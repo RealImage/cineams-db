@@ -4,45 +4,65 @@
 @tailwind utilities;
 
 @layer base {
+  /* Qube Design System (prefab-ui "qube-wire" theme). Values from the
+     design system's tokens; shadcn aliases below map onto them. */
   :root {
-    --background: 210 40% 98%;
-    --foreground: 222 47% 11%;
+    --background: 210 14% 97%;          /* --bg-surface  #f7f8f9 */
+    --foreground: 212 17% 19%;          /* --text-default #29313a */
 
-    --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card: 0 0% 100%;                  /* --surface-white */
+    --card-foreground: 212 17% 19%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 212 17% 19%;
 
-    --primary: 210 100% 50%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 209 88% 27%;             /* --fill-product #084782 */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 222 47% 11%;
+    --secondary: 217 15% 90%;           /* --fill-default #e1e4e9 */
+    --secondary-foreground: 212 17% 19%;
 
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
+    --muted: 210 15% 95%;               /* --bg-surface-subtle #f0f2f4 */
+    --muted-foreground: 212 17% 48%;    /* --text-secondary #677a90 */
 
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 210 15% 95%;              /* hover / active nav */
+    --accent-foreground: 212 17% 19%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 355 83% 44%;         /* --fill-negative #cf1322 */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 47% 11%;
+    --border: 217 15% 90%;              /* --border-default-alt #e1e4e9 */
+    --input: 212 16% 79%;               /* --border-default-subtle #c2cad3 */
+    --ring: 209 88% 27%;                /* --border-product */
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;                   /* --borderRadius-radius-100 */
+
+    --chart-1: 209 88% 27%;
+    --chart-2: 204 98% 48%;
+    --chart-3: 138 42% 41%;
+    --chart-4: 40 98% 48%;
+    --chart-5: 262 52% 47%;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 5% 26%;
-    --sidebar-primary: 210, 100%, 50%;
+    --sidebar-foreground: 212 16% 29%;  /* --grey-700 */
+    --sidebar-primary: 209 88% 27%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 210 40% 96%;
-    --sidebar-accent-foreground: 240 6% 10%;
-    --sidebar-border: 214 32% 91%;
-    --sidebar-ring: 217 91% 60%;
+    --sidebar-accent: 210 14% 97%;      /* --fill-default-subtle */
+    --sidebar-accent-foreground: 212 17% 19%;
+    --sidebar-border: 217 15% 90%;
+    --sidebar-ring: 209 88% 27%;
+
+    /* Raw design-system tokens, for the few places that need them directly */
+    --font-family: 'Commissioner', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --hover-subtelest: rgba(0, 0, 0, 0.03);   /* spelled as in the Qube DS tokens */
+    --hover-subtlest: var(--hover-subtelest);
+    --hover-more-subtle: rgba(0, 0, 0, 0.05);
+    --hover-subtle: rgba(0, 0, 0, 0.1);
+    --elevation-100: 0 1px 2px 0 rgba(4, 38, 82, 0.06);
+    --elevation-200: 0 0.25rem 0.5rem 0 rgba(4, 38, 82, 0.1);
+    --elevation-300: 0 0.5rem 1rem 0 rgba(4, 38, 82, 0.1);
+    --elevation-overlay: 0 0.5rem 1.5rem 0 rgba(4, 38, 82, 0.16);
+    --elevation-sheet: 0 8px 40px rgba(0, 0, 0, 0.14), 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .dark {
@@ -91,25 +111,27 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-family);
+    font-size: 0.875rem;   /* --fontSize-size-175 */
+    line-height: 1.25rem;  /* --lineHeight-height-250 */
   }
 }
 
 @layer components {
   .glass-card {
-    @apply bg-white bg-opacity-70 backdrop-blur-lg border border-white border-opacity-20 shadow-glass rounded-lg;
+    @apply bg-card border border-border shadow-sm rounded-lg;
   }
   
   .glass-card-dark {
-    @apply bg-slate-900 bg-opacity-70 backdrop-blur-lg border border-slate-700 border-opacity-30 shadow-glass rounded-lg;
+    @apply bg-grey-900 border border-grey-700 shadow-sm rounded-lg;
   }
   
   .stat-card {
-    @apply glass-card p-6 transition-all duration-300 hover:shadow-glass-lg hover:-translate-y-1;
+    @apply glass-card p-5 transition-shadow duration-150 hover:shadow-md;
   }
   
   .stat-card-dark {
-    @apply glass-card-dark p-6 transition-all duration-300 hover:shadow-glass-lg hover:-translate-y-1;
+    @apply glass-card-dark p-5 transition-shadow duration-150 hover:shadow-md;
   }
 
   .page-transition {
@@ -117,7 +139,7 @@
   }
   
   .blur-bg {
-    @apply backdrop-blur-md bg-white bg-opacity-50 dark:bg-slate-900 dark:bg-opacity-50;
+    @apply bg-card dark:bg-grey-900;
   }
   
   .nav-item {
