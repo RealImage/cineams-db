@@ -10,13 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { WireTAPDevice } from "@/types/wireTAP";
 
 interface PullOutDeviceDialogProps {
@@ -79,18 +73,13 @@ export const PullOutDeviceDialog = ({
             <Label htmlFor="reason">
               Reason for Pull Out <span className="text-destructive">*</span>
             </Label>
-            <Select value={reason} onValueChange={setReason}>
-              <SelectTrigger id="reason">
-                <SelectValue placeholder="Select a reason" />
-              </SelectTrigger>
-              <SelectContent className="bg-background border">
-                {pullOutReasons.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="reason"
+              value={reason}
+              onChange={(value) => setReason(value ?? "")}
+              options={pullOutReasons.map((r) => ({ value: r, label: r }))}
+              placeholder="Select a reason"
+            />
           </div>
 
           <div className="space-y-2">

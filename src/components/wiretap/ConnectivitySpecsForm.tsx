@@ -1,13 +1,11 @@
 
 import { useState } from "react";
 import { 
-  Wifi, 
   Calendar, 
   DollarSign, 
   Info, 
   Plug, 
   Database,
-  Settings
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -20,6 +18,7 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
@@ -53,6 +52,7 @@ const ispThirdPartyHandlers = ["Handler A", "Handler B", "Handler C", "None"];
 const billingTypes = ["Prepaid", "Postpaid"];
 const billingCycles = ["Monthly", "Quarterly", "Annually"];
 const ipTypes = ["DHCP", "Static"];
+const billingDateOptions = Array.from({ length: 31 }, (_, i) => (i + 1).toString()).map((day) => ({ value: day, label: day }));
 
 const ConnectivitySpecsForm = ({ formData, onChange }: ConnectivitySpecsFormProps) => {
   const [selectedDays, setSelectedDays] = useState<string[]>(formData.restrictionDays || []);
@@ -128,38 +128,24 @@ const ConnectivitySpecsForm = ({ formData, onChange }: ConnectivitySpecsFormProp
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <Label htmlFor="theatreNetworkInterface">Theatre Network Interface</Label>
-          <Select 
-            value={formData.theatreNetworkInterface} 
-            onValueChange={(value) => onChange({ theatreNetworkInterface: value })}
-          >
-            <SelectTrigger className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <SelectValue placeholder="Select network interface" />
-            </SelectTrigger>
-            <SelectContent>
-              {networkInterfaces.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            id="theatreNetworkInterface"
+            value={formData.theatreNetworkInterface}
+            onChange={(value) => onChange({ theatreNetworkInterface: value ?? "" })}
+            options={networkInterfaces.map((o) => ({ value: o, label: o }))}
+            placeholder="Select network interface"
+          />
         </div>
         
         <div className="space-y-2">
           <Label htmlFor="connectivityType">Connectivity Type</Label>
-          <Select 
-            value={formData.connectivityType} 
-            onValueChange={(value) => onChange({ connectivityType: value })}
-          >
-            <SelectTrigger className="flex items-center gap-2">
-              <Wifi className="h-4 w-4" />
-              <SelectValue placeholder="Select connectivity type" />
-            </SelectTrigger>
-            <SelectContent>
-              {connectivityTypes.map(option => (
-                <SelectItem key={option} value={option}>{option}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            id="connectivityType"
+            value={formData.connectivityType}
+            onChange={(value) => onChange({ connectivityType: value ?? "" })}
+            options={connectivityTypes.map((o) => ({ value: o, label: o }))}
+            placeholder="Select connectivity type"
+          />
         </div>
         
         <div className="space-y-2">
@@ -225,19 +211,13 @@ const ConnectivitySpecsForm = ({ formData, onChange }: ConnectivitySpecsFormProp
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-2">
             <Label htmlFor="ispCompany">ISP Company</Label>
-            <Select 
-              value={formData.ispCompany} 
-              onValueChange={(value) => onChange({ ispCompany: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select ISP company" />
-              </SelectTrigger>
-              <SelectContent>
-                {ispCompanies.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="ispCompany"
+              value={formData.ispCompany}
+              onChange={(value) => onChange({ ispCompany: value ?? "" })}
+              options={ispCompanies.map((o) => ({ value: o, label: o }))}
+              placeholder="Select ISP company"
+            />
           </div>
           
           <div className="space-y-2">
@@ -289,36 +269,24 @@ const ConnectivitySpecsForm = ({ formData, onChange }: ConnectivitySpecsFormProp
           
           <div className="space-y-2">
             <Label htmlFor="ispEquipmentModel">ISP Equipment Model</Label>
-            <Select 
-              value={formData.ispEquipmentModel} 
-              onValueChange={(value) => onChange({ ispEquipmentModel: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select equipment model" />
-              </SelectTrigger>
-              <SelectContent>
-                {ispEquipmentModels.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="ispEquipmentModel"
+              value={formData.ispEquipmentModel}
+              onChange={(value) => onChange({ ispEquipmentModel: value ?? "" })}
+              options={ispEquipmentModels.map((o) => ({ value: o, label: o }))}
+              placeholder="Select equipment model"
+            />
           </div>
           
           <div className="space-y-2">
             <Label htmlFor="ispThirdPartyHandler">ISP Third-Party Handler</Label>
-            <Select 
-              value={formData.ispThirdPartyHandler} 
-              onValueChange={(value) => onChange({ ispThirdPartyHandler: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select third-party handler" />
-              </SelectTrigger>
-              <SelectContent>
-                {ispThirdPartyHandlers.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="ispThirdPartyHandler"
+              value={formData.ispThirdPartyHandler}
+              onChange={(value) => onChange({ ispThirdPartyHandler: value ?? "" })}
+              options={ispThirdPartyHandlers.map((o) => ({ value: o, label: o }))}
+              placeholder="Select third-party handler"
+            />
           </div>
           
           <div className="space-y-2">
@@ -404,19 +372,13 @@ const ConnectivitySpecsForm = ({ formData, onChange }: ConnectivitySpecsFormProp
           
           <div className="space-y-2">
             <Label htmlFor="billingDate">Billing Date</Label>
-            <Select 
-              value={formData.billingDate} 
-              onValueChange={(value) => onChange({ billingDate: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select billing date" />
-              </SelectTrigger>
-              <SelectContent className="max-h-60">
-                {Array.from({ length: 31 }, (_, i) => (i + 1).toString()).map(day => (
-                  <SelectItem key={day} value={day}>{day}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="billingDate"
+              value={formData.billingDate}
+              onChange={(value) => onChange({ billingDate: value ?? "" })}
+              options={billingDateOptions}
+              placeholder="Select billing date"
+            />
           </div>
           
           <div className="space-y-2">

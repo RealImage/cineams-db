@@ -18,6 +18,7 @@ import {
   nonDciTypes,
 } from "@/data/credentialsManagerData";
 import { RoleMultiSelect, TagInput } from "./form-controls";
+import { Combobox } from "@/components/ui/combobox";
 
 interface Props {
   open: boolean;
@@ -38,7 +39,6 @@ type Form = Omit<CredentialDeviceInput, "type" | "credentialFields"> & {
   fields: FieldRow[];
 };
 
-const NO_ROLE = "__none__";
 let rowSeq = 0;
 const toRow = (f: CredentialFieldDef): FieldRow => ({ ...f, rowId: `row-${++rowSeq}` });
 
@@ -148,22 +148,27 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
 
           <div className="space-y-1">
             <Label htmlFor="dm-role" className="text-xs">Role</Label>
-            <Select value={form.primaryRole ?? NO_ROLE} onValueChange={(v) => upd({ primaryRole: v === NO_ROLE ? null : v })}>
-              <SelectTrigger id="dm-role"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NO_ROLE}>None</SelectItem>
-                {deviceRoles.map((r) => <SelectItem key={r.code} value={r.code}>{r.code} — {r.description}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="dm-role"
+              value={form.primaryRole}
+              onChange={(v) => upd({ primaryRole: v })}
+              clearable
+              placeholder="None"
+              searchPlaceholder="Search roles by code or name"
+              options={deviceRoles.map((r) => ({ value: r.code, label: r.code, description: r.description }))}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="dm-type" className="text-xs">Type<Required /></Label>
-            <Select value={form.type} onValueChange={(v: DeviceType) => upd({ type: v })}>
-              <SelectTrigger id="dm-type" aria-invalid={submitted && !!errors.type}><SelectValue placeholder="Select type" /></SelectTrigger>
-              <SelectContent>
-                {deviceTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="dm-type"
+              value={form.type || null}
+              onChange={(v) => upd({ type: (v ?? "") as DeviceType | "" })}
+              placeholder="Select type"
+              searchPlaceholder="Search types"
+              aria-invalid={submitted && !!errors.type}
+              options={deviceTypes.map((t) => ({ value: t, label: t }))}
+            />
             {show(errors.type)}
           </div>
 

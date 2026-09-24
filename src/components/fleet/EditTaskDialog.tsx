@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import type { FleetTask } from "@/pages/TaskManagement";
 import { FLEET_TIMEZONES as timezones, type FleetTaskOptions } from "@/data/fleetData";
 import { useFleetTaskOptions } from "@/hooks/api/fleet";
@@ -163,19 +164,14 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
           {formData.taskType === "WireOS Update" && (
             <div className="space-y-2">
               <Label htmlFor="wireOSVersion">Target Version</Label>
-              <Select
+              <Combobox
+                id="wireOSVersion"
                 value={formData.targetVersion}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, targetVersion: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={optionsQuery.isPending ? "Loading versions…" : "Select WireOS version"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {wireOSVersions.map(version => (
-                    <SelectItem key={version} value={version}>{version}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => { if (value) setFormData(prev => ({ ...prev, targetVersion: value })); }}
+                options={wireOSVersions.map(version => ({ value: version, label: version }))}
+                placeholder={optionsQuery.isPending ? "Loading versions…" : "Select WireOS version"}
+                searchPlaceholder="Search versions…"
+              />
             </div>
           )}
 
@@ -184,37 +180,27 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
                 <Label htmlFor="agent">Agent</Label>
-                <Select
+                <Combobox
+                  id="agent"
                   value={formData.selectedAgent}
-                  onValueChange={handleAgentChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={optionsQuery.isPending ? "Loading agents…" : "Select agent"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {agents.map(agent => (
-                      <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => { if (value) handleAgentChange(value); }}
+                  options={agents.map(agent => ({ value: agent.id, label: agent.name }))}
+                  placeholder={optionsQuery.isPending ? "Loading agents…" : "Select agent"}
+                  searchPlaceholder="Search agents…"
+                />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="agentVersion">Target Version</Label>
-                <Select
+                <Combobox
+                  id="agentVersion"
                   value={formData.agentTargetVersion}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, agentTargetVersion: value }))}
+                  onChange={(value) => { if (value) setFormData(prev => ({ ...prev, agentTargetVersion: value })); }}
                   disabled={!formData.selectedAgent}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder={formData.selectedAgent ? "Select version" : "Select agent first"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedAgentData?.versions.map(version => (
-                      <SelectItem key={version} value={version}>{version}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  options={(selectedAgentData?.versions ?? []).map(version => ({ value: version, label: version }))}
+                  placeholder={formData.selectedAgent ? "Select version" : "Select agent first"}
+                  searchPlaceholder="Search versions…"
+                />
               </div>
             </div>
           )}
@@ -223,19 +209,14 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
           {formData.taskType === "Agent Deactivate" && (
             <div className="space-y-2">
               <Label htmlFor="deactivateAgent">Agent</Label>
-              <Select
+              <Combobox
+                id="deactivateAgent"
                 value={formData.selectedAgent}
-                onValueChange={handleAgentChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select agent to deactivate" />
-                </SelectTrigger>
-                <SelectContent>
-                  {agents.map(agent => (
-                    <SelectItem key={agent.id} value={agent.id}>{agent.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => { if (value) handleAgentChange(value); }}
+                options={agents.map(agent => ({ value: agent.id, label: agent.name }))}
+                placeholder="Select agent to deactivate"
+                searchPlaceholder="Search agents…"
+              />
             </div>
           )}
 
@@ -243,19 +224,14 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
           {formData.taskType === "PartnerOS Update" && (
             <div className="space-y-2">
               <Label htmlFor="partnerOSVersion">Target Version</Label>
-              <Select
+              <Combobox
+                id="partnerOSVersion"
                 value={formData.targetVersion}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, targetVersion: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={optionsQuery.isPending ? "Loading versions…" : "Select PartnerOS version"} />
-                </SelectTrigger>
-                <SelectContent>
-                  {partnerOSVersions.map(version => (
-                    <SelectItem key={version} value={version}>{version}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => { if (value) setFormData(prev => ({ ...prev, targetVersion: value })); }}
+                options={partnerOSVersions.map(version => ({ value: version, label: version }))}
+                placeholder={optionsQuery.isPending ? "Loading versions…" : "Select PartnerOS version"}
+                searchPlaceholder="Search versions…"
+              />
             </div>
           )}
 
@@ -280,19 +256,13 @@ export const EditTaskDialog = ({ open, onOpenChange, taskData, onSaveTask }: Edi
             </div>
             <div className="space-y-2">
               <Label htmlFor="timezone">Timezone</Label>
-              <Select
+              <Combobox
+                id="timezone"
                 value={formData.triggerTimezone}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, triggerTimezone: value }))}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map(tz => (
-                    <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => { if (value) setFormData(prev => ({ ...prev, triggerTimezone: value })); }}
+                options={timezones.map(tz => ({ value: tz, label: tz }))}
+                searchPlaceholder="Search timezones…"
+              />
             </div>
           </div>
 

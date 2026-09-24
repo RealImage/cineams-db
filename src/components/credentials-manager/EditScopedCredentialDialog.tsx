@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   CredentialDevice,
   CredentialValues,
@@ -97,21 +97,22 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
         <div className="grid grid-cols-1 gap-4 py-2">
           <div className="space-y-1">
             <Label className="text-xs">{scopeInfo.refLabel}</Label>
-            {optionsLoading ? (
-              <Select disabled>
-                <SelectTrigger>
-                  <SelectValue placeholder={refOptionsQuery.isError ? `Could not load ${scopeInfo.refLabel.toLowerCase()} list` : "Loading…"} />
-                </SelectTrigger>
-              </Select>
-            ) : options ? (
-              <Select value={ref} onValueChange={setRef}>
-                <SelectTrigger><SelectValue placeholder={`Select ${scopeInfo.refLabel.toLowerCase()}`} /></SelectTrigger>
-                <SelectContent>
-                  {options.map((o) => (
-                    <SelectItem key={o} value={o} disabled={o !== credential?.ref && takenRefs.includes(o)}>{o}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {options || optionsLoading ? (
+              <Combobox
+                value={ref || null}
+                onChange={(v) => setRef(v ?? "")}
+                loading={optionsLoading && !refOptionsQuery.isError}
+                disabled={refOptionsQuery.isError}
+                placeholder={refOptionsQuery.isError ? `Could not load ${scopeInfo.refLabel.toLowerCase()} list` : `Select ${scopeInfo.refLabel.toLowerCase()}`}
+                searchPlaceholder={`Search ${scopeInfo.refLabel.toLowerCase()}s`}
+                aria-label={scopeInfo.refLabel}
+                options={(options ?? []).map((o) => ({
+                  value: o,
+                  label: o,
+                  disabled: o !== credential?.ref && takenRefs.includes(o),
+                  description: o !== credential?.ref && takenRefs.includes(o) ? "Already added" : undefined,
+                }))}
+              />
             ) : (
               <Input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="e.g. ICMP-12345" />
             )}

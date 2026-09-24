@@ -24,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import {
   Table,
   TableBody,
@@ -349,19 +350,14 @@ const FLMFeeds = () => {
         onClear={clearFilters}
       >
         <FilterGroup title="Source">
-          <Select value={draft.source} onValueChange={(v) => setDraft((d) => ({ ...d, source: v }))}>
-            <SelectTrigger aria-label="Source">
-              <SelectValue placeholder="Source" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All sources</SelectItem>
-              {SOURCES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            aria-label="Source"
+            value={draft.source}
+            onChange={(v) => setDraft((d) => ({ ...d, source: v ?? "all" }))}
+            options={[{ value: "all", label: "All sources" }, ...SOURCES.map((s) => ({ value: s, label: s }))]}
+            placeholder="Source"
+            searchPlaceholder="Search sources…"
+          />
         </FilterGroup>
         <FilterGroup title="New theatre">
           <Select value={draft.isNew} onValueChange={(v) => setDraft((d) => ({ ...d, isNew: v }))}>

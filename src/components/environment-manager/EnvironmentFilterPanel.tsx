@@ -1,4 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 import { scoreRangeBins } from "@/data/environmentManagerData";
 
@@ -65,27 +66,25 @@ export const EnvironmentFilterPanel = ({
       }}
     >
       <FilterGroup title="Chain">
-        <Select value={draft.chain} onValueChange={(v) => set("chain", v)}>
-          <SelectTrigger aria-label="Chain name"><SelectValue placeholder="All chains" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All chains</SelectItem>
-            {chains.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Chain name"
+          value={draft.chain}
+          onChange={(v) => set("chain", v ?? "all")}
+          options={[{ value: "all", label: "All chains" }, ...chains.map((c) => ({ value: c, label: c }))]}
+          placeholder="All chains"
+          searchPlaceholder="Search chains…"
+        />
       </FilterGroup>
 
       <FilterGroup title="Score range">
-        <Select value={draft.scoreRange} onValueChange={(v) => set("scoreRange", v)}>
-          <SelectTrigger aria-label="Score range"><SelectValue placeholder="All ranges" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All ranges</SelectItem>
-            {scoreRangeBins.map((b) => (
-              <SelectItem key={b.label} value={b.label}>{b.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Score range"
+          value={draft.scoreRange}
+          onChange={(v) => set("scoreRange", v ?? "all")}
+          options={[{ value: "all", label: "All ranges" }, ...scoreRangeBins.map((b) => ({ value: b.label, label: b.label }))]}
+          placeholder="All ranges"
+          searchPlaceholder="Search ranges…"
+        />
       </FilterGroup>
 
       {ratingGroups.map(({ key, title }) => (

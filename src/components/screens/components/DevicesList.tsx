@@ -2,7 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { ScreenDevice } from "@/types";
 import { Plus, Trash2 } from "lucide-react";
 import { deviceManufacturersList, deviceModelsList } from "../constants";
@@ -36,38 +36,22 @@ export const DevicesList = ({
             {devices.map((device, index) => (
               <TableRow key={index}>
                 <TableCell>
-                  <Select
+                  <Combobox
+                    aria-label="Manufacturer"
                     value={device.manufacturer}
-                    onValueChange={(value) => onDeviceChange(index, "manufacturer", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Manufacturer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {deviceManufacturersList.map((manufacturer) => (
-                        <SelectItem key={manufacturer} value={manufacturer}>
-                          {manufacturer}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => onDeviceChange(index, "manufacturer", value ?? "")}
+                    options={deviceManufacturersList.map((manufacturer) => ({ value: manufacturer, label: manufacturer }))}
+                    placeholder="Select Manufacturer"
+                  />
                 </TableCell>
                 <TableCell>
-                  <Select
+                  <Combobox
+                    aria-label="Model"
                     value={device.model}
-                    onValueChange={(value) => onDeviceChange(index, "model", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {(device.manufacturer && deviceModelsList[device.manufacturer as keyof typeof deviceModelsList] || []).map((model) => (
-                        <SelectItem key={model} value={model}>
-                          {model}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => onDeviceChange(index, "model", value ?? "")}
+                    options={(device.manufacturer && deviceModelsList[device.manufacturer as keyof typeof deviceModelsList] || []).map((model) => ({ value: model, label: model }))}
+                    placeholder="Select Model"
+                  />
                 </TableCell>
                 <TableCell>
                   <Input

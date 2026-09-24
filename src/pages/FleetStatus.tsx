@@ -4,7 +4,7 @@ import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertT
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -335,19 +335,16 @@ const FleetStatus = () => {
       <div className="sticky top-0 z-10 bg-background border-b pb-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 max-w-md">
-            <Label className="text-sm text-muted-foreground mb-1 block">Select OS / Agent / App</Label>
-            <Select value={selectedImage} onValueChange={setSelectedImage} disabled={!imagesQuery.isSuccess}>
-              <SelectTrigger>
-                <SelectValue placeholder={imagesQuery.isPending ? "Loading apps…" : imagesQuery.isError ? "Could not load apps" : "Select App ▾"} />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {images.map(img => (
-                  <SelectItem key={img.id} value={img.id}>
-                    {img.agentOsName} ({img.provider})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="fleet-image-select" className="text-sm text-muted-foreground mb-1 block">Select OS / Agent / App</Label>
+            <Combobox
+              id="fleet-image-select"
+              value={selectedImage}
+              onChange={(v) => { if (v) setSelectedImage(v); }}
+              disabled={!imagesQuery.isSuccess}
+              options={images.map((img) => ({ value: img.id, label: `${img.agentOsName} (${img.provider})` }))}
+              placeholder={imagesQuery.isPending ? "Loading apps…" : imagesQuery.isError ? "Could not load apps" : "Select App ▾"}
+              searchPlaceholder="Search apps…"
+            />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
@@ -453,13 +450,14 @@ const FleetStatus = () => {
             </FilterGroup>
 
             <FilterGroup title="Theatre chain">
-              <Select value={draft.chain || "all"} onValueChange={(v) => setDraft(d => ({ ...d, chain: v === "all" ? "" : v }))}>
-                <SelectTrigger aria-label="Theatre chain"><SelectValue placeholder="All chains" /></SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  <SelectItem value="all">All chains</SelectItem>
-                  {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                aria-label="Theatre chain"
+                value={draft.chain || "all"}
+                onChange={(v) => setDraft(d => ({ ...d, chain: !v || v === "all" ? "" : v }))}
+                options={[{ value: "all", label: "All chains" }, ...uniqueValues.chains.map((c) => ({ value: c, label: c }))]}
+                placeholder="All chains"
+                searchPlaceholder="Search chains…"
+              />
             </FilterGroup>
 
             <FilterGroup title="Theatre name">

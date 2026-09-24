@@ -37,6 +37,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { MoreHorizontal, Star, Eye, Copy, AlertTriangle, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
@@ -356,19 +357,14 @@ const ManageVersions = () => {
           </Select>
         </FilterGroup>
         <FilterGroup title="Added by">
-          <Select value={draft.addedBy} onValueChange={(v) => setDraft((d) => ({ ...d, addedBy: v }))}>
-            <SelectTrigger aria-label="Added by">
-              <SelectValue placeholder="Added by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Anyone</SelectItem>
-              {addedByOptions.map((name) => (
-                <SelectItem key={name} value={name}>
-                  {name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            aria-label="Added by"
+            value={draft.addedBy}
+            onChange={(v) => setDraft((d) => ({ ...d, addedBy: v ?? "all" }))}
+            options={[{ value: "all", label: "Anyone" }, ...addedByOptions.map((name) => ({ value: name, label: name }))]}
+            placeholder="Added by"
+            searchPlaceholder="Search people…"
+          />
         </FilterGroup>
         <FilterGroup title="Release date">
           <div className="grid grid-cols-2 gap-2">

@@ -10,13 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FlmFeed } from "@/data/flmFeedsData";
 import { useToast } from "@/hooks/use-toast";
 import { useMapFlmThirdPartyId } from "@/hooks/api/flm";
@@ -89,18 +83,13 @@ export const MapThirdPartyIdDialog = ({ feed, onClose }: MapThirdPartyIdDialogPr
             </div>
             <div className="space-y-2">
               <Label htmlFor="flm-domain">Domain</Label>
-              <Select value={domain} onValueChange={setDomain}>
-                <SelectTrigger id="flm-domain">
-                  <SelectValue placeholder="Select domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {domainOptions.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="flm-domain"
+                value={domain}
+                onChange={(value) => setDomain(value ?? "")}
+                options={domainOptions.map((d) => ({ value: d, label: d }))}
+                placeholder="Select domain"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="flm-id">ID</Label>

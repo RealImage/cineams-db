@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RichTextEditor } from "@/components/ui/rich-text-editor";
 import { 
@@ -68,6 +69,35 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { MoreHorizontal, Eye, LogOut } from "lucide-react";
 
 // WireTAP Appliances Section Component
+const theatreTypeOptions = [
+  "Amusement Park",
+  "Cemetery",
+  "Church",
+  "College / University",
+  "Complex",
+  "Conference / Exhibition",
+  "Cruise Shop",
+  "Dine-in",
+  "Drive-in",
+  "Film Festival",
+  "Home / Residence",
+  "Hotel",
+  "Karaoke",
+  "Lab",
+  "Multiplex",
+  "Multipurpose Facility",
+  "Needs Review",
+  "Offices",
+  "Open Air Theatre",
+  "Pop-up",
+  "Screening Room",
+  "Single Screen",
+  "VR Zone",
+  "Yacht",
+].map((t) => ({ value: t, label: t }));
+
+const weekDayOptions = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => ({ value: d, label: d }));
+
 const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
   const [showPulledOut, setShowPulledOut] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -777,40 +807,13 @@ export const TheatreDialog = ({
                 
                 <div className="space-y-2">
                   <Label htmlFor="theatreType">Theatre Type</Label>
-                  <Select
+                  <Combobox
+                    id="theatreType"
                     value={formData.type || ""}
-                    onValueChange={(value) => handleSelectChange("type", value)}
-                  >
-                    <SelectTrigger id="theatreType">
-                      <SelectValue placeholder="Select theatre type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Amusement Park">Amusement Park</SelectItem>
-                      <SelectItem value="Cemetery">Cemetery</SelectItem>
-                      <SelectItem value="Church">Church</SelectItem>
-                      <SelectItem value="College / University">College / University</SelectItem>
-                      <SelectItem value="Complex">Complex</SelectItem>
-                      <SelectItem value="Conference / Exhibition">Conference / Exhibition</SelectItem>
-                      <SelectItem value="Cruise Shop">Cruise Shop</SelectItem>
-                      <SelectItem value="Dine-in">Dine-in</SelectItem>
-                      <SelectItem value="Drive-in">Drive-in</SelectItem>
-                      <SelectItem value="Film Festival">Film Festival</SelectItem>
-                      <SelectItem value="Home / Residence">Home / Residence</SelectItem>
-                      <SelectItem value="Hotel">Hotel</SelectItem>
-                      <SelectItem value="Karaoke">Karaoke</SelectItem>
-                      <SelectItem value="Lab">Lab</SelectItem>
-                      <SelectItem value="Multiplex">Multiplex</SelectItem>
-                      <SelectItem value="Multipurpose Facility">Multipurpose Facility</SelectItem>
-                      <SelectItem value="Needs Review">Needs Review</SelectItem>
-                      <SelectItem value="Offices">Offices</SelectItem>
-                      <SelectItem value="Open Air Theatre">Open Air Theatre</SelectItem>
-                      <SelectItem value="Pop-up">Pop-up</SelectItem>
-                      <SelectItem value="Screening Room">Screening Room</SelectItem>
-                      <SelectItem value="Single Screen">Single Screen</SelectItem>
-                      <SelectItem value="VR Zone">VR Zone</SelectItem>
-                      <SelectItem value="Yacht">Yacht</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    onChange={(value) => handleSelectChange("type", value ?? "")}
+                    options={theatreTypeOptions}
+                    placeholder="Select theatre type"
+                  />
                 </div>
               </div>
 
@@ -820,23 +823,19 @@ export const TheatreDialog = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="chainName">Chain Name</Label>
-                    <Select
+                    <Combobox
+                      id="chainName"
                       value={formData.chainId || ""}
-                      onValueChange={(value) => {
+                      onChange={(value) => {
                         const chain = chainsQuery.data?.find((c) => c.id === value);
-                        handleSelectChange("chainId", value);
+                        handleSelectChange("chainId", value ?? "");
                         handleSelectChange("chainName", chain?.name ?? "");
                       }}
-                    >
-                      <SelectTrigger id="chainName">
-                        <SelectValue placeholder={chainsQuery.isPending ? "Loading chains…" : "Select chain"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(chainsQuery.data ?? []).map((chain) => (
-                          <SelectItem key={chain.id} value={chain.id}>{chain.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={(chainsQuery.data ?? []).map((chain) => ({ value: chain.id, label: chain.name }))}
+                      placeholder="Select chain"
+                      searchPlaceholder="Search chains…"
+                      loading={chainsQuery.isPending}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="chainId">Chain ID</Label>
@@ -853,23 +852,19 @@ export const TheatreDialog = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="companyName">Company Name</Label>
-                    <Select
+                    <Combobox
+                      id="companyName"
                       value={formData.companyId || ""}
-                      onValueChange={(value) => {
+                      onChange={(value) => {
                         const company = companiesQuery.data?.find((c) => c.id === value);
-                        handleSelectChange("companyId", value);
+                        handleSelectChange("companyId", value ?? "");
                         handleSelectChange("companyName", company?.name ?? "");
                       }}
-                    >
-                      <SelectTrigger id="companyName">
-                        <SelectValue placeholder={companiesQuery.isPending ? "Loading companies…" : "Select company"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {(companiesQuery.data ?? []).map((company) => (
-                          <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      options={(companiesQuery.data ?? []).map((company) => ({ value: company.id, label: company.name }))}
+                      placeholder="Select company"
+                      searchPlaceholder="Search companies…"
+                      loading={companiesQuery.isPending}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="companyId">Company ID</Label>
@@ -1568,27 +1563,17 @@ export const TheatreDialog = ({
                           {formData.deliveryTimeSlots.map((slot) => (
                             <TableRow key={slot.id}>
                               <TableCell>
-                                <Select
+                                <Combobox
+                                  aria-label="Day"
                                   value={slot.day}
-                                  onValueChange={(value) => handleDeliveryTimeSlotChange(
+                                  onChange={(value) => handleDeliveryTimeSlotChange(
                                     slot.id, 
                                     "day", 
-                                    value
+                                    value ?? ""
                                   )}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select day" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="Monday">Monday</SelectItem>
-                                    <SelectItem value="Tuesday">Tuesday</SelectItem>
-                                    <SelectItem value="Wednesday">Wednesday</SelectItem>
-                                    <SelectItem value="Thursday">Thursday</SelectItem>
-                                    <SelectItem value="Friday">Friday</SelectItem>
-                                    <SelectItem value="Saturday">Saturday</SelectItem>
-                                    <SelectItem value="Sunday">Sunday</SelectItem>
-                                  </SelectContent>
-                                </Select>
+                                  options={weekDayOptions}
+                                  placeholder="Select day"
+                                />
                               </TableCell>
                               <TableCell>
                                 <Input 

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
@@ -39,22 +39,22 @@ export const QubeAcsFilterPanel = ({ open, onOpenChange, chains, locations, filt
       onClear={() => { setDraft(emptyQubeAcsFilters); onClear(); }}
     >
       <FilterGroup title="Chain">
-        <Select value={draft.chain} onValueChange={(v) => set({ chain: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All chains</SelectItem>
-            {chains.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Chain"
+          value={draft.chain}
+          onChange={(v) => set({ chain: v ?? "all" })}
+          options={[{ value: "all", label: "All chains" }, ...chains.map((c) => ({ value: c, label: c }))]}
+          searchPlaceholder="Search chains…"
+        />
       </FilterGroup>
       <FilterGroup title="Location">
-        <Select value={draft.location} onValueChange={(v) => set({ location: v })}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All locations</SelectItem>
-            {locations.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Location"
+          value={draft.location}
+          onChange={(v) => set({ location: v ?? "all" })}
+          options={[{ value: "all", label: "All locations" }, ...locations.map((l) => ({ value: l, label: l }))]}
+          searchPlaceholder="Search locations…"
+        />
       </FilterGroup>
       <FilterGroup title="Last updated">
         <div className="grid grid-cols-2 gap-2">

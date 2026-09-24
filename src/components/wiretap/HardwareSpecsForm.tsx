@@ -3,6 +3,7 @@ import { useState } from "react";
 import { HardDrive, Database, Smartphone, Info, MoreVertical, Eye, Edit, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
 import EditAgentConfigDialog from "./EditAgentConfigDialog";
 import { 
   Select, 
@@ -104,20 +105,13 @@ const HardwareSpecsForm = ({ formData, onChange }: HardwareSpecsFormProps) => {
                 </Tooltip>
               </TooltipProvider>
             </div>
-            <Select 
-              value={formData.storage} 
-              onValueChange={(value) => onChange({ storage: value })}
-            >
-              <SelectTrigger className="flex items-center gap-2">
-                <HardDrive className="h-4 w-4" />
-                <SelectValue placeholder="Select storage capacity" />
-              </SelectTrigger>
-              <SelectContent>
-                {storageOptions.map(option => (
-                  <SelectItem key={option} value={option}>{option}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Combobox
+              id="storage"
+              value={formData.storage}
+              onChange={(value) => onChange({ storage: value ?? "" })}
+              options={storageOptions.map((o) => ({ value: o, label: o }))}
+              placeholder="Select storage capacity"
+            />
           </div>
           
           <div className="space-y-2">

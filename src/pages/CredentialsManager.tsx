@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
+import { Combobox } from "@/components/ui/combobox";
 import { formatDateTime } from "@/lib/dateUtils";
 import {
   CredentialDeviceInput,
@@ -167,6 +168,16 @@ const CredentialsManager = () => {
       </SelectContent>
     </Select>
   );
+  // Searchable picker for the longer lists (brand, type)
+  const filterCombobox = (key: keyof Filters, placeholder: string, label: string, options: { value: string; label: string }[]) => (
+    <Combobox
+      aria-label={label}
+      value={draft[key]}
+      onChange={(v) => setDraft((f) => ({ ...f, [key]: v ?? ALL }))}
+      options={[{ value: ALL, label: placeholder }, ...options]}
+      searchPlaceholder={`Search ${label.toLowerCase()}s`}
+    />
+  );
 
   return (
     <motion.div
@@ -218,10 +229,10 @@ const CredentialsManager = () => {
         onClear={() => { setDraft(emptyFilters); setFilters(emptyFilters); }}
       >
         <FilterGroup title="Brand">
-          {filterSelect("brand", "All brands", brands.map((b) => ({ value: b, label: b })))}
+          {filterCombobox("brand", "All brands", "Brand", brands.map((b) => ({ value: b, label: b })))}
         </FilterGroup>
         <FilterGroup title="Type">
-          {filterSelect("type", "All types", deviceTypes.map((t) => ({ value: t, label: t })))}
+          {filterCombobox("type", "All types", "Type", deviceTypes.map((t) => ({ value: t, label: t })))}
         </FilterGroup>
         <FilterGroup title="DCI compliant">
           {filterSelect("dci", "Any", dciOptions.map((d) => ({ value: d, label: d === "NA" ? "NA" : d === "true" ? "True" : "False" })))}

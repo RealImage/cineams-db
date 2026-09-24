@@ -1,4 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 
 export interface ProjectionFilters {
@@ -47,8 +48,8 @@ export const ProjectionFilterPanel = ({
         onClear();
       }}
     >
-      <FilterSelect title="Chain" value={draft.chain} onChange={(v) => set("chain", v)} options={chains} />
-      <FilterSelect title="Location" value={draft.location} onChange={(v) => set("location", v)} options={locations} />
+      <FilterCombobox title="Chain" value={draft.chain} onChange={(v) => set("chain", v)} options={chains} />
+      <FilterCombobox title="Location" value={draft.location} onChange={(v) => set("location", v)} options={locations} />
       <FilterSelect
         title="Score range"
         value={draft.scoreRange}
@@ -73,6 +74,23 @@ export const ProjectionFilterPanel = ({
     </FilterDrawer>
   );
 };
+
+/** Searchable variant for data-driven lists (chains, locations). */
+const FilterCombobox = ({
+  title, value, onChange, options,
+}: {
+  title: string; value: string; onChange: (v: string) => void; options: string[];
+}) => (
+  <FilterGroup title={title}>
+    <Combobox
+      aria-label={title}
+      value={value}
+      onChange={(v) => onChange(v ?? "all")}
+      options={[{ value: "all", label: "All" }, ...options.map((o) => ({ value: o, label: o }))]}
+      searchPlaceholder={`Search ${title.toLowerCase()}…`}
+    />
+  </FilterGroup>
+);
 
 const FilterSelect = ({
   title, value, onChange, options, optionLabels,

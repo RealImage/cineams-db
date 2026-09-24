@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -119,21 +119,13 @@ export const TemporaryClosuresTab = ({
         </div>
         <div className="space-y-2">
           <Label htmlFor="tempClosureReason">Reason (Required)</Label>
-          <Select
+          <Combobox
+            id="tempClosureReason"
             value={tempClosureReason}
-            onValueChange={setTempClosureReason}
-          >
-            <SelectTrigger id="tempClosureReason">
-              <SelectValue placeholder="Select reason" />
-            </SelectTrigger>
-            <SelectContent>
-              {tempClosureReasonsList.map((reason) => (
-                <SelectItem key={reason} value={reason}>
-                  {reason}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            onChange={(value) => setTempClosureReason(value ?? "")}
+            options={tempClosureReasonsList.map((reason) => ({ value: reason, label: reason }))}
+            placeholder="Select reason"
+          />
         </div>
         <div className="space-y-2">
           <Label htmlFor="tempClosureNotes">Notes</Label>

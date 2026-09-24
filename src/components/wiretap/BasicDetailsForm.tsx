@@ -5,6 +5,7 @@ import { format } from "date-fns";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Combobox } from "@/components/ui/combobox";
 import { 
   Select, 
   SelectContent, 
@@ -129,19 +130,13 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
               </TooltipContent>
             </Tooltip>
           </div>
-          <Select 
-            value={formData.applianceType} 
-            onValueChange={(value) => onChange({ applianceType: value })}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select appliance type" />
-            </SelectTrigger>
-            <SelectContent className="z-50 bg-background">
-              {applianceTypes.map(type => (
-                <SelectItem key={type} value={type}>{type}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Combobox
+            id="applianceType"
+            value={formData.applianceType}
+            onChange={(value) => onChange({ applianceType: value ?? "" })}
+            options={applianceTypes.map((o) => ({ value: o, label: o }))}
+            placeholder="Select appliance type"
+          />
         </div>
         
         <div className="space-y-2">

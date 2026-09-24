@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
@@ -104,15 +105,13 @@ export const TDLFilterPanel = ({ open, onOpenChange, devices, filters, onApply, 
     setDraft((prev) => withFilter(prev, key, value));
 
   const renderSelect = (key: "manufacturer" | "deviceRole" | "source", field: keyof TDLDevice) => (
-    <Select value={draft[key] || "all"} onValueChange={(v) => handleChange(key, v)}>
-      <SelectTrigger><SelectValue placeholder="All" /></SelectTrigger>
-      <SelectContent>
-        <SelectItem value="all">All</SelectItem>
-        {getUniqueValues(field).map((v) => (
-          <SelectItem key={v} value={v}>{v}</SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Combobox
+      aria-label={FILTER_LABELS[key]}
+      value={draft[key] || "all"}
+      onChange={(v) => handleChange(key, v ?? "all")}
+      options={[{ value: "all", label: "All" }, ...getUniqueValues(field).map((v) => ({ value: v, label: v }))]}
+      placeholder="All"
+    />
   );
 
   const renderYesNo = (key: "certificateAutoSync" | "retired") => (

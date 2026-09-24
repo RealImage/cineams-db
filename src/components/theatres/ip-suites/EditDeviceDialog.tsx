@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Switch } from "@/components/ui/switch";
 
 interface ScreenDevice {
@@ -184,19 +185,14 @@ export const EditDeviceDialog = ({ open, onOpenChange, device, onSave }: EditDev
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="deviceRole">Device Role *</Label>
-                <Select
+                <Combobox
+                  id="deviceRole"
                   value={formData.deviceRole}
-                  onValueChange={(value) => handleChange("deviceRole", value)}
-                >
-                  <SelectTrigger className={errors.deviceRole ? "border-destructive" : ""}>
-                    <SelectValue placeholder="Select device role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {deviceRoles.map((role) => (
-                      <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  onChange={(value) => handleChange("deviceRole", value ?? "")}
+                  options={deviceRoles.map((role) => ({ value: role, label: role }))}
+                  placeholder="Select device role"
+                  aria-invalid={!!errors.deviceRole}
+                />
                 {errors.deviceRole && (
                   <p className="text-sm text-destructive">{errors.deviceRole}</p>
                 )}
