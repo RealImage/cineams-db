@@ -12,6 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { IcountCamera, IcountScreen, makeEmptyCamera } from "@/data/icountData";
 import EditIcountCameraDialog from "./EditIcountCameraDialog";
+import type { IcountCamerasInput } from "@/hooks/api/icount";
 
 const LIST_PATH = "/qube-appliances/icount-cameras";
 
@@ -24,6 +25,9 @@ interface Props {
   longitude: number;
   initialScreens: IcountScreen[];
   successMessage: string;
+  /** Persist the edited theatre; rejects with the API error. */
+  onSave: (input: IcountCamerasInput) => Promise<unknown>;
+  saving?: boolean;
 }
 
 const Field = ({ label, value }: { label: string; value?: React.ReactNode }) => (
@@ -34,7 +38,7 @@ const Field = ({ label, value }: { label: string; value?: React.ReactNode }) => 
 );
 
 export const IcountTheatreEditor = ({
-  heading, theatreName, theatreId, location, latitude, longitude, initialScreens, successMessage,
+  heading, theatreName, theatreId, location, latitude, longitude, initialScreens, successMessage, onSave: save, saving,
 }: Props) => {
   const navigate = useNavigate();
   const [editDetails, setEditDetails] = useState(false);
@@ -69,8 +73,13 @@ export const IcountTheatreEditor = ({
     });
 
   const onSave = () => {
-    toast.success(successMessage);
-    navigate(LIST_PATH);
+    save({ ...details, screens }).then(
+      () => {
+        toast.success(successMessage);
+        navigate(LIST_PATH);
+      },
+      (err: Error) => toast.error(`Could not save ${theatreName}: ${err.message}`),
+    );
   };
 
   return (
@@ -87,7 +96,7 @@ export const IcountTheatreEditor = ({
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate(LIST_PATH)}>Cancel</Button>
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onSave} disabled={saving}>{saving ? "Saving…" : "Save"}</Button>
         </div>
       </div>
 

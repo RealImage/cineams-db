@@ -10,15 +10,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FlmFeed } from "@/data/flmFeedsData";
 import { useToast } from "@/hooks/use-toast";
+import { useMapFlmThirdPartyId } from "@/hooks/api/flm";
 
 const domainOptions = [
   "amcnetworks.com",
@@ -50,15 +45,25 @@ export const MapThirdPartyIdDialog = ({ feed, onClose }: MapThirdPartyIdDialogPr
   const [domain, setDomain] = useState("");
   const [identifier, setIdentifier] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const mapId = useMapFlmThirdPartyId();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Third-party ID mapped",
-      description: `${domain}:${identifier} mapped to ${feed?.theatreName}.`,
-    });
-    setDomain("");
-    setIdentifier("");
-    onClose();
+    if (!feed) return;
+    try {
+      const result = await mapId.mutateAsync({ feedId: feed.id, domain, externalId: identifier.trim() });
+      toast({
+        title: "Third-party ID mapped",
+        description: result.mappedTo === "theatre"
+          ? `${domain}:${identifier} mapped to ${feed.theatreName}.`
+          : `${domain}:${identifier} saved; it will be added to the theatre when this feed is mapped.`,
+      });
+      setDomain("");
+      setIdentifier("");
+      onClose();
+    } catch (err) {
+      toast({ title: "Could not map ID", description: (err as Error).message, variant: "destructive" });
+    }
   };
 
   return (
@@ -78,18 +83,13 @@ export const MapThirdPartyIdDialog = ({ feed, onClose }: MapThirdPartyIdDialogPr
             </div>
             <div className="space-y-2">
               <Label htmlFor="flm-domain">Domain</Label>
-              <Select value={domain} onValueChange={setDomain}>
-                <SelectTrigger id="flm-domain">
-                  <SelectValue placeholder="Select domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {domainOptions.map((d) => (
-                    <SelectItem key={d} value={d}>
-                      {d}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Combobox
+                id="flm-domain"
+                value={domain}
+                onChange={(value) => setDomain(value ?? "")}
+                options={domainOptions.map((d) => ({ value: d, label: d }))}
+                placeholder="Select domain"
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="flm-id">ID</Label>
@@ -106,8 +106,8 @@ export const MapThirdPartyIdDialog = ({ feed, onClose }: MapThirdPartyIdDialogPr
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!domain || !identifier}>
-              Map ID
+            <Button type="submit" disabled={!domain || !identifier.trim() || mapId.isPending}>
+              {mapId.isPending ? "Mapping…" : "Map ID"}
             </Button>
           </DialogFooter>
         </form>

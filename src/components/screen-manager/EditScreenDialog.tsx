@@ -13,15 +13,17 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { ScreenRecord } from "@/data/screenManagerData";
 import { toast } from "sonner";
+import { useUpdatePulseScreen } from "@/hooks/api/screenPulse";
 
 interface EditScreenDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   screen: ScreenRecord | null;
-  onSave: (updated: ScreenRecord) => void;
+  onSaved?: (updated: ScreenRecord) => void;
 }
 
-export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScreenDialogProps) => {
+export const EditScreenDialog = ({ open, onOpenChange, screen, onSaved }: EditScreenDialogProps) => {
+  const updateScreen = useUpdatePulseScreen();
   const [pulseInstalled, setPulseInstalled] = useState(false);
   const [pulseSerial, setPulseSerial] = useState("");
   const [pulseDate, setPulseDate] = useState<Date | undefined>();
@@ -47,21 +49,27 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
 
   const handleSave = () => {
     if (!screen) return;
-    onSave({
-      ...screen,
-      pulseInstalled,
-      pulseSerialNumber: pulseInstalled ? pulseSerial : undefined,
-      pulseInstalledOn: pulseInstalled && pulseDate ? pulseDate.toISOString() : undefined,
-      pulseInstalledBy: pulseInstalled ? pulseBy : undefined,
-      lionisInstalled,
-      lionisSerialNumber: lionisInstalled ? lionisSerial : undefined,
-      lionisInstalledOn: lionisInstalled && lionisDate ? lionisDate.toISOString() : undefined,
-      lionisInstalledBy: lionisInstalled ? lionisBy : undefined,
-      updatedOn: new Date().toISOString(),
-      updatedBy: "Current User",
-    });
-    toast.success("Screen updated successfully");
-    onOpenChange(false);
+    updateScreen.mutate(
+      {
+        id: screen.id,
+        pulseInstalled,
+        pulseSerialNumber: pulseInstalled ? pulseSerial : undefined,
+        pulseInstalledOn: pulseInstalled && pulseDate ? pulseDate.toISOString() : undefined,
+        pulseInstalledBy: pulseInstalled ? pulseBy : undefined,
+        lionisInstalled,
+        lionisSerialNumber: lionisInstalled ? lionisSerial : undefined,
+        lionisInstalledOn: lionisInstalled && lionisDate ? lionisDate.toISOString() : undefined,
+        lionisInstalledBy: lionisInstalled ? lionisBy : undefined,
+      },
+      {
+        onSuccess: (updated) => {
+          toast.success("Screen updated successfully");
+          onSaved?.(updated);
+          onOpenChange(false);
+        },
+        onError: (err) => toast.error(`Could not update screen: ${err.message}`),
+      },
+    );
   };
 
   if (!screen) return null;
@@ -170,7 +178,9 @@ export const EditScreenDialog = ({ open, onOpenChange, screen, onSave }: EditScr
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave}>Save Changes</Button>
+          <Button onClick={handleSave} disabled={updateScreen.isPending}>
+            {updateScreen.isPending ? "Saving…" : "Save Changes"}
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -26,120 +26,13 @@ import {
 } from "@/components/ui/dialog";
 import { DataTable } from "@/components/ui/data-table";
 import { Column, Action } from "@/components/ui/data-table/types";
-import { FleetTask } from "./TaskManagement";
+import type { FleetTask, FleetTaskDetail, TaskApplianceProgress } from "@/data/fleetData";
+import { QueryState } from "@/components/ui/query-state";
+import { useCancelTaskAppliance, useFleetTask } from "@/hooks/api/fleet";
+import { formatDate, formatDateTime } from "@/lib/dateUtils";
+import { toast } from "sonner";
 
-interface TaskAppliance {
-  id: string;
-  applianceSerialNumber: string;
-  hardwareSerialNumber: string;
-  nodeId: string;
-  clusterId: string;
-  theatreName: string;
-  chainName: string;
-  updateStatus: "Pending" | "In Progress" | "Completed" | "Failed";
-  updatedOn: string | null;
-  attemptLogs: AttemptLog[];
-}
-
-interface AttemptLog {
-  attemptNumber: number;
-  timestamp: string;
-  status: "Success" | "Failed";
-  message: string;
-}
-
-// Mock data for appliances
-const mockAppliances: TaskAppliance[] = [
-  {
-    id: "1",
-    applianceSerialNumber: "APP-2024-001",
-    hardwareSerialNumber: "HW-A1B2C3D4",
-    nodeId: "NODE-001",
-    clusterId: "CLUSTER-A",
-    theatreName: "AMC Empire 25",
-    chainName: "AMC Theatres",
-    updateStatus: "Completed",
-    updatedOn: "2024-01-15 10:45",
-    attemptLogs: [
-      { attemptNumber: 1, timestamp: "2024-01-15 10:30", status: "Success", message: "Update completed successfully" },
-    ],
-  },
-  {
-    id: "2",
-    applianceSerialNumber: "APP-2024-002",
-    hardwareSerialNumber: "HW-E5F6G7H8",
-    nodeId: "NODE-002",
-    clusterId: "CLUSTER-A",
-    theatreName: "AMC Lincoln Square 13",
-    chainName: "AMC Theatres",
-    updateStatus: "In Progress",
-    updatedOn: "2024-01-15 10:35",
-    attemptLogs: [
-      { attemptNumber: 1, timestamp: "2024-01-15 10:30", status: "Failed", message: "Connection timeout" },
-      { attemptNumber: 2, timestamp: "2024-01-15 10:35", status: "Failed", message: "Package verification failed" },
-    ],
-  },
-  {
-    id: "3",
-    applianceSerialNumber: "APP-2024-003",
-    hardwareSerialNumber: "HW-I9J0K1L2",
-    nodeId: "NODE-003",
-    clusterId: "CLUSTER-B",
-    theatreName: "Regal Union Square",
-    chainName: "Regal Cinemas",
-    updateStatus: "Failed",
-    updatedOn: "2024-01-15 11:20",
-    attemptLogs: [
-      { attemptNumber: 1, timestamp: "2024-01-15 10:30", status: "Failed", message: "Connection timeout" },
-      { attemptNumber: 2, timestamp: "2024-01-15 10:40", status: "Failed", message: "Disk space insufficient" },
-      { attemptNumber: 3, timestamp: "2024-01-15 10:50", status: "Failed", message: "Connection refused" },
-      { attemptNumber: 4, timestamp: "2024-01-15 11:00", status: "Failed", message: "Service unavailable" },
-      { attemptNumber: 5, timestamp: "2024-01-15 11:10", status: "Failed", message: "Maximum retries exceeded" },
-      { attemptNumber: 6, timestamp: "2024-01-15 11:20", status: "Failed", message: "Final attempt failed - marked as failed" },
-    ],
-  },
-  {
-    id: "4",
-    applianceSerialNumber: "APP-2024-004",
-    hardwareSerialNumber: "HW-M3N4O5P6",
-    nodeId: "NODE-004",
-    clusterId: "CLUSTER-B",
-    theatreName: "Cinemark Century City",
-    chainName: "Cinemark",
-    updateStatus: "Pending",
-    updatedOn: null,
-    attemptLogs: [],
-  },
-  {
-    id: "5",
-    applianceSerialNumber: "APP-2024-005",
-    hardwareSerialNumber: "HW-Q7R8S9T0",
-    nodeId: "NODE-005",
-    clusterId: "CLUSTER-C",
-    theatreName: "Landmark Sunshine Cinema",
-    chainName: "Landmark Theatres",
-    updateStatus: "Completed",
-    updatedOn: "2024-01-15 10:32",
-    attemptLogs: [
-      { attemptNumber: 1, timestamp: "2024-01-15 10:30", status: "Success", message: "Update completed successfully" },
-    ],
-  },
-  {
-    id: "6",
-    applianceSerialNumber: "APP-2024-006",
-    hardwareSerialNumber: "HW-U1V2W3X4",
-    nodeId: "NODE-006",
-    clusterId: "CLUSTER-C",
-    theatreName: "Marcus Majestic Cinema",
-    chainName: "Marcus Theatres",
-    updateStatus: "In Progress",
-    updatedOn: "2024-01-15 10:38",
-    attemptLogs: [
-      { attemptNumber: 1, timestamp: "2024-01-15 10:30", status: "Failed", message: "Network error" },
-      { attemptNumber: 2, timestamp: "2024-01-15 10:38", status: "Failed", message: "Retrying..." },
-    ],
-  },
-];
+type TaskAppliance = TaskApplianceProgress;
 
 const getStatusColor = (status: TaskAppliance["updateStatus"]): string => {
   switch (status) {
@@ -151,6 +44,8 @@ const getStatusColor = (status: TaskAppliance["updateStatus"]): string => {
       return "bg-red-500/10 text-red-500 border-red-500/20";
     case "Pending":
       return "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+    case "Cancelled":
+      return "bg-gray-500/10 text-gray-500 border-gray-500/20";
     default:
       return "";
   }
@@ -177,9 +72,30 @@ const FleetTaskView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const taskData = location.state?.task as FleetTask | undefined;
+  const summary = location.state?.task as FleetTask | undefined;
+  const taskQuery = useFleetTask(id);
 
-  const [appliances] = useState<TaskAppliance[]>(mockAppliances);
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+          <ArrowLeft className="h-5 w-5" />
+        </Button>
+        <p className="text-muted-foreground">
+          Task {taskQuery.data?.taskId ?? summary?.taskId ?? ""} - View task details and device update status
+        </p>
+      </div>
+      <QueryState query={taskQuery} label="task">
+        {(task) => <FleetTaskViewContent task={task} />}
+      </QueryState>
+    </div>
+  );
+};
+
+const FleetTaskViewContent = ({ task }: { task: FleetTaskDetail }) => {
+  const appliances = task.appliances;
+  const cancelAppliance = useCancelTaskAppliance(task.id);
   const [logsDialogOpen, setLogsDialogOpen] = useState(false);
   const [selectedAppliance, setSelectedAppliance] = useState<TaskAppliance | null>(null);
   const [showAllLogs, setShowAllLogs] = useState(false);
@@ -187,7 +103,7 @@ const FleetTaskView = () => {
   // Get unique values for filters
   const clusterIds = [...new Set(appliances.map(a => a.clusterId))];
   const chainNames = [...new Set(appliances.map(a => a.chainName))];
-  const statusOptions = ["Pending", "In Progress", "Completed", "Failed"];
+  const statusOptions = ["Pending", "In Progress", "Completed", "Failed", "Cancelled"];
 
   // Define columns for the DataTable
   const deviceColumns: Column<TaskAppliance>[] = [
@@ -242,7 +158,7 @@ const FleetTaskView = () => {
     {
       accessor: "updatedOn",
       header: "Updated On",
-      cell: (appliance) => appliance.updatedOn || "-",
+      cell: (appliance) => (appliance.updatedOn ? formatDateTime(appliance.updatedOn) : "-"),
     },
   ];
 
@@ -253,10 +169,13 @@ const FleetTaskView = () => {
   const inProgressCount = appliances.filter(a => a.updateStatus === "In Progress").length;
   const pendingCount = appliances.filter(a => a.updateStatus === "Pending").length;
 
-  const completedPercentage = (completedCount / totalDevices) * 100;
-  const failedPercentage = (failedCount / totalDevices) * 100;
-  const inProgressPercentage = (inProgressCount / totalDevices) * 100;
-  const pendingPercentage = (pendingCount / totalDevices) * 100;
+  const cancelledCount = appliances.filter(a => a.updateStatus === "Cancelled").length;
+  const pct = (n: number) => (totalDevices ? (n / totalDevices) * 100 : 0);
+  const completedPercentage = pct(completedCount);
+  const failedPercentage = pct(failedCount);
+  const inProgressPercentage = pct(inProgressCount);
+  const pendingPercentage = pct(pendingCount);
+  const cancelledPercentage = pct(cancelledCount);
 
   const handleViewLogs = (appliance: TaskAppliance) => {
     setSelectedAppliance(appliance);
@@ -265,8 +184,10 @@ const FleetTaskView = () => {
   };
 
   const handleCancelDevice = (appliance: TaskAppliance) => {
-    console.log("Cancel update for device:", appliance.applianceSerialNumber);
-    // Implement cancel logic here
+    cancelAppliance.mutate(appliance.id, {
+      onSuccess: () => toast.success(`Update cancelled for ${appliance.applianceSerialNumber}`),
+      onError: (err) => toast.error(`Could not cancel ${appliance.applianceSerialNumber}: ${err.message}`),
+    });
   };
 
   const displayedLogs = selectedAppliance
@@ -275,33 +196,8 @@ const FleetTaskView = () => {
       : [...selectedAppliance.attemptLogs].slice(-5).reverse()
     : [];
 
-  // Fallback task data if not passed via state
-  const task: FleetTask = taskData || {
-    id: id || "1",
-    taskId: "FT-001",
-    taskType: "WireOS Update",
-    triggerDate: "2024-01-15 10:00",
-    triggerTimezone: "UTC",
-    description: "Update WireOS to v4.2.0 for all devices in Region A",
-    createdBy: "John Doe",
-    createdOn: "2024-01-10",
-    status: "In Progress",
-    targetVersion: "v4.2.0",
-    affectedDevices: totalDevices,
-  };
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <p className="text-muted-foreground">
-          Task {task.taskId} - View task details and device update status
-        </p>
-      </div>
-
+    <>
       {/* Task Details */}
       <Card>
         <CardHeader>
@@ -337,7 +233,7 @@ const FleetTaskView = () => {
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Created On</p>
-              <p className="font-medium">{task.createdOn}</p>
+              <p className="font-medium">{formatDate(task.createdOn)}</p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Devices</p>
@@ -374,6 +270,10 @@ const FleetTaskView = () => {
               className="bg-yellow-500 transition-all" 
               style={{ width: `${pendingPercentage}%` }}
             />
+            <div 
+              className="bg-gray-400 transition-all" 
+              style={{ width: `${cancelledPercentage}%` }}
+            />
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2">
@@ -400,6 +300,14 @@ const FleetTaskView = () => {
                 Pending: {pendingCount} ({pendingPercentage.toFixed(1)}%)
               </span>
             </div>
+            {cancelledCount > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-gray-400" />
+                <span className="text-sm">
+                  Cancelled: {cancelledCount} ({cancelledPercentage.toFixed(1)}%)
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -479,7 +387,7 @@ const FleetTaskView = () => {
                           {displayedLogs.map((log) => (
                             <TableRow key={log.attemptNumber}>
                               <TableCell className="font-medium">#{log.attemptNumber}</TableCell>
-                              <TableCell>{log.timestamp}</TableCell>
+                              <TableCell>{formatDateTime(log.timestamp)}</TableCell>
                               <TableCell>
                                 <Badge 
                                   className={log.status === "Success" 
@@ -516,7 +424,7 @@ const FleetTaskView = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };
 

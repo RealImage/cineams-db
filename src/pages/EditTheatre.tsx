@@ -1,44 +1,44 @@
-
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Save } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
-import { Theatre, Screen } from "@/types";
-import { theatres as mockTheatres } from "@/data/mockData";
+import { Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
+import { QueryState } from "@/components/ui/query-state";
+import { useTheatre, useUpdateTheatre } from "@/hooks/api/theatres";
+import { ApiError } from "@/lib/api";
 
 const EditTheatre = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [theatre, setTheatre] = useState<Theatre | undefined>(undefined);
-  const [dialogOpen, setDialogOpen] = useState(true);
-  
+  const theatreQuery = useTheatre(id);
+  const updateTheatre = useUpdateTheatre();
+  const theatre = theatreQuery.data;
+
   useEffect(() => {
-    // In a real app, we would fetch the theatre from an API
-    const foundTheatre = mockTheatres.find((t) => t.id === id);
-    
-    if (foundTheatre) {
-      // Make sure we're working with a deep copy to avoid modifying the mock data directly
-      setTheatre(JSON.parse(JSON.stringify(foundTheatre)));
-    } else {
+    if (theatreQuery.error instanceof ApiError && theatreQuery.error.status === 404) {
       toast.error("Theatre not found");
       navigate("/theatres");
     }
-  }, [id, navigate]);
-  
-  const handleSave = (theatreData: Partial<Theatre>) => {
-    // In a real app, we would send this to an API
-    toast.success(`Theatre "${theatreData.name}" updated successfully`);
-    setDialogOpen(false);
+  }, [theatreQuery.error, navigate]);
+
+  const handleSave = async (theatreData: Partial<Theatre>) => {
+    if (!id) return;
+    try {
+      await updateTheatre.mutateAsync({ ...theatreData, id });
+    } catch (err) {
+      toast.error(`Could not save theatre: ${(err as Error).message}`);
+      throw err;
+    }
     navigate("/theatres");
   };
-  
+
   const handleBackToList = () => {
     navigate("/theatres");
   };
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -48,9 +48,9 @@ const EditTheatre = () => {
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            size="icon" 
+          <Button
+            variant="outline"
+            size="icon"
             onClick={handleBackToList}
           >
             <ArrowLeft className="h-4 w-4" />
@@ -65,16 +65,19 @@ const EditTheatre = () => {
           </div>
         </div>
       </div>
-      
-      {theatre && (
-        <TheatreDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          theatre={theatre}
-          onSave={handleSave}
-          isFullPage={true}
-        />
-      )}
+
+      <QueryState query={theatreQuery} label="theatre">
+        {(loaded) => (
+          <TheatreDialog
+            key={loaded.id}
+            open={true}
+            onOpenChange={(open) => !open && navigate("/theatres")}
+            theatre={loaded}
+            onSave={handleSave}
+            isFullPage={true}
+          />
+        )}
+      </QueryState>
     </motion.div>
   );
 };

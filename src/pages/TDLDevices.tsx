@@ -5,14 +5,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FilterButton } from "@/components/ui/filter-drawer";
 import { Plus, Edit, Search, Upload, Archive } from "lucide-react";
-import { tdlDevices as mockDevices } from "@/data/mockData";
+import { useRetireTDLDevice, useTDLDevices } from "@/hooks/api/tdl";
+import { QueryState } from "@/components/ui/query-state";
 import { TDLDevice } from "@/types";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/dateUtils";
 import { TDLFilterPanel, TDLFilterBadges, TDLFilters } from "@/components/tdl/TDLFilterPanel";
 
 const TDLDevices = () => {
-  const [devices, setDevices] = useState<TDLDevice[]>(mockDevices);
+  const devicesQuery = useTDLDevices();
+  const retireDevice = useRetireTDLDevice();
+  const devices = useMemo(() => devicesQuery.data ?? [], [devicesQuery.data]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<TDLFilters>({});
   const [filterOpen, setFilterOpen] = useState(false);
@@ -29,8 +32,17 @@ const TDLDevices = () => {
     toast.info(`Editing device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
   };
 
-  const handleRetireDevice = (device: TDLDevice) => {
-    toast.info(`Retiring device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
+  const handleRetireDevice = async (device: TDLDevice) => {
+    if (device.retired) {
+      toast.info(`${device.manufacturer} ${device.model} (${device.serialNumber}) is already retired`);
+      return;
+    }
+    try {
+      await retireDevice.mutateAsync(device.id);
+      toast.success(`Retired device: ${device.manufacturer} ${device.model} (${device.serialNumber})`);
+    } catch (err) {
+      toast.error(`Could not retire device: ${(err as Error).message}`);
+    }
   };
 
   // Custom search: Model, Serial Number, Public Key Thumbprint, Issuer Thumbprint
@@ -198,12 +210,16 @@ const TDLDevices = () => {
         onClear={clearAll}
       />
 
-      <DataTable
-        data={filteredDevices}
-        columns={columns}
-        searchable={false}
-        actions={actions}
-      />
+      <QueryState query={devicesQuery} label="TDL devices">
+        {() => (
+          <DataTable
+            data={filteredDevices}
+            columns={columns}
+            searchable={false}
+            actions={actions}
+          />
+        )}
+      </QueryState>
     </motion.div>
   );
 };

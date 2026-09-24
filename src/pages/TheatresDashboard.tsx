@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { useApprovalsSummary, type DashboardCount } from "@/hooks/api/approvals";
+import { QueryState } from "@/components/ui/query-state";
 
 interface DashboardItem {
   label: string;
@@ -9,35 +11,16 @@ interface DashboardItem {
   path?: string;
 }
 
-const approvals: DashboardItem[] = [
-  { label: "Chain Updates", count: 0 },
-  { label: "Company Claims", count: 22, path: "/approvals-conflicts/company-claims" },
-  { label: "Integrators", count: 0 },
-  { label: "Partners", count: 1, path: "/approvals-conflicts/partners" },
-  { label: "Theatre Additions", count: 0 },
-  { label: "Theatre Deletions", count: 0 },
-  { label: "Theatre Updates", count: 0 },
-];
+/** Rows that link somewhere. */
+const PATHS: Record<string, string> = {
+  "Company Claims": "/approvals-conflicts/company-claims",
+  "Partners": "/approvals-conflicts/partners",
+  "Third-party Theatre Updates: FLM": "/theatres/flm-feeds",
+  "WireTAPs": "/qube-appliances/wiretap",
+};
 
-const conflicts: DashboardItem[] = [
-  { label: "Device Conflicts", count: 1 },
-  { label: "Facilities without Chains", count: 10435 },
-  { label: "Facilities without Location", count: 2118 },
-  { label: "Facility Duplications", count: 0 },
-  { label: "Missing Models", count: 65 },
-  { label: "Missing Places", count: 0 },
-  { label: "Missing Province Codes", count: 0 },
-  { label: "Screens with Numeric Names", count: 2 },
-  { label: "Screens without Devices", count: 185986 },
-  { label: "Screens without Screen Names or Numbers", count: 0 },
-];
-
-const thirdParty: DashboardItem[] = [
-  { label: "Third-party Chain Updates: API", count: 0 },
-  { label: "Third-party Theatre Updates: API", count: 0 },
-  { label: "Third-party Theatre Updates: FLM", count: 3024, path: "/theatres/flm-feeds" },
-  { label: "WireTAPs", count: 10322, path: "/qube-appliances/wiretap" },
-];
+const withPaths = (items: DashboardCount[]): DashboardItem[] =>
+  items.map((item) => ({ ...item, path: PATHS[item.label] }));
 
 const Row = ({ item, onClick }: { item: DashboardItem; onClick?: () => void }) => (
   <div
@@ -90,14 +73,21 @@ const Section = ({
   );
 };
 
-const TheatresDashboard = () => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-    <div className="space-y-6">
-      <Section title="Approvals" items={approvals} delay={0} />
-      <Section title="Third-party Updates" items={thirdParty} delay={0.2} />
-    </div>
-    <Section title="Conflicts" items={conflicts} delay={0.1} />
-  </div>
-);
+const TheatresDashboard = () => {
+  const summaryQuery = useApprovalsSummary();
+  return (
+    <QueryState query={summaryQuery} label="dashboard">
+      {(summary) => (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <Section title="Approvals" items={withPaths(summary.approvals)} delay={0} />
+            <Section title="Third-party Updates" items={withPaths(summary.thirdParty)} delay={0.2} />
+          </div>
+          <Section title="Conflicts" items={withPaths(summary.conflicts)} delay={0.1} />
+        </div>
+      )}
+    </QueryState>
+  );
+};
 
 export default TheatresDashboard;

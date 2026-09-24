@@ -1,4 +1,5 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 
 export interface ScreenFilters {
@@ -45,27 +46,25 @@ export const ScreenFilterPanel = ({
       }}
     >
       <FilterGroup title="Chain">
-        <Select value={draft.chain} onValueChange={(v) => set("chain", v)}>
-          <SelectTrigger aria-label="Chain name"><SelectValue placeholder="All chains" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All chains</SelectItem>
-            {chains.map((c) => (
-              <SelectItem key={c} value={c}>{c}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Chain name"
+          value={draft.chain}
+          onChange={(v) => set("chain", v ?? "all")}
+          options={[{ value: "all", label: "All chains" }, ...chains.map((c) => ({ value: c, label: c }))]}
+          placeholder="All chains"
+          searchPlaceholder="Search chains…"
+        />
       </FilterGroup>
 
       <FilterGroup title="Location">
-        <Select value={draft.location} onValueChange={(v) => set("location", v)}>
-          <SelectTrigger aria-label="Location"><SelectValue placeholder="All locations" /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All locations</SelectItem>
-            {locations.map((l) => (
-              <SelectItem key={l} value={l}>{l}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox
+          aria-label="Location"
+          value={draft.location}
+          onChange={(v) => set("location", v ?? "all")}
+          options={[{ value: "all", label: "All locations" }, ...locations.map((l) => ({ value: l, label: l }))]}
+          placeholder="All locations"
+          searchPlaceholder="Search locations…"
+        />
       </FilterGroup>
 
       <FilterGroup title="Pulse installation">

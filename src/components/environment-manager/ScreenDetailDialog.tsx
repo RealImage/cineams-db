@@ -1,11 +1,13 @@
 
 import { useState, useMemo } from "react";
+import { Loader2, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileDown, FileSpreadsheet } from "lucide-react";
 import { ChartContainer, ChartTooltip } from "@/components/ui/chart";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, ReferenceLine, ReferenceArea, ResponsiveContainer } from "recharts";
-import { generateScreenTimeSeries, TIME_RANGES, type TimeRange, type TimeSeriesPoint } from "@/data/environmentTimeSeriesData";
+import { TIME_RANGES, type TimeRange, type TimeSeriesPoint } from "@/data/environmentTimeSeriesData";
+import { useScreenTimeSeries } from "@/hooks/api/screenPulse";
 import type { EnvironmentScreenRecord } from "@/data/environmentManagerData";
 
 interface ScreenDetailDialogProps {
@@ -133,12 +135,10 @@ const MetricChart = ({ title, data, onUpper, onLower, offUpper, offLower, unit }
 export const ScreenDetailDialog = ({ screen, open, onOpenChange }: ScreenDetailDialogProps) => {
   const [timeRange, setTimeRange] = useState<TimeRange>("5D");
 
-  const timeSeries = useMemo(() => {
-    if (!screen) return null;
-    return generateScreenTimeSeries(screen.id, timeRange);
-  }, [screen, timeRange]);
+  const seriesQuery = useScreenTimeSeries(open ? screen?.id : undefined, timeRange);
+  const timeSeries = seriesQuery.data;
 
-  if (!screen || !timeSeries) return null;
+  if (!screen) return null;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -173,35 +173,48 @@ export const ScreenDetailDialog = ({ screen, open, onOpenChange }: ScreenDetailD
         </div>
 
         {/* Charts */}
-        <div className="space-y-4">
-          <MetricChart
-            title="Temperature (°C)"
-            data={timeSeries.temperature}
-            onUpper={timeSeries.thresholds.temperature.onUpper}
-            onLower={timeSeries.thresholds.temperature.onLower}
-            offUpper={timeSeries.thresholds.temperature.offUpper}
-            offLower={timeSeries.thresholds.temperature.offLower}
-            unit="°C"
-          />
-          <MetricChart
-            title="Humidity (%)"
-            data={timeSeries.humidity}
-            onUpper={timeSeries.thresholds.humidity.onUpper}
-            onLower={timeSeries.thresholds.humidity.onLower}
-            offUpper={timeSeries.thresholds.humidity.offUpper}
-            offLower={timeSeries.thresholds.humidity.offLower}
-            unit="%"
-          />
-          <MetricChart
-            title="Dust (µg/m³)"
-            data={timeSeries.dust}
-            onUpper={timeSeries.thresholds.dust.onUpper}
-            onLower={timeSeries.thresholds.dust.onLower}
-            offUpper={timeSeries.thresholds.dust.offUpper}
-            offLower={timeSeries.thresholds.dust.offLower}
-            unit="µg/m³"
-          />
-        </div>
+        {seriesQuery.isPending ? (
+          <div className="flex items-center justify-center gap-2 py-16 text-sm text-muted-foreground" role="status">
+            <Loader2 className="h-4 w-4 animate-spin" /> Loading sensor readings
+          </div>
+        ) : seriesQuery.isError ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-16 text-center" role="alert">
+            <p className="flex items-center gap-2 text-sm text-red-500">
+              <AlertTriangle className="h-4 w-4" /> Could not load sensor readings: {seriesQuery.error.message}
+            </p>
+            <Button variant="outline" onClick={() => seriesQuery.refetch()}>Retry</Button>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <MetricChart
+              title="Temperature (°C)"
+              data={timeSeries.temperature}
+              onUpper={timeSeries.thresholds.temperature.onUpper}
+              onLower={timeSeries.thresholds.temperature.onLower}
+              offUpper={timeSeries.thresholds.temperature.offUpper}
+              offLower={timeSeries.thresholds.temperature.offLower}
+              unit="°C"
+            />
+            <MetricChart
+              title="Humidity (%)"
+              data={timeSeries.humidity}
+              onUpper={timeSeries.thresholds.humidity.onUpper}
+              onLower={timeSeries.thresholds.humidity.onLower}
+              offUpper={timeSeries.thresholds.humidity.offUpper}
+              offLower={timeSeries.thresholds.humidity.offLower}
+              unit="%"
+            />
+            <MetricChart
+              title="Dust (µg/m³)"
+              data={timeSeries.dust}
+              onUpper={timeSeries.thresholds.dust.onUpper}
+              onLower={timeSeries.thresholds.dust.onLower}
+              offUpper={timeSeries.thresholds.dust.offUpper}
+              offLower={timeSeries.thresholds.dust.offLower}
+              unit="µg/m³"
+            />
+          </div>
+        )}
 
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-6 text-xs text-muted-foreground pt-2 border-t">

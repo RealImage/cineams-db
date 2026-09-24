@@ -3,7 +3,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { theatres as mockTheatres } from "@/data/mockData";
 import { Theatre } from "@/types";
 import { TheatreDialog } from "@/components/TheatreDialog";
 import { AddTheatreDialog } from "@/components/AddTheatreDialog";
@@ -11,11 +10,13 @@ import { ViewTheatreDialog } from "@/components/ViewTheatreDialog";
 import { TheatreLogsDialog } from "@/components/TheatreLogsDialog";
 import { DeleteTheatreDialog } from "@/components/DeleteTheatreDialog";
 import { TheatreTable } from "@/components/theatres/TheatreTable";
-import { useTheatres } from "@/components/theatres/useTheatres";
-import { toast } from "sonner";
+import { useTheatreHandlers } from "@/components/theatres/useTheatres";
+import { useTheatres } from "@/hooks/api/theatres";
+import { QueryState } from "@/components/ui/query-state";
 
 const Theatres = () => {
-  const { theatres, handleSaveTheatre, handleDeleteTheatre, handleToggleStatus } = useTheatres(mockTheatres);
+  const theatresQuery = useTheatres();
+  const { handleSaveTheatre, handleDeleteTheatre, handleToggleStatus } = useTheatreHandlers();
   
   // Dialog states
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -45,8 +46,7 @@ const Theatres = () => {
   };
   
   const handleToggleTheatreStatus = (theatre: Theatre) => {
-    const newStatus = handleToggleStatus(theatre);
-    toast.success(`Theatre "${theatre.name}" ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
+    void handleToggleStatus(theatre);
   };
   
   const handleDeleteTheatreClick = (theatre: Theatre) => {
@@ -54,10 +54,8 @@ const Theatres = () => {
     setDeleteDialogOpen(true);
   };
   
-  const confirmDeleteTheatre = () => {
-    if (selectedTheatre) {
-      handleDeleteTheatre(selectedTheatre.id);
-      toast.success(`Theatre "${selectedTheatre.name}" deleted successfully`);
+  const confirmDeleteTheatre = async () => {
+    if (selectedTheatre && (await handleDeleteTheatre(selectedTheatre))) {
       setDeleteDialogOpen(false);
     }
   };
@@ -78,19 +76,22 @@ const Theatres = () => {
         </Button>
       </div>
       
-      <TheatreTable
-        theatres={theatres}
-        onViewTheatre={handleViewTheatre}
-        onViewLogs={handleViewLogs}
-        onToggleStatus={handleToggleTheatreStatus}
-        onDelete={handleDeleteTheatreClick}
-      />
+      <QueryState query={theatresQuery} label="theatres">
+        {(theatres) => (
+          <TheatreTable
+            theatres={theatres}
+            onViewTheatre={handleViewTheatre}
+            onViewLogs={handleViewLogs}
+            onToggleStatus={handleToggleTheatreStatus}
+            onDelete={handleDeleteTheatreClick}
+          />
+        )}
+      </QueryState>
       
       {/* Dialogs */}
       <AddTheatreDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
-        onSave={handleSaveTheatre}
       />
       
       <ViewTheatreDialog
@@ -103,7 +104,7 @@ const Theatres = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         theatre={editingTheatre}
-        onSave={handleSaveTheatre}
+        onSave={(data) => handleSaveTheatre(data, editingTheatre)}
       />
       
       <TheatreLogsDialog

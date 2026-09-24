@@ -2,34 +2,13 @@ import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { useApprovalsSummary } from "@/hooks/api/approvals";
+import { QueryState } from "@/components/ui/query-state";
 
 interface DashboardItem {
   label: string;
   count: number;
 }
-
-const approvalItems: DashboardItem[] = [
-  { label: "Chain Updates", count: 0 },
-  { label: "Company Claims", count: 10 },
-  { label: "Integrators", count: 2 },
-  { label: "Partners", count: 1 },
-  { label: "Theatre Additions", count: 0 },
-  { label: "Theatre Deletions", count: 0 },
-  { label: "Theatre Updates", count: 37 },
-];
-
-const conflictItems: DashboardItem[] = [
-  { label: "Device Conflicts", count: 143 },
-  { label: "Facilities without Chains", count: 9477 },
-  { label: "Facilities without Location", count: 2157 },
-  { label: "Facility Duplications", count: 13 },
-  { label: "Missing Models", count: 60 },
-  { label: "Missing Places", count: 0 },
-  { label: "Missing Province Codes", count: 0 },
-  { label: "Screens with Numeric Names", count: 3 },
-  { label: "Screens without Devices", count: 178919 },
-  { label: "Screens without Screen Names or Numbers", count: 265 },
-];
 
 const DashboardItemRow = ({ item, onClick }: { item: DashboardItem; onClick?: () => void }) => (
   <div
@@ -49,6 +28,15 @@ const approvalRoutes: Record<string, string> = {
 };
 
 const ApprovalsConflicts = () => {
+  const summaryQuery = useApprovalsSummary();
+  return (
+    <QueryState query={summaryQuery} label="approvals and conflicts">
+      {(summary) => <ApprovalsConflictsView approvalItems={summary.approvals} conflictItems={summary.conflicts} />}
+    </QueryState>
+  );
+};
+
+const ApprovalsConflictsView = ({ approvalItems, conflictItems }: { approvalItems: DashboardItem[]; conflictItems: DashboardItem[] }) => {
   const navigate = useNavigate();
   return (
     <div className="space-y-6">

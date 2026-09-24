@@ -39,3 +39,20 @@ export interface WireTAPDevice {
   updatedAt: string;
   connectivity?: ConnectivityInfo;
 }
+
+/** GET /api/wiretap/:id — a device plus the add/edit form fields stored with it. */
+export interface WireTAPDeviceDetail extends WireTAPDevice {
+  noMappingReason: string | null;
+  pullOutDate: string | null;
+  pullOutReason: string | null;
+  deactivationReason: string | null;
+  /** Remaining add/edit form fields as last submitted. */
+  details: Record<string, unknown>;
+}
+
+/** A theatre the device can be mapped to (GET /api/wiretap/theatres). */
+export interface WireTAPTheatreOption {
+  id: string;
+  name: string;
+  code: string | null;
+}

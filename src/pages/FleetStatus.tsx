@@ -4,7 +4,7 @@ import { RefreshCw, Download, Plus, LayoutGrid, Table as TableIcon, List, AlertT
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -16,26 +16,11 @@ import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from "
 import { formatDate, formatDateTime, formatTime } from "@/lib/dateUtils";
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { QueryState } from "@/components/ui/query-state";
+import { useFleetImages, useFleetStatus, useImageVersions } from "@/hooks/api/fleet";
+import type { FleetNode } from "@/data/fleetData";
 
-// Types
-interface FleetNode {
-  id: string;
-  nodeId: string;
-  theatreChain: string;
-  theatreName: string;
-  theatreId: string;
-  city: string;
-  state: string;
-  country: string;
-  version: string;
-  status: "Active" | "Inactive" | "Unresponsive";
-  deprecated: boolean;
-  lastHeartbeat: string;
-  lastUpdateTask: string | null;
-  alternateNames: string[];
-  uuid: string;
-  address: string;
-}
+const EMPTY_NODES: FleetNode[] = [];
 
 interface VersionData {
   version: string;
@@ -45,72 +30,6 @@ interface VersionData {
   deprecated: boolean;
   isDefault: boolean;
 }
-
-// Mock images data with specific versions per OS/Agent
-const mockImages = [
-  { id: "1", name: "WireOS", provider: "Appliance OS", defaultVersion: "v2.4.1", versions: ["v2.4.1", "v2.4.0", "v2.3.5", "v2.3.0", "v2.2.1", "v2.1.0"] },
-  { id: "2", name: "QWA-OS", provider: "Appliance OS", defaultVersion: "v3.1.2", versions: ["v3.1.2", "v3.1.0", "v3.0.8", "v3.0.5", "v2.9.1", "v2.8.0"] },
-  { id: "3", name: "PartnerOS", provider: "Appliance OS", defaultVersion: "v1.8.0", versions: ["v1.8.0", "v1.7.5", "v1.7.0", "v1.6.2", "v1.5.0", "v1.4.3"] },
-  { id: "4", name: "iCount", provider: "iCount", defaultVersion: "v5.2.0", versions: ["v5.2.0", "v5.1.3", "v5.1.0", "v5.0.2", "v4.9.1", "v4.8.0"] },
-  { id: "5", name: "Qlog Agent", provider: "Qlog", defaultVersion: "v2.1.4", versions: ["v2.1.4", "v2.1.0", "v2.0.5", "v2.0.0", "v1.9.2", "v1.8.1"] },
-  { id: "6", name: "Kadet (Agent Zero)", provider: "Qube Wire", defaultVersion: "v1.3.0", versions: ["v1.3.0", "v1.2.5", "v1.2.0", "v1.1.3", "v1.0.5", "v1.0.0"] },
-  { id: "7", name: "Agent Redux", provider: "Qube Wire", defaultVersion: "v4.0.2", versions: ["v4.0.2", "v4.0.0", "v3.9.5", "v3.9.0", "v3.8.2", "v3.7.0"] },
-  { id: "8", name: "Manifest Agent", provider: "Qube Wire", defaultVersion: "v2.5.1", versions: ["v2.5.1", "v2.5.0", "v2.4.3", "v2.4.0", "v2.3.1", "v2.2.0"] },
-  { id: "9", name: "Content Ingest Agent", provider: "Qube Wire", defaultVersion: "v3.2.0", versions: ["v3.2.0", "v3.1.5", "v3.1.0", "v3.0.3", "v2.9.0", "v2.8.2"] },
-  { id: "10", name: "KDM Agent", provider: "Qube Wire", defaultVersion: "v1.6.2", versions: ["v1.6.2", "v1.6.0", "v1.5.4", "v1.5.0", "v1.4.1", "v1.3.0"] },
-];
-
-// Mock fleet data generator
-const generateMockFleetData = (imageId: string): FleetNode[] => {
-  const chains = ["AMC Theatres", "Regal Cinemas", "Cinemark", "Marcus Theatres", "Harkins Theatres"];
-  const countries = ["USA", "Canada", "Mexico", "Brazil", "UK"];
-  const states = ["California", "Texas", "New York", "Florida", "Ontario", "London"];
-  const cities = ["Los Angeles", "Dallas", "New York City", "Miami", "Toronto", "London"];
-  
-  // Get versions specific to the selected image
-  const selectedImage = mockImages.find(img => img.id === imageId);
-  const versions = selectedImage?.versions || ["v1.0.0", "v1.0.1", "v1.0.2", "v1.0.3", "v1.0.4", "v1.0.5"];
-  const deprecatedVersions = versions.slice(-2); // Last 2 versions are deprecated
-  
-  const statuses: ("Active" | "Inactive" | "Unresponsive")[] = ["Active", "Inactive", "Unresponsive"];
-
-  const alternateNamesOptions = [
-    ["GA Cinema", "Grand Theatre"],
-    ["Metro Movies", "City Cinema"],
-    ["Star Cinema", "Premium Theatre"],
-    ["Galaxy Films", "Space Cinema"],
-  ];
-  const streetNames = ["Grand Ave", "Main St", "Broadway", "Cinema Blvd", "Theatre Way"];
-  const zipCodes = ["90012", "10001", "75201", "33101", "M5V 1J1", "SW1A 1AA"];
-
-  return Array.from({ length: 250 }, (_, i) => {
-    const status = statuses[Math.floor(Math.random() * (i < 200 ? 1 : 3))];
-    const version = versions[Math.floor(Math.random() * versions.length)];
-    const deprecated = deprecatedVersions.includes(version);
-    const city = cities[Math.floor(Math.random() * cities.length)];
-    const state = states[Math.floor(Math.random() * states.length)];
-    const country = countries[Math.floor(Math.random() * countries.length)];
-    
-    return {
-      id: `node-${imageId}-${i}`,
-      nodeId: `NODE-${String(i + 1000).padStart(6, '0')}`,
-      theatreChain: chains[Math.floor(Math.random() * chains.length)],
-      theatreName: `Theatre ${i + 1}`,
-      theatreId: `TH-${String(i + 1).padStart(4, '0')}`,
-      city,
-      state,
-      country,
-      version,
-      status,
-      deprecated,
-      lastHeartbeat: new Date(Date.now() - Math.random() * 86400000 * 7).toISOString(),
-      lastUpdateTask: Math.random() > 0.5 ? `TASK-${Math.floor(Math.random() * 1000)}` : null,
-      alternateNames: alternateNamesOptions[Math.floor(Math.random() * alternateNamesOptions.length)],
-      uuid: `${Math.random().toString(36).substring(2, 10)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 6)}-${Math.random().toString(36).substring(2, 14)}`,
-      address: `${Math.floor(Math.random() * 999) + 1} ${streetNames[Math.floor(Math.random() * streetNames.length)]}, ${city}, ${state} ${zipCodes[Math.floor(Math.random() * zipCodes.length)]}`,
-    };
-  });
-};
 
 // Generate version chart data
 const generateVersionChartData = (nodes: FleetNode[], defaultVersion: string): VersionData[] => {
@@ -166,8 +85,10 @@ const FleetStatus = () => {
   const navigate = useNavigate();
   // Global Context State
   const [selectedImage, setSelectedImage] = useState<string>("");
-  const [lastRefreshed, setLastRefreshed] = useState<Date>(new Date());
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const imagesQuery = useFleetImages();
+  const images = imagesQuery.data ?? [];
+  const statusQuery = useFleetStatus(selectedImage);
+  const versionsQuery = useImageVersions(selectedImage || undefined);
 
   // Filter State (applied) + drawer draft
   const [filters, setFilters] = useState<FleetFilters>(EMPTY_FLEET_FILTERS);
@@ -189,10 +110,13 @@ const FleetStatus = () => {
   const [activeKPI, setActiveKPI] = useState<string | null>(null);
 
   // Data
-  const fleetData = useMemo(() => {
-    if (!selectedImage) return [];
-    return generateMockFleetData(selectedImage);
-  }, [selectedImage]);
+  const fleetData = statusQuery.data ?? EMPTY_NODES;
+  const lastRefreshed = new Date(statusQuery.dataUpdatedAt || Date.now());
+  const isRefreshing = statusQuery.isFetching;
+  const deprecatedVersions = useMemo(
+    () => new Set((versionsQuery.data ?? []).filter(v => v.status === "deprecated").map(v => v.version)),
+    [versionsQuery.data],
+  );
 
   const filteredData = useMemo(() => {
     let data = [...fleetData];
@@ -221,8 +145,9 @@ const FleetStatus = () => {
     return data;
   }, [fleetData, selectedLocations, chainFilter, theatreNameFilter, theatreIdFilter, statusFilters, versionFilters, deprecatedOnly, activeKPI]);
 
-  const selectedImageData = mockImages.find(img => img.id === selectedImage);
-  const versionChartData = useMemo(() => generateVersionChartData(filteredData, selectedImageData?.defaultVersion || "v4.1.9"), [filteredData, selectedImageData]);
+  const selectedImageData = images.find(img => img.id === selectedImage);
+  const defaultVersion = selectedImageData?.defaultVersion ?? "";
+  const versionChartData = useMemo(() => generateVersionChartData(filteredData, defaultVersion), [filteredData, defaultVersion]);
 
   // KPIs
   const kpis = useMemo(() => ({
@@ -333,11 +258,8 @@ const FleetStatus = () => {
   };
 
   const handleRefresh = () => {
-    setIsRefreshing(true);
-    setTimeout(() => {
-      setLastRefreshed(new Date());
-      setIsRefreshing(false);
-    }, 1000);
+    statusQuery.refetch();
+    versionsQuery.refetch();
   };
 
   const handleResetFilters = () => {
@@ -390,7 +312,7 @@ const FleetStatus = () => {
       <div className="flex items-center gap-2">
         <span>{row.version}</span>
         {row.deprecated && <Badge variant="destructive" className="text-xs">Deprecated</Badge>}
-        {row.version === "v4.1.9" && <Badge variant="default" className="text-xs bg-green-600">Recommended</Badge>}
+        {row.version === defaultVersion && <Badge variant="default" className="text-xs bg-green-600">Recommended</Badge>}
       </div>
     )},
     { accessor: "status", header: "Status", sortable: true, cell: (row) => (
@@ -413,19 +335,16 @@ const FleetStatus = () => {
       <div className="sticky top-0 z-10 bg-background border-b pb-4">
         <div className="flex items-center justify-between">
           <div className="flex-1 max-w-md">
-            <Label className="text-sm text-muted-foreground mb-1 block">Select OS / Agent / App</Label>
-            <Select value={selectedImage} onValueChange={setSelectedImage}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select App ▾" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover z-50">
-                {mockImages.map(img => (
-                  <SelectItem key={img.id} value={img.id}>
-                    {img.name} ({img.provider})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label htmlFor="fleet-image-select" className="text-sm text-muted-foreground mb-1 block">Select OS / Agent / App</Label>
+            <Combobox
+              id="fleet-image-select"
+              value={selectedImage}
+              onChange={(v) => { if (v) setSelectedImage(v); }}
+              disabled={!imagesQuery.isSuccess}
+              options={images.map((img) => ({ value: img.id, label: `${img.agentOsName} (${img.provider})` }))}
+              placeholder={imagesQuery.isPending ? "Loading apps…" : imagesQuery.isError ? "Could not load apps" : "Select App ▾"}
+              searchPlaceholder="Search apps…"
+            />
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">
@@ -440,6 +359,8 @@ const FleetStatus = () => {
       </div>
 
       {selectedImage && (
+        <QueryState query={statusQuery} label="fleet status">
+          {() => (
         <>
           {/* A2. Applied filter chips + the page's single filter trigger */}
           <div id="fleet-filter-panel" className="sticky top-16 z-10 bg-background border rounded-lg p-4">
@@ -529,13 +450,14 @@ const FleetStatus = () => {
             </FilterGroup>
 
             <FilterGroup title="Theatre chain">
-              <Select value={draft.chain || "all"} onValueChange={(v) => setDraft(d => ({ ...d, chain: v === "all" ? "" : v }))}>
-                <SelectTrigger aria-label="Theatre chain"><SelectValue placeholder="All chains" /></SelectTrigger>
-                <SelectContent className="bg-popover z-50">
-                  <SelectItem value="all">All chains</SelectItem>
-                  {uniqueValues.chains.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-                </SelectContent>
-              </Select>
+              <Combobox
+                aria-label="Theatre chain"
+                value={draft.chain || "all"}
+                onChange={(v) => setDraft(d => ({ ...d, chain: !v || v === "all" ? "" : v }))}
+                options={[{ value: "all", label: "All chains" }, ...uniqueValues.chains.map((c) => ({ value: c, label: c }))]}
+                placeholder="All chains"
+                searchPlaceholder="Search chains…"
+              />
             </FilterGroup>
 
             <FilterGroup title="Theatre name">
@@ -579,7 +501,7 @@ const FleetStatus = () => {
                   />
                   <Label htmlFor={`version-${version}`} className="text-sm cursor-pointer flex items-center gap-1">
                     {version}
-                    {(version === "v3.9.2" || version === "v3.8.1") && (
+                    {deprecatedVersions.has(version) && (
                       <Badge variant="destructive" className="text-xs">Deprecated</Badge>
                     )}
                   </Label>
@@ -757,22 +679,22 @@ const FleetStatus = () => {
               <Button 
                 size="sm"
                 onClick={() => {
-                  const selectedImageData = mockImages.find(img => img.id === selectedImage);
                   const now = new Date();
                   const currentDate = now.toISOString().split('T')[0];
                   const currentTime = now.toTimeString().slice(0, 5);
                   
                   // Map filtered data to appliance format
-                  const appliances = filteredData.map((node, index) => ({
-                    id: `appliance-${index + 1}`,
-                    applianceSerial: node.nodeId,
-                    hardwareSerial: `HW-${node.nodeId.replace('NODE-', '')}`,
+                  const appliances = filteredData.map((node) => ({
+                    id: node.applianceId,
+                    applianceSerial: node.applianceSerialNumber,
+                    hardwareSerial: node.hardwareSerialNumber,
+                    nodeId: node.nodeId,
                     theatreName: node.theatreName,
                     city: node.city,
                     state: node.state,
                     country: node.country,
                     chain: node.theatreChain,
-                    cluster: `Cluster-${Math.floor(Math.random() * 10) + 1}`,
+                    cluster: node.clusterName,
                     updateStatus: "Pending" as const,
                   }));
                   
@@ -780,8 +702,8 @@ const FleetStatus = () => {
                     state: {
                       taskData: {
                         taskType: "Agent Update",
-                        selectedAgent: selectedImageData?.name || "",
-                        agentName: selectedImageData?.name || "",
+                        selectedAgent: selectedImageData?.id || "",
+                        agentName: selectedImageData?.agentOsName || "",
                         triggerDate: currentDate,
                         triggerTime: currentTime,
                         triggerTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone.includes("America/Los_Angeles") ? "PST" : 
@@ -868,9 +790,15 @@ const FleetStatus = () => {
             )}
           </div>
         </>
+          )}
+        </QueryState>
       )}
 
-      {!selectedImage && (
+      {!selectedImage && imagesQuery.isError && (
+        <QueryState query={imagesQuery} label="apps">{() => null}</QueryState>
+      )}
+
+      {!selectedImage && !imagesQuery.isError && (
         <Card className="p-12 text-center">
           <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Select an OS / Agent / App</h3>

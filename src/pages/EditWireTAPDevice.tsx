@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -12,7 +12,8 @@ import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
 import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
 import DeviceLogsTable from "@/components/wiretap/DeviceLogsTable";
 import { WireTAPDevice } from "@/types/wireTAP";
-import { wireTapDevices } from "@/data/wireTapDevices";
+import { ApiError } from "@/lib/api";
+import { fromWireTAPDetails, toWireTAPPayload, useCreateWireTAPDevice, useUpdateWireTAPDevice, useWireTAPDevice } from "@/hooks/api/wiretap";
 const EditWireTAPDevice = () => {
   const {
     id
@@ -24,11 +25,18 @@ const EditWireTAPDevice = () => {
   const [activeTab, setActiveTab] = useState("basic-details");
   const [device, setDevice] = useState<WireTAPDevice | null>(null);
   const [isNewDevice, setIsNewDevice] = useState(false);
+  const deviceQuery = useWireTAPDevice(id === "new" ? undefined : id);
+  const createDevice = useCreateWireTAPDevice();
+  const updateDevice = useUpdateWireTAPDevice();
+  const saving = createDevice.isPending || updateDevice.isPending;
+  // Hydrate the form once per device so background refetches do not discard edits.
+  const hydratedId = useRef<string | null>(null);
   const [formData, setFormData] = useState({
     // Basic Details
     hardwareSerialNumber: "",
     applicationSerialNumber: "",
     hostName: "",
+    clusterName: "",
     applianceType: "WireTAP",
     mappingStatus: "No",
     theatreId: "",
@@ -113,65 +121,41 @@ const EditWireTAPDevice = () => {
         navigate("/wiretap-devices");
       }
     } else {
-      // Find existing device by ID and populate the form
-      const currentDevice = wireTapDevices.find(d => d.id === id);
-      if (currentDevice) {
-        setDevice(currentDevice);
-        setFormData({
-          // Basic Details
-          hardwareSerialNumber: currentDevice.hardwareSerialNumber,
-          applicationSerialNumber: currentDevice.applicationSerialNumber,
-          hostName: currentDevice.hostName,
-          applianceType: "WireTAP",
-          mappingStatus: currentDevice.mappingStatus === "Mapped" ? "Yes" : "No",
-          theatreId: currentDevice.theatreId,
-          theatreName: currentDevice.theatreName,
-          noMappingReason: currentDevice.mappingStatus === "Unmapped" ? "Not specified" : "",
-          pullOutStatus: false,
-          pullOutDate: null,
-          pullOutReason: "",
-          // Hardware Specifications - Map from device data
-          storage: currentDevice.storageCapacity,
-          ramSize: "8",
-          // Default values as these aren't in the device type
-          ramUnit: "GB",
-          mobileNumber: "",
-          simNumber: "",
-          // Connectivity Specifications - Map from device data
-          downloadRestrictions: false,
-          restrictionDays: [],
-          restrictionTimeStart: "",
-          restrictionTimeEnd: "",
-          theatreNetworkInterface: "eth0",
-          theatreBandwidth: currentDevice.bandwidth,
-          theatreBandwidthUnit: "MBPS",
-          proposedBandwidth: "",
-          proposedBandwidthUnit: "MBPS",
-          connectivityType: currentDevice.connectivityType,
-          ispCompany: currentDevice.ispName,
-          internetInstallationDate: null,
-          pricePerGB: "",
-          ispEquipmentModel: "",
-          ispThirdPartyHandler: "",
-          ispCharges: "",
-          monthlyFUPLimit: "",
-          ispPaymentResponsibility: "",
-          billingType: "Postpaid",
-          billingCycle: "Monthly",
-          billingDate: "1",
-          planStartDate: null,
-          internetIPType: "DHCP",
-          ingestIPType: "DHCP",
-          ingestIPAddress: "",
-          ingestIPMask: "",
-          ingestIPGateway: ""
-        });
-      } else {
+      // Populate the form from the stored device once it has loaded
+      if (deviceQuery.error instanceof ApiError && deviceQuery.error.status === 404) {
         toast.error("Device not found");
         navigate("/wiretap-devices");
+        return;
       }
+      if (deviceQuery.isError) return; // rendered below with Retry
+      const currentDevice = deviceQuery.data;
+      if (!currentDevice || hydratedId.current === currentDevice.id) return;
+      hydratedId.current = currentDevice.id;
+      setDevice(currentDevice);
+      setFormData(prev => ({
+        ...prev,
+        // Remaining form fields as last saved (RAM, SIM, ISP billing, …)
+        ...fromWireTAPDetails(currentDevice.details),
+        // Basic Details
+        hardwareSerialNumber: currentDevice.hardwareSerialNumber,
+        applicationSerialNumber: currentDevice.applicationSerialNumber,
+        hostName: currentDevice.hostName,
+        clusterName: currentDevice.clusterName ?? "",
+        mappingStatus: currentDevice.mappingStatus === "Mapped" ? "Yes" : "No",
+        theatreId: currentDevice.theatreId,
+        theatreName: currentDevice.theatreName,
+        noMappingReason: currentDevice.noMappingReason ?? (currentDevice.mappingStatus === "Mapped" ? "" : "Not specified"),
+        pullOutStatus: currentDevice.pullOutStatus === "Pulled Out",
+        pullOutDate: fromWireTAPDetails({ pullOutDate: currentDevice.pullOutDate }).pullOutDate ?? null,
+        pullOutReason: currentDevice.pullOutReason ?? "",
+        // Hardware / connectivity specifications from the device columns
+        storage: currentDevice.storageCapacity,
+        theatreBandwidth: currentDevice.bandwidth,
+        connectivityType: currentDevice.connectivityType,
+        ispCompany: currentDevice.ispName,
+      }) as typeof prev);
     }
-  }, [id, navigate, location.state]);
+  }, [id, navigate, location.state, deviceQuery.data, deviceQuery.isError, deviceQuery.error]);
   const handleFormChange = (sectionData: Partial<typeof formData>) => {
     setFormData(prev => ({
       ...prev,
@@ -206,10 +190,16 @@ const EditWireTAPDevice = () => {
       return;
     }
 
-    // Submit the form - in a real app, this would be an API call
-    console.log("Updating device:", id, formData);
-    toast.success("WireTAP device updated successfully");
-    navigate("/wiretap-devices");
+    const payload = toWireTAPPayload(formData);
+    const done = {
+      onSuccess: () => {
+        toast.success(isNewDevice ? "WireTAP device added successfully" : "WireTAP device updated successfully");
+        navigate("/wiretap-devices");
+      },
+      onError: (err: Error) => toast.error(`Could not save device: ${err.message}`),
+    };
+    if (isNewDevice) createDevice.mutate(payload, done);
+    else updateDevice.mutate({ id: id!, form: payload }, done);
   };
   const handleNext = () => {
     if (activeTab === "basic-details") {
@@ -231,6 +221,14 @@ const EditWireTAPDevice = () => {
   };
   const isLastStep = activeTab === "device-logs";
   const isFirstStep = activeTab === "basic-details";
+  if (!device && deviceQuery.isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center" role="alert">
+        <p className="text-sm text-red-500">Could not load the device: {deviceQuery.error.message}</p>
+        <Button variant="outline" onClick={() => deviceQuery.refetch()}>Retry</Button>
+      </div>
+    );
+  }
   if (!device) {
     return <div>Loading...</div>;
   }
@@ -323,8 +321,8 @@ const EditWireTAPDevice = () => {
               <div className="flex gap-2">
                 {!isLastStep ? <Button onClick={handleNext}>
                     Next <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button> : <Button onClick={handleSubmit}>
-                    <Save className="h-4 w-4 mr-2" /> Update Device
+                  </Button> : <Button onClick={handleSubmit} disabled={saving}>
+                    <Save className="h-4 w-4 mr-2" /> {saving ? "Saving…" : isNewDevice ? "Save Device" : "Update Device"}
                   </Button>}
               </div>
             </CardFooter>}

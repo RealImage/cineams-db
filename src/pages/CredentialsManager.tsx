@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Eye, KeyRound, Pencil, Search, SquarePen, X } from "lucide-react";
+import { Eye, KeyRound, Pencil, Plus, Search, SquarePen, X } from "lucide-react";
 import { toast } from "sonner";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
@@ -10,18 +10,27 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
+import { Combobox } from "@/components/ui/combobox";
 import { formatDateTime } from "@/lib/dateUtils";
 import {
-  CredentialDevice,
+  CredentialDeviceInput,
+  CredentialDeviceWithStatus as CredentialDevice,
   dciOptions,
+  deviceCredentialsPath,
   deviceTypes,
-  hasDefaultCredentials,
 } from "@/data/credentialsManagerData";
-import { credentialsStore, deviceCredentialsPath, useCredentialsStore } from "@/data/credentialsStore";
+import { QueryState } from "@/components/ui/query-state";
+import {
+  useCreateCredentialDevice,
+  useCredentialDevices,
+  useDeviceCredentials,
+  useUpdateCredentialDevice,
+} from "@/hooks/api/credentials";
 import { CredentialDeviceSheet } from "@/components/credentials-manager/CredentialDeviceSheet";
-import { EditCredentialDeviceDialog } from "@/components/credentials-manager/EditCredentialDeviceDialog";
+import { DeviceModelDialog } from "@/components/credentials-manager/DeviceModelDialog";
 import { DefaultCredentialsDialog } from "@/components/credentials-manager/DefaultCredentialsDialog";
 import { DciBadge, DefaultCredentialsBadge } from "@/components/credentials-manager/badges";
+import { RoleBadges } from "@/components/credentials-manager/device-fields";
 
 const ALL = "all";
 const MAX_TRANSLATIONS_SHOWN = 2;
@@ -29,9 +38,15 @@ const MAX_TRANSLATIONS_SHOWN = 2;
 type Filters = { brand: string; type: string; dci: string; credentials: string };
 const emptyFilters: Filters = { brand: ALL, type: ALL, dci: ALL, credentials: ALL };
 
+const EMPTY: CredentialDevice[] = [];
+
 const CredentialsManager = () => {
   const navigate = useNavigate();
-  const { devices, credentials } = useCredentialsStore();
+  const devicesQuery = useCredentialDevices();
+  const devices = devicesQuery.data ?? EMPTY;
+  const updateDevice = useUpdateCredentialDevice();
+  const createDevice = useCreateCredentialDevice();
+  const [addOpen, setAddOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -43,9 +58,10 @@ const CredentialsManager = () => {
   const [credentialsOpen, setCredentialsOpen] = useState(false);
 
   const selected = devices.find((d) => d.id === selectedId) ?? null;
+  const selectedCredentials = useDeviceCredentials(selected?.id, credentialsOpen);
   const devicesWithDefaults = useMemo(
-    () => new Set(devices.filter((d) => hasDefaultCredentials(d.id, credentials)).map((d) => d.id)),
-    [devices, credentials],
+    () => new Set(devices.filter((d) => d.hasDefaultCredentials).map((d) => d.id)),
+    [devices],
   );
   const brands = useMemo(() => Array.from(new Set(devices.map((d) => d.brand))).sort(), [devices]);
 
@@ -74,10 +90,22 @@ const CredentialsManager = () => {
   const openCredentials = (d: CredentialDevice) => { setSelectedId(d.id); setDetailsOpen(false); setCredentialsOpen(true); };
   const manageCredentials = (d: CredentialDevice) => navigate(deviceCredentialsPath(d.id));
 
-  const handleSaveDevice = (patch: Partial<CredentialDevice>) => {
-    if (!selected) return;
-    credentialsStore.updateDevice(selected.id, patch);
-    toast.success(`Updated ${patch.brand ?? selected.brand} ${patch.model ?? selected.model}`);
+  const handleAddDevice = (input: CredentialDeviceInput) =>
+    createDevice.mutateAsync(input).then(
+      (d) => {
+        toast.success(`Added ${d.brand} ${d.model}`);
+        setSelectedId(d.id);
+        setDetailsOpen(true);
+      },
+      (err: Error) => { toast.error(`Could not add ${input.brand} ${input.model}: ${err.message}`); throw err; },
+    );
+
+  const handleSaveDevice = (patch: CredentialDeviceInput) => {
+    if (!selected) return Promise.resolve();
+    return updateDevice.mutateAsync({ id: selected.id, patch }).then(
+      (d) => { toast.success(`Updated ${d.brand} ${d.model}`); },
+      (err: Error) => { toast.error(`Could not update ${selected.brand} ${selected.model}: ${err.message}`); throw err; },
+    );
   };
 
   const columns: Column<CredentialDevice>[] = [
@@ -88,9 +116,7 @@ const CredentialsManager = () => {
       accessor: (row) => row.roles.join(", "),
       cell: (row) =>
         row.roles.length ? (
-          <div className="flex flex-wrap gap-1">
-            {row.roles.map((r) => <Badge key={r} variant="secondary" className="font-normal">{r}</Badge>)}
-          </div>
+          <RoleBadges roles={row.roles} />
         ) : (
           <span className="text-muted-foreground">—</span>
         ),
@@ -142,6 +168,16 @@ const CredentialsManager = () => {
       </SelectContent>
     </Select>
   );
+  // Searchable picker for the longer lists (brand, type)
+  const filterCombobox = (key: keyof Filters, placeholder: string, label: string, options: { value: string; label: string }[]) => (
+    <Combobox
+      aria-label={label}
+      value={draft[key]}
+      onChange={(v) => setDraft((f) => ({ ...f, [key]: v ?? ALL }))}
+      options={[{ value: ALL, label: placeholder }, ...options]}
+      searchPlaceholder={`Search ${label.toLowerCase()}s`}
+    />
+  );
 
   return (
     <motion.div
@@ -150,9 +186,14 @@ const CredentialsManager = () => {
       transition={{ duration: 0.3 }}
       className="space-y-4"
     >
-      <p className="text-muted-foreground">
-        Manage device models, their alternate names and factory default credentials
-      </p>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-muted-foreground">
+          Manage device models, their alternate names and factory default credentials
+        </p>
+        <Button onClick={() => setAddOpen(true)}>
+          <Plus className="h-4 w-4" /> Add device model
+        </Button>
+      </div>
 
       <div className="flex items-center gap-2">
         <div className="relative flex-1">
@@ -188,10 +229,10 @@ const CredentialsManager = () => {
         onClear={() => { setDraft(emptyFilters); setFilters(emptyFilters); }}
       >
         <FilterGroup title="Brand">
-          {filterSelect("brand", "All brands", brands.map((b) => ({ value: b, label: b })))}
+          {filterCombobox("brand", "All brands", "Brand", brands.map((b) => ({ value: b, label: b })))}
         </FilterGroup>
         <FilterGroup title="Type">
-          {filterSelect("type", "All types", deviceTypes.map((t) => ({ value: t, label: t })))}
+          {filterCombobox("type", "All types", "Type", deviceTypes.map((t) => ({ value: t, label: t })))}
         </FilterGroup>
         <FilterGroup title="DCI compliant">
           {filterSelect("dci", "Any", dciOptions.map((d) => ({ value: d, label: d === "NA" ? "NA" : d === "true" ? "True" : "False" })))}
@@ -204,17 +245,23 @@ const CredentialsManager = () => {
         </FilterGroup>
       </FilterDrawer>
 
-      <p className="text-sm text-muted-foreground">
-        Showing {filteredDevices.length} of {devices.length} devices
-      </p>
+      <QueryState query={devicesQuery} label="devices">
+        {() => (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredDevices.length} of {devices.length} devices
+            </p>
 
-      <DataTable
-        data={filteredDevices}
-        columns={columns}
-        searchable={false}
-        actions={actions}
-        onRowClick={openDetails}
-      />
+            <DataTable
+              data={filteredDevices}
+              columns={columns}
+              searchable={false}
+              actions={actions}
+              onRowClick={openDetails}
+            />
+          </>
+        )}
+      </QueryState>
 
       <CredentialDeviceSheet
         device={selected}
@@ -224,15 +271,23 @@ const CredentialsManager = () => {
         onEdit={openEdit}
         onViewCredentials={openCredentials}
       />
-      <EditCredentialDeviceDialog
+      <DeviceModelDialog
         device={selected}
         open={editOpen}
         onOpenChange={setEditOpen}
         onSave={handleSaveDevice}
+        saving={updateDevice.isPending}
+      />
+      <DeviceModelDialog
+        device={null}
+        open={addOpen}
+        onOpenChange={setAddOpen}
+        onSave={handleAddDevice}
+        saving={createDevice.isPending}
       />
       <DefaultCredentialsDialog
         device={selected}
-        credentials={selected ? credentials.filter((c) => c.deviceId === selected.id) : []}
+        credentialsQuery={selectedCredentials}
         open={credentialsOpen}
         onOpenChange={setCredentialsOpen}
         onManage={manageCredentials}

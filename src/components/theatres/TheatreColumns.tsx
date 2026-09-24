@@ -29,12 +29,15 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
       accessor: "address",
       cell: (row: Theatre) => {
         const addressParts = row.address.split(',').map(part => part.trim());
-        const location = addressParts.length >= 3 
-          ? `${addressParts[addressParts.length - 3]}, ${addressParts[addressParts.length - 2]}, ${addressParts[addressParts.length - 1]}`
-          : row.address;
+        const cityStateCountry = [row.city, row.state, row.country].filter(Boolean).join(", ");
+        const location = !row.address
+          ? cityStateCountry
+          : addressParts.length >= 3
+            ? `${addressParts[addressParts.length - 3]}, ${addressParts[addressParts.length - 2]}, ${addressParts[addressParts.length - 1]}`
+            : row.address;
         
         return (
-          <span className="truncate max-w-[200px] block" title={row.address}>
+          <span className="truncate max-w-[200px] block" title={row.address || cityStateCountry}>
             {location}
           </span>
         );
@@ -59,7 +62,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
       header: "Ad Integrators",
       accessor: "adIntegrators",
       cell: (row: Theatre) => {
-        const adIntegrators = ["Screenvision", "NCM", "Spotlight Cinema"];
+        const adIntegrators = row.adIntegrators ?? [];
         
         return (
           <div className="space-y-1">
@@ -82,7 +85,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
       header: "WireTAP",
       accessor: "wireTap",
       cell: (row: Theatre) => {
-        const wireTapSerials = ["WT8273891", "WT9264719"];
+        const wireTapSerials = (row.wireTAPDevices ?? []).map((d) => d.serialNumber);
         
         return (
           <div className="space-y-1">
@@ -130,7 +133,7 @@ export const useTheatreColumns = (): Column<Theatre>[] => {
         <div className="flex items-center">
           <User className="h-4 w-4 mr-1 text-muted-foreground" />
           <span className="text-sm">
-            {row.id ? "John Doe" : "Unknown"}
+            {row.updatedBy || "Unknown"}
           </span>
         </div>
       )

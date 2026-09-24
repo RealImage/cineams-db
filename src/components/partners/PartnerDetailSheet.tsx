@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
-import { PartnerRequest, OperationsRegion, locationOptions, chainOptions, theatreOptions } from "@/data/partnersData";
+import { PartnerRequest } from "@/data/partnersData";
+import { useAddPartnerRegion, useDeletePartnerRegion, usePartnerRegionOptions, usePartnerRegions, useReviewPartnerRequest } from "@/hooks/api/approvals";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,54 +41,62 @@ const DetailRow = ({ label, value }: { label: string; value: string }) => (
 
 type ParameterType = "Location" | "Chain" | "Theatre";
 
-const optionsMap: Record<ParameterType, string[]> = {
-  Location: locationOptions,
-  Chain: chainOptions,
-  Theatre: theatreOptions,
-};
-
 export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetailSheetProps) => {
-  const [regions, setRegions] = useState<OperationsRegion[]>([]);
+  const regionsQuery = usePartnerRegions(open ? partner?.id : undefined);
+  const regions = regionsQuery.data ?? [];
+  const optionsQuery = usePartnerRegionOptions();
+  const addRegion = useAddPartnerRegion(partner?.id ?? "");
+  const deleteRegion = useDeletePartnerRegion(partner?.id ?? "");
+  const review = useReviewPartnerRequest();
   const [parameterType, setParameterType] = useState<ParameterType>("Location");
   const [searchValue, setSearchValue] = useState("");
   const [popoverOpen, setPopoverOpen] = useState(false);
 
   const filteredOptions = useMemo(() => {
-    return optionsMap[parameterType].filter((opt) =>
-      opt.toLowerCase().includes(searchValue.toLowerCase())
-    );
-  }, [parameterType, searchValue]);
+    const options = optionsQuery.data;
+    const list = !options ? [] : parameterType === "Location" ? options.locations : parameterType === "Chain" ? options.chains : options.theatres;
+    return list
+      .filter((opt) => opt.toLowerCase().includes(searchValue.toLowerCase()))
+      .slice(0, 50);
+  }, [optionsQuery.data, parameterType, searchValue]);
 
   if (!partner) return null;
 
-  const handleAccept = () => {
-    toast.success(`Partner request from "${partner.company}" has been accepted.`);
+  const decide = async (decision: "accept" | "reject") => {
+    try {
+      await review.mutateAsync({ id: partner.id, decision });
+    } catch (err) {
+      toast.error(`Could not ${decision} partner request: ${(err as Error).message}`);
+      return;
+    }
+    if (decision === "accept") toast.success(`Partner request from "${partner.company}" has been accepted.`);
+    else toast.error(`Partner request from "${partner.company}" has been rejected.`);
     onOpenChange(false);
   };
+  const handleAccept = () => decide("accept");
+  const handleReject = () => decide("reject");
 
-  const handleReject = () => {
-    toast.error(`Partner request from "${partner.company}" has been rejected.`);
-    onOpenChange(false);
-  };
-
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!searchValue.trim()) {
       toast.error("Please enter a value");
       return;
     }
-    const newRegion: OperationsRegion = {
-      id: crypto.randomUUID(),
-      parameterType,
-      value: searchValue.trim(),
-    };
-    setRegions((prev) => [...prev, newRegion]);
-    setSearchValue("");
-    toast.success("Operations region added");
+    try {
+      await addRegion.mutateAsync({ parameterType, value: searchValue.trim() });
+      setSearchValue("");
+      toast.success("Operations region added");
+    } catch (err) {
+      toast.error(`Could not add operations region: ${(err as Error).message}`);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    setRegions((prev) => prev.filter((r) => r.id !== id));
-    toast.success("Operations region removed");
+  const handleDelete = async (id: string) => {
+    try {
+      await deleteRegion.mutateAsync(id);
+      toast.success("Operations region removed");
+    } catch (err) {
+      toast.error(`Could not remove operations region: ${(err as Error).message}`);
+    }
   };
 
   return (
@@ -168,11 +177,18 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
               </Popover>
             </div>
 
-            <Button onClick={handleAdd} size="sm" className="flex-shrink-0">
+            <Button onClick={handleAdd} size="sm" className="flex-shrink-0" disabled={addRegion.isPending}>
               Add
             </Button>
           </div>
 
+          {regionsQuery.isPending && <p className="text-sm text-muted-foreground">Loading operations regions…</p>}
+          {regionsQuery.isError && (
+            <p className="text-sm text-red-500">
+              Could not load operations regions: {regionsQuery.error.message}{" "}
+              <Button variant="link" className="h-auto p-0" onClick={() => regionsQuery.refetch()}>Retry</Button>
+            </p>
+          )}
           {regions.length > 0 && (
             <div className="rounded-md border">
               <Table>
@@ -202,8 +218,8 @@ export const PartnerDetailSheet = ({ partner, open, onOpenChange }: PartnerDetai
         </div>
 
         <SheetFooter className="flex flex-row gap-2 sm:justify-start pt-4">
-          <Button onClick={handleAccept} className="flex-1">Accept</Button>
-          <Button variant="destructive" onClick={handleReject} className="flex-1">Reject</Button>
+          <Button onClick={handleAccept} className="flex-1" disabled={review.isPending}>Accept</Button>
+          <Button variant="destructive" onClick={handleReject} className="flex-1" disabled={review.isPending}>Reject</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -216,16 +216,15 @@ export default function Reports() {
                           <Calendar mode="single" selected={endDate} onSelect={setEndDate} initialFocus className={cn("p-3 pointer-events-auto")} />
                         </PopoverContent>
                       </Popover>
-                      <Select value={timezone} onValueChange={setTimezone}>
-                        <SelectTrigger className="h-9 text-xs">
-                          <SelectValue placeholder="Timezone" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {timezones.map(tz => (
-                            <SelectItem key={tz} value={tz} className="text-xs">{tz}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Combobox
+                        aria-label="Timezone"
+                        className="h-9 text-xs"
+                        value={timezone}
+                        onChange={(v) => { if (v) setTimezone(v); }}
+                        options={timezones.map((tz) => ({ value: tz, label: tz }))}
+                        placeholder="Timezone"
+                        searchPlaceholder="Search timezones…"
+                      />
                     </div>
                   )}
                 </div>

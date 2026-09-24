@@ -17,14 +17,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatDateTime } from "@/lib/dateUtils";
 
-interface ImageItem {
-  id: string;
-  provider: string;
-  agentOsName: string;
-  latestVersion: string;
-  updatedOn: string;
-  updatedBy: string;
-}
+import type { ImageItem } from "@/data/fleetData";
+import { useImageLogs } from "@/hooks/api/fleet";
 
 interface ViewImageLogsDialogProps {
   open: boolean;
@@ -32,24 +26,13 @@ interface ViewImageLogsDialogProps {
   image: ImageItem | null;
 }
 
-// Mock logs data
-const getMockLogs = (imageId: string) => [
-  { timestamp: "2024-01-15 14:32:15", action: "Version Added", details: "Added v4.2.0", user: "Admin", status: "success" },
-  { timestamp: "2024-01-15 14:30:00", action: "Build Started", details: "Building v4.2.0", user: "System", status: "info" },
-  { timestamp: "2024-01-10 09:15:22", action: "Version Updated", details: "Set v4.1.9 as latest", user: "John Doe", status: "success" },
-  { timestamp: "2024-01-10 09:10:00", action: "Version Added", details: "Added v4.1.9", user: "John Doe", status: "success" },
-  { timestamp: "2024-01-08 16:45:33", action: "Version Deprecated", details: "Deprecated v4.1.6", user: "Admin", status: "warning" },
-  { timestamp: "2024-01-05 11:20:00", action: "Download", details: "v4.1.8 downloaded by 15 devices", user: "System", status: "info" },
-  { timestamp: "2024-01-03 08:00:00", action: "Build Failed", details: "Failed to build v4.1.8-beta", user: "System", status: "error" },
-  { timestamp: "2024-01-02 14:22:11", action: "Configuration Changed", details: "Updated build parameters", user: "Jane Smith", status: "info" },
-];
-
 export function ViewImageLogsDialog({
   open,
   onOpenChange,
   image,
 }: ViewImageLogsDialogProps) {
-  const logs = image ? getMockLogs(image.id) : [];
+  const logsQuery = useImageLogs(open ? image?.id : undefined);
+  const logs = logsQuery.data ?? [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -88,8 +71,25 @@ export function ViewImageLogsDialog({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {logs.map((log, index) => (
-                <TableRow key={index}>
+              {logsQuery.isPending && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">Loading logs…</TableCell>
+                </TableRow>
+              )}
+              {logsQuery.isError && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-red-500">
+                    Could not load logs: {logsQuery.error.message}
+                  </TableCell>
+                </TableRow>
+              )}
+              {logsQuery.isSuccess && logs.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">No activity yet.</TableCell>
+                </TableRow>
+              )}
+              {logs.map((log) => (
+                <TableRow key={log.id}>
                   <TableCell className="font-mono text-sm">{formatDateTime(log.timestamp)}</TableCell>
                   <TableCell className="font-medium">{log.action}</TableCell>
                   <TableCell>{log.details}</TableCell>

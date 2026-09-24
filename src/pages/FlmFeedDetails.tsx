@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Building2, CheckCircle2, Search } from "lucide-react";
-import { flmFeeds, FlmFeed } from "@/data/flmFeedsData";
-import { theatres } from "@/data/mockData";
+import { FlmFeed } from "@/data/flmFeedsData";
+import { useCreateTheatreFromFlmFeed, useFlmFeed, useMapFlmFeed } from "@/hooks/api/flm";
+import { useTheatres } from "@/hooks/api/theatres";
+import { QueryState } from "@/components/ui/query-state";
+import { ApiError } from "@/lib/api";
 import { Theatre } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -132,7 +135,8 @@ const ComparisonTable = ({ feed, theatre, fields, differences, selectedFields, s
   const toggleField = (key: FieldKey, checked: boolean) => {
     setSelectedFields((previous) => {
       const next = new Set(previous);
-      checked ? next.add(key) : next.delete(key);
+      if (checked) next.add(key);
+      else next.delete(key);
       return next;
     });
   };
@@ -197,18 +201,41 @@ const ComparisonTable = ({ feed, theatre, fields, differences, selectedFields, s
 
 const FlmFeedDetails = () => {
   const { id } = useParams();
+  const feedQuery = useFlmFeed(id);
+  const theatresQuery = useTheatres();
   const navigate = useNavigate();
+
+  if (feedQuery.error instanceof ApiError && feedQuery.error.status === 404) {
+    return <div className="py-16 text-center"><p className="text-muted-foreground">FLM feed record not found.</p><Button className="mt-4" onClick={() => navigate("/theatres/flm-feeds")}>Back to FLM Feeds</Button></div>;
+  }
+  return (
+    <QueryState query={feedQuery} label="FLM feed">
+      {(feed) => (
+        <QueryState query={theatresQuery} label="theatres">
+          {(theatres) => <FlmFeedDetailsView key={feed.id} feed={feed} theatres={theatres} />}
+        </QueryState>
+      )}
+    </QueryState>
+  );
+};
+
+const FlmFeedDetailsView = ({ feed, theatres }: { feed: FlmFeed; theatres: Theatre[] }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
-  const feed = flmFeeds.find((item) => item.id === id);
-  const initialTheatre = feed?.mappedTheatreId ? theatres.find((item) => item.id === feed.mappedTheatreId) : undefined;
+  const mapFeed = useMapFlmFeed();
+  const createTheatre = useCreateTheatreFromFlmFeed();
+  const initialTheatre = feed.mappedTheatreId ? theatres.find((item) => item.id === feed.mappedTheatreId) : undefined;
   const [selectedTheatre, setSelectedTheatre] = useState<Theatre | undefined>(initialTheatre);
   const [search, setSearch] = useState("");
   const [selectedFields, setSelectedFields] = useState<Set<FieldKey>>(new Set());
   const [selectionReady, setSelectionReady] = useState(false);
-  const [createMode, setCreateMode] = useState(false);
+  const [createMode, setCreateMode] = useState(
+    !initialTheatre && feed.status === "Manual" && (location.state as { createMode?: boolean } | null)?.createMode === true,
+  );
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const fields = useMemo(() => feed && selectedTheatre ? buildFields(feed, selectedTheatre) : [], [feed, selectedTheatre]);
+  const fields = useMemo(() => selectedTheatre ? buildFields(feed, selectedTheatre) : [], [feed, selectedTheatre]);
   const differences = useMemo(() => fields.filter((field) => field.incoming.trim().toLowerCase() !== field.current.trim().toLowerCase()), [fields]);
   useEffect(() => {
     if (!selectionReady && differences.length > 0) {
@@ -221,11 +248,7 @@ const FlmFeedDetails = () => {
     const query = search.trim().toLowerCase();
     if (!query) return [];
     return theatres.filter((theatre) => [theatre.name, theatre.displayName, theatre.uuid, theatre.thirdPartyId, theatre.chainName, theatre.city, theatre.state, theatre.country].join(" ").toLowerCase().includes(query)).slice(0, 6);
-  }, [search]);
-
-  if (!feed) {
-    return <div className="py-16 text-center"><p className="text-muted-foreground">FLM feed record not found.</p><Button className="mt-4" onClick={() => navigate("/theatres/flm-feeds")}>Back to FLM Feeds</Button></div>;
-  }
+  }, [search, theatres]);
 
   const isActionable = feed.status === "Manual";
   const selectedChanges = differences.filter((field) => selectedFields.has(field.key));
@@ -234,8 +257,18 @@ const FlmFeedDetails = () => {
     setCreateMode(false);
     setSelectionReady(false);
   };
-  const finish = () => {
-    sessionStorage.setItem(`flm-feed-status:${feed.id}`, "Auto-Updated / Mapped");
+  const saving = mapFeed.isPending || createTheatre.isPending;
+  const finish = async () => {
+    try {
+      if (createMode) await createTheatre.mutateAsync(feed.id);
+      else if (selectedTheatre) {
+        await mapFeed.mutateAsync({ feedId: feed.id, theatreId: selectedTheatre.id, fields: selectedChanges.map((f) => f.key) });
+      }
+    } catch (err) {
+      toast({ title: createMode ? "Could not create theatre" : "Could not update theatre", description: (err as Error).message, variant: "destructive" });
+      return;
+    }
+    setConfirmOpen(false);
     toast({ title: createMode ? "Theatre created" : "Theatre updated", description: `${feed.theatreName} was mapped successfully.` });
     navigate("/theatres/flm-feeds");
   };
@@ -309,7 +342,7 @@ const FlmFeedDetails = () => {
           <div className="max-h-[50vh] overflow-y-auto rounded-md border border-border">
             {createMode ? <div className="p-4"><IncomingSummary feed={feed} /></div> : selectedChanges.map((field) => <div key={field.key} className="grid gap-1 border-b border-border p-3 last:border-b-0 sm:grid-cols-[140px_1fr_24px_1fr]"><p className="text-xs font-medium">{field.label}</p><p className="text-xs text-muted-foreground line-through">{field.current}</p><span className="text-xs text-muted-foreground">→</span><p className="text-xs font-medium">{field.incoming}</p></div>)}
           </div>
-          <DialogFooter><Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button><Button onClick={finish}>Confirm</Button></DialogFooter>
+          <DialogFooter><Button variant="outline" onClick={() => setConfirmOpen(false)}>Cancel</Button><Button onClick={finish} disabled={saving}>{saving ? "Saving…" : "Confirm"}</Button></DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

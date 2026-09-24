@@ -1,10 +1,10 @@
 
-import { useState } from "react";
 import { motion } from "framer-motion";
 import { DataTable, Column } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { Plus, Edit, Trash2 } from "lucide-react";
-import { chains as mockChains } from "@/data/mockData";
+import { QueryState } from "@/components/ui/query-state";
+import { useChains, useDeleteChain } from "@/hooks/api/chains";
 import { Chain } from "@/types";
 import { toast } from "sonner";
 import { formatDate } from "@/lib/dateUtils";
@@ -14,7 +14,8 @@ const optionsFor = (key: keyof Chain) => (rows: Chain[]) =>
   Array.from(new Set(rows.map((r) => String(r[key])))).sort((a, b) => a.localeCompare(b));
 
 const Chains = () => {
-  const [chains, setChains] = useState<Chain[]>(mockChains);
+  const chainsQuery = useChains();
+  const deleteChain = useDeleteChain();
   
   const handleCreateChain = () => {
     toast.info("Chain creation will be implemented in a future update");
@@ -25,8 +26,10 @@ const Chains = () => {
   };
   
   const handleDeleteChain = (chain: Chain) => {
-    setChains(chains.filter((c) => c.id !== chain.id));
-    toast.success(`Chain "${chain.name}" deleted successfully`);
+    deleteChain.mutate(chain.id, {
+      onSuccess: () => toast.success(`Chain "${chain.name}" deleted`),
+      onError: (err) => toast.error(`Could not delete ${chain.name}: ${err.message}`),
+    });
   };
   
   const columns: Column<Chain>[] = [
@@ -101,12 +104,16 @@ const Chains = () => {
         </Button>
       </div>
       
-      <DataTable
-        data={chains}
-        columns={columns}
-        searchPlaceholder="Search chains..."
-        actions={actions}
-      />
+      <QueryState query={chainsQuery} label="chains">
+        {(chains) => (
+          <DataTable
+            data={chains}
+            columns={columns}
+            searchPlaceholder="Search chains..."
+            actions={actions}
+          />
+        )}
+      </QueryState>
     </motion.div>
   );
 };

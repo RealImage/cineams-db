@@ -2,6 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { Screen } from "@/types";
 import { domainsList } from "../constants";
 
@@ -70,21 +71,13 @@ export const GeneralTab = ({
         <div className="space-y-2">
           <Label>Third-Party ID</Label>
           <div className="flex space-x-2">
-            <Select
+            <Combobox
+              aria-label="Third-party domain"
               value={thirdPartyDomain}
-              onValueChange={(value) => setThirdPartyDomain(value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Domain" />
-              </SelectTrigger>
-              <SelectContent>
-                {domainsList.map((domain) => (
-                  <SelectItem key={domain} value={domain}>
-                    {domain}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              onChange={(value) => setThirdPartyDomain(value ?? "")}
+              options={domainsList.map((domain) => ({ value: domain, label: domain }))}
+              placeholder="Select Domain"
+            />
             <Input
               type="text"
               placeholder="Enter Value"

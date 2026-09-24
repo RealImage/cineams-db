@@ -47,7 +47,7 @@ export const ViewTheatreDialog = ({
               <h3 className="text-lg font-semibold">{theatre.displayName}</h3>
               <div className="flex items-center text-sm text-muted-foreground mt-1">
                 <MapPin className="h-4 w-4 mr-1" />
-                <span>{theatre.address}</span>
+                <span>{theatre.address || [theatre.city, theatre.state, theatre.country].filter(Boolean).join(", ")}</span>
               </div>
             </div>
             <Badge variant={theatre.status === "Active" ? "default" : "outline"}>
@@ -73,7 +73,7 @@ export const ViewTheatreDialog = ({
               <p className="text-sm font-medium">Type</p>
               <div className="flex items-center">
                 <Tag className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span>{theatre.type}</span>
+                <span>{theatre.type || "Not specified"}</span>
               </div>
             </div>
             
@@ -90,22 +90,30 @@ export const ViewTheatreDialog = ({
             <div className="space-y-1">
               <p className="text-sm font-medium">Ad Integrators</p>
               <div className="flex flex-wrap gap-1 mt-1">
-                {["Screenvision", "NCM", "Spotlight Cinema"].map((integrator, i) => (
-                  <Badge key={i} variant="outline" className="text-xs">
-                    {integrator}
-                  </Badge>
-                ))}
+                {(theatre.adIntegrators ?? []).length > 0 ? (
+                  (theatre.adIntegrators ?? []).map((integrator, i) => (
+                    <Badge key={i} variant="outline" className="text-xs">
+                      {integrator}
+                    </Badge>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground text-xs">None</span>
+                )}
               </div>
             </div>
             
             <div className="space-y-1">
               <p className="text-sm font-medium">WireTAP Serial Numbers</p>
               <div className="flex flex-col mt-1">
-                {["WT8273891", "WT9264719"].map((serial, i) => (
-                  <span key={i} className="text-xs font-mono">
-                    {serial}
-                  </span>
-                ))}
+                {(theatre.wireTAPDevices ?? []).length > 0 ? (
+                  (theatre.wireTAPDevices ?? []).map((device) => (
+                    <span key={device.id} className="text-xs font-mono">
+                      {device.serialNumber}
+                    </span>
+                  ))
+                ) : (
+                  <span className="text-muted-foreground text-xs">None</span>
+                )}
               </div>
             </div>
           </div>
@@ -117,7 +125,7 @@ export const ViewTheatreDialog = ({
             </div>
             <div className="flex items-center">
               <User className="h-4 w-4 mr-1" />
-              <span>By: John Doe</span>
+              <span>By: {theatre.updatedBy || "Unknown"}</span>
             </div>
           </div>
         </div>

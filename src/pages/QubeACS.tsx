@@ -11,7 +11,9 @@ import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { qubeAcsTheatres, QubeAcsTheatre } from "@/data/qubeAcsData";
+import type { QubeAcsTheatre } from "@/data/qubeAcsData";
+import { useApplianceTheatres } from "@/hooks/api/appliances";
+import { QueryState } from "@/components/ui/query-state";
 import { QubeAcsFilterPanel, QubeAcsFilters, emptyQubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
 import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDialog";
 import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
@@ -19,7 +21,8 @@ import SystemConstantsDialog from "@/components/qube-acs/SystemConstantsDialog";
 
 const QubeACS = () => {
   const navigate = useNavigate();
-  const [data] = useState(qubeAcsTheatres);
+  const theatresQuery = useApplianceTheatres("qube-acs");
+  const data = useMemo<QubeAcsTheatre[]>(() => theatresQuery.data ?? [], [theatresQuery.data]);
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -92,88 +95,94 @@ const QubeACS = () => {
         </Button>
       </div>
 
-      <div className="rounded-md border overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Theatre Name (ID)</TableHead>
-                <TableHead>Theatre Location</TableHead>
-                <TableHead>Chain Name</TableHead>
-                <TableHead>Screens</TableHead>
-                <TableHead>Updated At</TableHead>
-                <TableHead>Updated By</TableHead>
-                <TableHead className="w-12 text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginated.length === 0 ? (
-                <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">No results found.</TableCell></TableRow>
-              ) : paginated.map((t) => (
-                <TableRow key={t.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => openDetails(t)}>
-                  <TableCell>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div className="inline-flex items-center gap-2">
-                          <div>
-                            <div className="font-medium">{t.theatreName}</div>
-                            <div className="text-xs text-muted-foreground">{t.theatreId}</div>
-                          </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
-                            onClick={(e) => copyId(e, t.theatreId)}
-                            aria-label="Copy Theatre ID"
-                          >
-                            {copiedId === t.theatreId
-                              ? <Check className="h-3.5 w-3.5 text-[hsl(142_76%_36%)]" />
-                              : <Copy className="h-3.5 w-3.5" />}
-                          </Button>
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent className="text-xs space-y-1">
-                        <div><span className="font-semibold">Theatre Name:</span> {t.theatreName}</div>
-                        <div><span className="font-semibold">Also Known As:</span> {t.alsoKnownAs || "—"}</div>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{t.city}, {t.state}, {t.country}</TableCell>
-                  <TableCell>{t.chainName}</TableCell>
-                  <TableCell>{t.enabledScreens} / {t.totalScreens}</TableCell>
-                  <TableCell className="text-xs">{format(new Date(t.updatedAt), "dd MMM yyyy hh:mm a")}</TableCell>
-                  <TableCell className="text-xs">{t.updatedBy}</TableCell>
-                  <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openDetails(t)}>
-                          <Eye className="h-4 w-4 mr-2" /> View Details
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => goEdit(t)}>
-                          <Pencil className="h-4 w-4 mr-2" /> Edit Details
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+      <QueryState query={theatresQuery} label="theatres">
+        {() => (
+          <>
+          <div className="rounded-md border overflow-hidden">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Theatre Name (ID)</TableHead>
+                    <TableHead>Theatre Location</TableHead>
+                    <TableHead>Chain Name</TableHead>
+                    <TableHead>Screens</TableHead>
+                    <TableHead>Updated At</TableHead>
+                    <TableHead>Updated By</TableHead>
+                    <TableHead className="w-12 text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginated.length === 0 ? (
+                    <TableRow><TableCell colSpan={7} className="text-center h-24 text-muted-foreground">No results found.</TableCell></TableRow>
+                  ) : paginated.map((t) => (
+                    <TableRow key={t.id} className="hover:bg-muted/50 cursor-pointer" onClick={() => openDetails(t)}>
+                      <TableCell>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="inline-flex items-center gap-2">
+                              <div>
+                                <div className="font-medium">{t.theatreName}</div>
+                                <div className="text-xs text-muted-foreground">{t.theatreId}</div>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6"
+                                onClick={(e) => copyId(e, t.theatreId)}
+                                aria-label="Copy Theatre ID"
+                              >
+                                {copiedId === t.theatreId
+                                  ? <Check className="h-3.5 w-3.5 text-[hsl(142_76%_36%)]" />
+                                  : <Copy className="h-3.5 w-3.5" />}
+                              </Button>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs space-y-1">
+                            <div><span className="font-semibold">Theatre Name:</span> {t.theatreName}</div>
+                            <div><span className="font-semibold">Also Known As:</span> {t.alsoKnownAs || "—"}</div>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">{t.city}, {t.state}, {t.country}</TableCell>
+                      <TableCell>{t.chainName}</TableCell>
+                      <TableCell>{t.enabledScreens} / {t.totalScreens}</TableCell>
+                      <TableCell className="text-xs">{format(new Date(t.updatedAt), "dd MMM yyyy hh:mm a")}</TableCell>
+                      <TableCell className="text-xs">{t.updatedBy}</TableCell>
+                      <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openDetails(t)}>
+                              <Eye className="h-4 w-4 mr-2" /> View Details
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => goEdit(t)}>
+                              <Pencil className="h-4 w-4 mr-2" /> Edit Details
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
 
-      <PaginationControls
-        currentPage={page}
-        totalPages={totalPages}
-        totalItems={totalItems}
-        rowsPerPage={pageSize}
-        handlePageChange={setPage}
-        handleRowsPerPageChange={setPageSize}
-      />
+          <PaginationControls
+            currentPage={page}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            rowsPerPage={pageSize}
+            handlePageChange={setPage}
+            handleRowsPerPageChange={setPageSize}
+          />
+          </>
+        )}
+      </QueryState>
 
       <QubeAcsFilterPanel
         open={filtersOpen}

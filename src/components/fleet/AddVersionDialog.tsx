@@ -13,20 +13,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 
-interface ImageItem {
-  id: string;
-  provider: string;
-  agentOsName: string;
-  latestVersion: string;
-  updatedOn: string;
-  updatedBy: string;
-}
+import type { ImageItem } from "@/data/fleetData";
+import type { AddVersionInput } from "@/hooks/api/fleet";
 
 interface AddVersionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   image: ImageItem | null;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: AddVersionInput) => Promise<unknown>;
 }
 
 export function AddVersionDialog({
@@ -42,20 +36,32 @@ export function AddVersionDialog({
     changelog: "",
   });
 
-  const handleSubmit = () => {
-    if (!formData.version) {
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async () => {
+    if (!formData.version.trim()) {
       toast.error("Please enter a version number");
       return;
     }
+    if (!image) return;
 
-    onSubmit({
-      imageId: image?.id,
-      ...formData,
-    });
-
-    toast.success(`Version ${formData.version} added for ${image?.agentOsName}`);
-    onOpenChange(false);
-    setFormData({ version: "", imageUrl: "", releaseNotes: "", changelog: "" });
+    setSaving(true);
+    try {
+      await onSubmit({
+        imageId: image.id,
+        version: formData.version.trim(),
+        imageUrl: formData.imageUrl,
+        releaseNotes: formData.releaseNotes,
+        internalNotes: formData.changelog,
+      });
+      toast.success(`Version ${formData.version.trim()} added for ${image.agentOsName}`);
+      onOpenChange(false);
+      setFormData({ version: "", imageUrl: "", releaseNotes: "", changelog: "" });
+    } catch (err) {
+      toast.error(`Could not add version: ${(err as Error).message}`);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleClose = () => {
@@ -121,7 +127,7 @@ export function AddVersionDialog({
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit}>Add Version</Button>
+          <Button onClick={handleSubmit} disabled={saving}>{saving ? "Adding…" : "Add Version"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { DataTable } from "@/components/ui/data-table";
-import { Column } from "@/components/ui/data-table"; // Import Column type from data-table
+import type { Filter } from "@/components/ui/data-table/types";
 import { Theatre } from "@/types";
 import { useTheatreColumns, useEnhancedColumns } from "./TheatreColumns";
 import { getTheatreActions, useTheatreActions } from "./TheatreActions";
@@ -23,14 +23,13 @@ export const TheatreTable = ({
 }: TheatreTableProps) => {
   const [filteredTheatres, setFilteredTheatres] = useState<Theatre[]>([]);
   const [totalTheatres, setTotalTheatres] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
   const [paginationState, setPaginationState] = useState({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
     searchTerm: "",
     sortColumn: "",
     sortDirection: null as "asc" | "desc" | null,
-    filters: [] as any[]
+    filters: [] as Filter<Theatre>[]
   });
   
   const columns = useTheatreColumns();
@@ -66,7 +65,7 @@ export const TheatreTable = ({
   };
   
   // Handle filter change
-  const handleFilterChange = (filters: any[]) => {
+  const handleFilterChange = (filters: Filter<Theatre>[]) => {
     setPaginationState(prev => ({
       ...prev,
       filters,
@@ -74,12 +73,9 @@ export const TheatreTable = ({
     }));
   };
   
-  // Fetch data based on pagination, filtering, and sorting
+  // Filter, sort and page the full list the API returned
   const fetchData = useCallback(() => {
-    setLoading(true);
-    
-    // Simulate network delay
-    setTimeout(() => {
+    {
       // Apply search filtering
       let filtered = [...theatres];
       
@@ -152,8 +148,7 @@ export const TheatreTable = ({
       );
       
       setFilteredTheatres(paginatedResults);
-      setLoading(false);
-    }, 300);
+    }
   }, [theatres, paginationState]);
   
   // Fetch data whenever pagination state changes

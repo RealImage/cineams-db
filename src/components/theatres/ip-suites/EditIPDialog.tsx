@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 
 interface ScreenIP {
   id: string;
@@ -127,19 +127,14 @@ export const EditIPDialog = ({ open, onOpenChange, ip, onSave }: EditIPDialogPro
 
             <div className="space-y-2">
               <Label htmlFor="subnetMask">Subnet Mask *</Label>
-              <Select
+              <Combobox
+                id="subnetMask"
                 value={formData.subnetMask}
-                onValueChange={(value) => handleChange("subnetMask", value)}
-              >
-                <SelectTrigger className={errors.subnetMask ? "border-destructive" : ""}>
-                  <SelectValue placeholder="Select subnet mask" />
-                </SelectTrigger>
-                <SelectContent>
-                  {commonSubnetMasks.map((mask) => (
-                    <SelectItem key={mask} value={mask}>{mask}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value) => handleChange("subnetMask", value ?? "")}
+                options={commonSubnetMasks.map((mask) => ({ value: mask, label: mask }))}
+                placeholder="Select subnet mask"
+                aria-invalid={!!errors.subnetMask}
+              />
               {errors.subnetMask && (
                 <p className="text-sm text-destructive">{errors.subnetMask}</p>
               )}

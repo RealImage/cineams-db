@@ -11,6 +11,7 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import { toast } from "sonner";
+import { useReviewCompanyClaim } from "@/hooks/api/approvals";
 
 interface ClaimDetailSheetProps {
   claim: CompanyClaim | null;
@@ -26,17 +27,22 @@ const DetailRow = ({ label, value }: { label: string; value: string | number }) 
 );
 
 export const ClaimDetailSheet = ({ claim, open, onOpenChange }: ClaimDetailSheetProps) => {
+  const review = useReviewCompanyClaim();
   if (!claim) return null;
 
-  const handleAccept = () => {
-    toast.success(`Claim by "${claim.claimedBy}" for ${claim.companyName} has been accepted.`);
+  const decide = async (decision: "accept" | "reject") => {
+    try {
+      await review.mutateAsync({ id: claim.id, decision });
+    } catch (err) {
+      toast.error(`Could not ${decision} claim: ${(err as Error).message}`);
+      return;
+    }
+    if (decision === "accept") toast.success(`Claim by "${claim.claimedBy}" for ${claim.companyName} has been accepted.`);
+    else toast.error(`Claim by "${claim.claimedBy}" for ${claim.companyName} has been rejected.`);
     onOpenChange(false);
   };
-
-  const handleReject = () => {
-    toast.error(`Claim by "${claim.claimedBy}" for ${claim.companyName} has been rejected.`);
-    onOpenChange(false);
-  };
+  const handleAccept = () => decide("accept");
+  const handleReject = () => decide("reject");
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -70,8 +76,8 @@ export const ClaimDetailSheet = ({ claim, open, onOpenChange }: ClaimDetailSheet
         </div>
 
         <SheetFooter className="flex flex-row gap-2 sm:justify-start">
-          <Button onClick={handleAccept} className="flex-1">Accept</Button>
-          <Button variant="destructive" onClick={handleReject} className="flex-1">Reject</Button>
+          <Button onClick={handleAccept} className="flex-1" disabled={review.isPending}>Accept</Button>
+          <Button variant="destructive" onClick={handleReject} className="flex-1" disabled={review.isPending}>Reject</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

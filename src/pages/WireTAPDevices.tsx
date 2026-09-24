@@ -8,8 +8,8 @@ import { format } from "date-fns";
 import { DataTable } from "@/components/ui/data-table";
 import { Button } from "@/components/ui/button";
 import { WireTAPDevice } from "@/types/wireTAP";
-import { wireTapDevices } from "@/data/wireTapDevices";
-import { newWireTapDevices } from "@/data/newWireTapDevices";
+import { useAddWireTAPDevicesToInventory, useNewWireTAPDevices, useSetWireTAPActivation, useWireTAPDevices } from "@/hooks/api/wiretap";
+import { QueryState } from "@/components/ui/query-state";
 import { getDeviceColumns } from "@/components/wiretap/DeviceColumns";
 import { DeviceLogsDialog } from "@/components/wiretap/DeviceLogsDialog";
 import { DeactivateDeviceDialog } from "@/components/wiretap/DeactivateDeviceDialog";
@@ -20,7 +20,12 @@ import { FilterButton } from "@/components/ui/filter-drawer";
 
 const WireTAPDevices = () => {
   const navigate = useNavigate();
-  const [devices, setDevices] = useState<WireTAPDevice[]>(wireTapDevices);
+  const devicesQuery = useWireTAPDevices();
+  const devices = useMemo(() => devicesQuery.data ?? [], [devicesQuery.data]);
+  const setActivation = useSetWireTAPActivation();
+  const addToInventory = useAddWireTAPDevicesToInventory();
+  // Only fetched when the user asks ("Fetch new devices").
+  const newDevicesQuery = useNewWireTAPDevices(false);
   const [filters, setFilters] = useState<WireTAPFilters>({ ...emptyFilters });
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [isViewLogsDialogOpen, setIsViewLogsDialogOpen] = useState(false);
@@ -45,40 +50,17 @@ const WireTAPDevices = () => {
   }, [devices, filters]);
 
   const handleActivateDevice = (device: WireTAPDevice) => {
-    const updatedDevices = devices.map(d => {
-      if (d.id === device.id) {
-        return {
-          ...d,
-          activationStatus: "Active" as const,
-          vpnStatus: "Enabled" as const,
-          updatedBy: "current.user@example.com",
-          updatedAt: new Date().toISOString(),
-        };
-      }
-      return d;
+    setActivation.mutate({ id: device.id, status: "Active" }, {
+      onSuccess: () => toast.success(`Device ${device.hardwareSerialNumber} activated successfully`),
+      onError: (err) => toast.error(`Could not activate ${device.hardwareSerialNumber}: ${err.message}`),
     });
-    
-    setDevices(updatedDevices);
-    toast.success(`Device ${device.hardwareSerialNumber} activated successfully`);
   };
 
   const handleDeactivateDevice = (device: WireTAPDevice, reason: string) => {
-    const updatedDevices = devices.map(d => {
-      if (d.id === device.id) {
-        return {
-          ...d,
-          activationStatus: "Inactive" as const,
-          vpnStatus: "Disabled" as const,
-          updatedBy: "current.user@example.com",
-          updatedAt: new Date().toISOString(),
-          deactivationReason: reason,
-        };
-      }
-      return d;
+    setActivation.mutate({ id: device.id, status: "Inactive", reason }, {
+      onSuccess: () => toast.success(`Device ${device.hardwareSerialNumber} deactivated successfully`),
+      onError: (err) => toast.error(`Could not deactivate ${device.hardwareSerialNumber}: ${err.message}`),
     });
-    
-    setDevices(updatedDevices);
-    toast.success(`Device ${device.hardwareSerialNumber} deactivated successfully`);
   };
 
   const handleToggleDeviceActivation = (device: WireTAPDevice) => {
@@ -98,14 +80,18 @@ const WireTAPDevices = () => {
   };
 
   const handleFetchNewDevices = () => {
+    newDevicesQuery.refetch();
     setLastFetchedDate(new Date());
     setIsFetchNewDevicesDialogOpen(true);
   };
 
   const handleAddNewDevices = (selectedDevices: WireTAPDevice[]) => {
-    // Add selected devices to the inventory
-    setDevices([...devices, ...selectedDevices]);
-    toast.success(`${selectedDevices.length} device${selectedDevices.length !== 1 ? 's' : ''} added to inventory`);
+    if (selectedDevices.length === 0) return;
+    addToInventory.mutate(selectedDevices.map((d) => d.id), {
+      onSuccess: () =>
+        toast.success(`${selectedDevices.length} device${selectedDevices.length !== 1 ? 's' : ''} added to inventory`),
+      onError: (err) => toast.error(`Could not add devices to inventory: ${err.message}`),
+    });
   };
 
   const columns = getDeviceColumns();
@@ -165,16 +151,20 @@ const WireTAPDevices = () => {
 
       <AppliedFilterPills filters={filters} onFiltersChange={setFilters} />
       
-      <DataTable
-        data={filteredDevices}
-        columns={columns}
-        searchable={true}
-        searchPlaceholder="Search WireTAP devices..."
-        actions={getActions}
-        onRowClick={handleViewConnectivity}
-        showFilters={false}
-        toolbar={<FilterButton count={countWireTAPFilters(filters)} onClick={() => setFiltersOpen(true)} />}
-      />
+      <QueryState query={devicesQuery} label="WireTAP devices">
+        {() => (
+          <DataTable
+            data={filteredDevices}
+            columns={columns}
+            searchable={true}
+            searchPlaceholder="Search WireTAP devices..."
+            actions={getActions}
+            onRowClick={handleViewConnectivity}
+            showFilters={false}
+            toolbar={<FilterButton count={countWireTAPFilters(filters)} onClick={() => setFiltersOpen(true)} />}
+          />
+        )}
+      </QueryState>
       
       <WireTAPFilterPanel
         open={filtersOpen}
@@ -206,7 +196,9 @@ const WireTAPDevices = () => {
       <FetchNewDevicesDialog
         isOpen={isFetchNewDevicesDialogOpen}
         onOpenChange={setIsFetchNewDevicesDialogOpen}
-        newDevices={newWireTapDevices}
+        newDevices={newDevicesQuery.data ?? []}
+        isLoading={newDevicesQuery.isFetching}
+        error={newDevicesQuery.error}
         onAddDevices={handleAddNewDevices}
       />
     </motion.div>

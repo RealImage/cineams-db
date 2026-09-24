@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { cameraMakes, cameraModelsByMake, IcountCamera, CameraOwnership } from "@/data/icountData";
 
 interface Props {
@@ -45,21 +46,24 @@ export const EditIcountCameraDialog = ({ open, onOpenChange, camera, screenName,
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
           <div className="space-y-1">
             <Label className="text-xs">Make</Label>
-            <Select value={form.make ?? ""} onValueChange={(v) => upd({ make: v, model: undefined })}>
-              <SelectTrigger><SelectValue placeholder="Select make" /></SelectTrigger>
-              <SelectContent>
-                {cameraMakes.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Combobox
+              aria-label="Make"
+              value={form.make ?? ""}
+              onChange={(v) => upd({ make: v ?? "", model: undefined })}
+              options={cameraMakes.map((m) => ({ value: m, label: m }))}
+              placeholder="Select make"
+            />
           </div>
           <div className="space-y-1">
             <Label className="text-xs">Model</Label>
-            <Select value={form.model ?? ""} onValueChange={(v) => upd({ model: v })} disabled={!form.make}>
-              <SelectTrigger><SelectValue placeholder={form.make ? "Select model" : "Select a make first"} /></SelectTrigger>
-              <SelectContent>
-                {models.map((m) => <SelectItem key={m} value={m}>{m}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <Combobox
+              aria-label="Model"
+              value={form.model ?? ""}
+              onChange={(v) => upd({ model: v ?? "" })}
+              options={models.map((m) => ({ value: m, label: m }))}
+              placeholder={form.make ? "Select model" : "Select a make first"}
+              disabled={!form.make}
+            />
           </div>
           <div className="space-y-1">
             <Label htmlFor="serial" className="text-xs">Serial Number</Label>

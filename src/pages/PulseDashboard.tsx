@@ -1,4 +1,4 @@
-
+import { useMemo } from "react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Monitor, Eye, EyeOff, Thermometer, Projector, Building2 } from "lucide-react";
@@ -6,17 +6,13 @@ import { DataTable, Column } from "@/components/ui/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { QueryState } from "@/components/ui/query-state";
+import { usePulseDashboard } from "@/hooks/api/screenPulse";
+import type { PulseDashboardData, PulseMonitoredTheatre } from "@/types/screenPulse";
 
 type Coverage = "All screens" | "Some screens" | "No screens";
 
-interface MonitoredTheatre {
-  id: string;
-  name: string;
-  city: string;
-  country: string;
-  screens: number;
-  environment: number;
-  projection: number;
+interface MonitoredTheatre extends PulseMonitoredTheatre {
   environmentCoverage: Coverage;
   projectionCoverage: Coverage;
 }
@@ -25,21 +21,6 @@ const coverageOf = (monitored: number, screens: number): Coverage =>
   monitored === 0 ? "No screens" : monitored >= screens ? "All screens" : "Some screens";
 
 const coverageOptions: Coverage[] = ["All screens", "Some screens", "No screens"];
-
-// Mock data for monitored theatres
-const monitoredTheatres: MonitoredTheatre[] = [
-  { id: "1", name: "AMC Empire 25", city: "New York", country: "USA", screens: 25, environment: 20, projection: 18 },
-  { id: "2", name: "Odeon Leicester Square", city: "London", country: "UK", screens: 14, environment: 12, projection: 14 },
-  { id: "3", name: "PVR Phoenix", city: "Mumbai", country: "India", screens: 11, environment: 11, projection: 9 },
-  { id: "4", name: "CGV Yongsan", city: "Seoul", country: "South Korea", screens: 18, environment: 15, projection: 16 },
-  { id: "5", name: "Cinépolis Diana", city: "Mexico City", country: "Mexico", screens: 16, environment: 10, projection: 12 },
-  { id: "6", name: "Village Cinemas Crown", city: "Melbourne", country: "Australia", screens: 12, environment: 8, projection: 10 },
-  { id: "7", name: "Pathé Schouwburgplein", city: "Rotterdam", country: "Netherlands", screens: 7, environment: 7, projection: 5 },
-].map((t) => ({
-  ...t,
-  environmentCoverage: coverageOf(t.environment, t.screens),
-  projectionCoverage: coverageOf(t.projection, t.screens),
-}));
 
 /** Distinct values of a field, for a column's filter options. */
 const optionsFor = (key: "city" | "country") => (rows: MonitoredTheatre[]) =>
@@ -80,38 +61,6 @@ const theatreColumns: Column<MonitoredTheatre>[] = [
   },
 ];
 
-const totalScreens = monitoredTheatres.reduce((sum, t) => sum + t.screens, 0);
-const envMonitored = monitoredTheatres.reduce((sum, t) => sum + t.environment, 0);
-const projMonitored = monitoredTheatres.reduce((sum, t) => sum + t.projection, 0);
-const noMonitoring = totalScreens - Math.max(envMonitored, projMonitored);
-
-// Mock histogram data for environment monitoring scores (percentage 1-100)
-const envHistogramData = [
-  { range: "1-10", count: 3 },
-  { range: "11-20", count: 5 },
-  { range: "21-30", count: 8 },
-  { range: "31-40", count: 12 },
-  { range: "41-50", count: 15 },
-  { range: "51-60", count: 18 },
-  { range: "61-70", count: 22 },
-  { range: "71-80", count: 14 },
-  { range: "81-90", count: 10 },
-  { range: "91-100", count: 6 },
-];
-
-const projHistogramData = [
-  { range: "1-10", count: 2 },
-  { range: "11-20", count: 4 },
-  { range: "21-30", count: 7 },
-  { range: "31-40", count: 10 },
-  { range: "41-50", count: 13 },
-  { range: "51-60", count: 20 },
-  { range: "61-70", count: 19 },
-  { range: "71-80", count: 16 },
-  { range: "81-90", count: 8 },
-  { range: "91-100", count: 5 },
-];
-
 const envChartConfig = {
   count: { label: "Screens", color: "hsl(var(--primary))" },
 };
@@ -121,6 +70,31 @@ const projChartConfig = {
 };
 
 export default function PulseDashboard() {
+  const dashboardQuery = usePulseDashboard();
+  return (
+    <QueryState query={dashboardQuery} label="Screen Pulse dashboard">
+      {(data) => <DashboardContent data={data} />}
+    </QueryState>
+  );
+}
+
+function DashboardContent({ data }: { data: PulseDashboardData }) {
+  const monitoredTheatres: MonitoredTheatre[] = useMemo(
+    () =>
+      data.theatres.map((t) => ({
+        ...t,
+        environmentCoverage: coverageOf(t.environment, t.screens),
+        projectionCoverage: coverageOf(t.projection, t.screens),
+      })),
+    [data.theatres],
+  );
+  const totalScreens = monitoredTheatres.reduce((sum, t) => sum + t.screens, 0);
+  const envMonitored = monitoredTheatres.reduce((sum, t) => sum + t.environment, 0);
+  const projMonitored = monitoredTheatres.reduce((sum, t) => sum + t.projection, 0);
+  const noMonitoring = totalScreens - Math.max(envMonitored, projMonitored);
+  const envHistogramData = data.environmentHistogram;
+  const projHistogramData = data.projectionHistogram;
+
   return (
     <div className="flex flex-col gap-6">
       {/* Summary Stats */}

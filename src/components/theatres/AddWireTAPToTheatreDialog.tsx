@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Search, AlertTriangle } from "lucide-react";
-import { wireTapDevices } from "@/data/wireTapDevices";
+import { searchWireTAPDevice } from "@/hooks/api/theatres";
 import { WireTAPDevice } from "@/types/wireTAP";
 
 interface AddWireTAPToTheatreDialogProps {
@@ -50,12 +50,22 @@ export function AddWireTAPToTheatreDialog({
   const [hasSearched, setHasSearched] = useState(false);
   const [autoConfig, setAutoConfig] = useState(false);
 
-  const handleSearch = () => {
-    const result = wireTapDevices.find(
-      (device) => device[searchType].toLowerCase() === searchText.toLowerCase()
-    );
-    setSearchResult(result || null);
-    setHasSearched(true);
+  const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+
+  const handleSearch = async () => {
+    if (!searchText.trim()) return;
+    setSearching(true);
+    setSearchError(null);
+    try {
+      setSearchResult(await searchWireTAPDevice(searchType, searchText.trim()));
+    } catch (err) {
+      setSearchResult(null);
+      setSearchError((err as Error).message);
+    } finally {
+      setSearching(false);
+      setHasSearched(true);
+    }
   };
 
   const handleConfirm = () => {
@@ -69,12 +79,15 @@ export function AddWireTAPToTheatreDialog({
     setSearchText("");
     setSearchResult(null);
     setHasSearched(false);
+    setSearchError(null);
     setAutoConfig(false);
     onOpenChange(false);
   };
 
   const isMappedToOtherTheatre =
-    searchResult?.mappingStatus === "Mapped" && searchResult?.theatreId !== theatreId;
+    searchResult?.mappingStatus === "Mapped" &&
+    searchResult?.pullOutStatus !== "Pulled Out" &&
+    searchResult?.theatreId !== theatreId;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -117,9 +130,9 @@ export function AddWireTAPToTheatreDialog({
                 onChange={(e) => setSearchText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-              <Button onClick={handleSearch} disabled={!searchText.trim()}>
+              <Button onClick={handleSearch} disabled={!searchText.trim() || searching}>
                 <Search className="h-4 w-4 mr-1" />
-                Search
+                {searching ? "Searching…" : "Search"}
               </Button>
             </div>
           </div>
@@ -190,8 +203,8 @@ export function AddWireTAPToTheatreDialog({
                   )}
                 </>
               ) : (
-                <p className="text-center text-muted-foreground py-4">
-                  No device found matching the search criteria.
+                <p className={`text-center py-4 ${searchError ? "text-red-500" : "text-muted-foreground"}`}>
+                  {searchError ? `Search failed: ${searchError}` : "No device found matching the search criteria."}
                 </p>
               )}
             </div>

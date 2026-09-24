@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { format, parse } from "date-fns";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,97 +9,84 @@ import { AddApplianceDialog } from "@/components/fleet/AddApplianceDialog";
 import { EditTaskDialog, TaskData } from "@/components/fleet/EditTaskDialog";
 import { TargetAppliancesTable } from "@/components/fleet/TargetAppliancesTable";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
+import { QueryState } from "@/components/ui/query-state";
+import { useFleetTask, useSaveFleetTask } from "@/hooks/api/fleet";
+import type { FleetTaskDetail, TaskAppliance } from "@/data/fleetData";
 
-export interface TaskAppliance {
-  id: string;
-  applianceSerialNumber: string;
-  hardwareSerialNumber: string;
-  nodeId: string;
-  clusterName: string;
-  theatreName: string;
-  theatreLocation: {
-    city: string;
-    state: string;
-    country: string;
+export type { TaskAppliance } from "@/data/fleetData";
+
+/** Normalise appliances handed over via router state (e.g. from Fleet Status). */
+const fromRouterState = (initialAppliances: unknown): TaskAppliance[] => {
+  if (!Array.isArray(initialAppliances)) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return initialAppliances.map((app: any, index: number) => ({
+    id: app.id || `appliance-${index + 1}`,
+    applianceSerialNumber: app.applianceSerial || app.applianceSerialNumber || "",
+    hardwareSerialNumber: app.hardwareSerial || app.hardwareSerialNumber || "",
+    nodeId: app.nodeId || app.applianceSerial || "",
+    clusterName: app.cluster || app.clusterName || "",
+    theatreName: app.theatreName || "",
+    theatreLocation: {
+      city: app.city || app.theatreLocation?.city || "",
+      state: app.state || app.theatreLocation?.state || "",
+      country: app.country || app.theatreLocation?.country || "",
+    },
+    chainName: app.chain || app.chainName || "",
+    chainAddress: {
+      city: app.chainAddress?.city || app.city || "",
+      state: app.chainAddress?.state || app.state || "",
+      country: app.chainAddress?.country || app.country || "",
+    },
+    updateStatus: app.updateStatus || "Pending",
+    updatedOn: app.updatedOn || new Date().toISOString(),
+  }));
+};
+
+/** Task detail from the API → the edit form's TaskData. */
+const toTaskData = (task: FleetTaskDetail): TaskData => {
+  const isAgent = task.taskType === "Agent Update" || task.taskType === "Agent Deactivate";
+  return {
+    taskType: task.taskType,
+    triggerDate: task.triggerDay,
+    triggerTime: task.triggerTime,
+    triggerTimezone: task.triggerTimezone,
+    description: task.description,
+    targetVersion: isAgent ? "" : task.targetVersion || "",
+    selectedAgent: isAgent ? task.selectedAgent || "" : "",
+    agentTargetVersion: task.taskType === "Agent Update" ? task.targetVersion || "" : "",
+    agentName: isAgent ? task.agentName || "" : "",
   };
-  chainName: string;
-  chainAddress: {
-    city: string;
-    state: string;
-    country: string;
-  };
-  updateStatus: "Pending" | "In Progress" | "Completed" | "Failed" | "Cancelled";
-  updatedOn: string;
-}
-
-// Mock appliances for demonstration
-const mockAppliances: TaskAppliance[] = [
-  {
-    id: "1",
-    applianceSerialNumber: "QWA-L28038",
-    hardwareSerialNumber: "HWS-L28038",
-    nodeId: "NODE-001",
-    clusterName: "Cluster Alpha",
-    theatreName: "AMC Empire 25",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "AMC Theatres",
-    chainAddress: { city: "Leawood", state: "KS", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: "2024-03-15T10:30:00",
-  },
-  {
-    id: "2",
-    applianceSerialNumber: "QWA-M12304",
-    hardwareSerialNumber: "HWS-M12304",
-    nodeId: "NODE-002",
-    clusterName: "Cluster Beta",
-    theatreName: "Regal LA Live",
-    theatreLocation: { city: "Los Angeles", state: "CA", country: "USA" },
-    chainName: "Regal Cinemas",
-    chainAddress: { city: "Knoxville", state: "TN", country: "USA" },
-    updateStatus: "In Progress",
-    updatedOn: "2024-03-16T14:22:00",
-  },
-];
-
+};
 
 const FleetTaskEdit = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const initialTaskData = location.state?.taskData;
-  const initialAppliances = location.state?.appliances;
+  const { id } = useParams();
+  const taskQuery = useFleetTask(id);
+  const saveTask = useSaveFleetTask();
 
-  const [taskData, setTaskData] = useState<TaskData | null>(initialTaskData);
-  
-  // Convert incoming appliances to TaskAppliance format or use mock data
-  const [appliances, setAppliances] = useState<TaskAppliance[]>(() => {
-    if (initialAppliances && Array.isArray(initialAppliances)) {
-      return initialAppliances.map((app: any, index: number) => ({
-        id: app.id || `appliance-${index + 1}`,
-        applianceSerialNumber: app.applianceSerial || app.applianceSerialNumber || "",
-        hardwareSerialNumber: app.hardwareSerial || app.hardwareSerialNumber || "",
-        nodeId: app.nodeId || app.applianceSerial || "",
-        clusterName: app.cluster || app.clusterName || "",
-        theatreName: app.theatreName || "",
-        theatreLocation: {
-          city: app.city || app.theatreLocation?.city || "",
-          state: app.state || app.theatreLocation?.state || "",
-          country: app.country || app.theatreLocation?.country || "",
-        },
-        chainName: app.chain || app.chainName || "",
-        chainAddress: {
-          city: app.chainAddress?.city || app.city || "",
-          state: app.chainAddress?.state || app.state || "",
-          country: app.chainAddress?.country || app.country || "",
-        },
-        updateStatus: app.updateStatus || "Pending",
-        updatedOn: app.updatedOn || new Date().toISOString(),
-      }));
-    }
-    return mockAppliances;
-  });
+  const [taskData, setTaskData] = useState<TaskData | null>(id ? null : location.state?.taskData ?? null);
+  const [appliances, setAppliances] = useState<TaskAppliance[]>(() => (id ? [] : fromRouterState(location.state?.appliances)));
+  const [loadedTaskId, setLoadedTaskId] = useState<string | null>(null);
+
+  // Editing an existing task: start from what is saved.
+  useEffect(() => {
+    const task = taskQuery.data;
+    if (!task || loadedTaskId === task.id) return;
+    setTaskData(toTaskData(task));
+    setAppliances(task.appliances.map(({ clusterId: _c, attemptLogs: _l, addedOn, updatedOn, ...a }) => ({
+      ...a,
+      updatedOn: updatedOn ?? addedOn,
+    })));
+    setLoadedTaskId(task.id);
+  }, [taskQuery.data, loadedTaskId]);
   const [addApplianceOpen, setAddApplianceOpen] = useState(false);
   const [editTaskOpen, setEditTaskOpen] = useState(false);
+
+  if (id && !taskData) {
+    return <QueryState query={taskQuery} label="task">{() => null}</QueryState>;
+  }
 
   // If no task data, redirect back
   if (!taskData) {
@@ -137,8 +124,27 @@ const FleetTaskEdit = () => {
   };
 
   const handleSaveTask = () => {
-    toast.success("Task saved successfully");
-    navigate("/fleet-management/tasks");
+    const isAgentUpdate = taskData.taskType === "Agent Update";
+    saveTask.mutate(
+      {
+        id,
+        taskType: taskData.taskType,
+        triggerDate: taskData.triggerDate,
+        triggerTime: taskData.triggerTime,
+        triggerTimezone: taskData.triggerTimezone,
+        description: taskData.description,
+        targetVersion: (isAgentUpdate ? taskData.agentTargetVersion : taskData.targetVersion) || undefined,
+        imageId: taskData.selectedAgent || undefined,
+        nodeIds: appliances.map((a) => a.id),
+      },
+      {
+        onSuccess: (saved) => {
+          toast.success(id ? `Task ${saved.taskId} saved successfully` : `Task ${saved.taskId} created`);
+          navigate("/fleet-management/tasks");
+        },
+        onError: (err) => toast.error(`Could not save task: ${err.message}`),
+      },
+    );
   };
 
   return (
@@ -150,7 +156,10 @@ const FleetTaskEdit = () => {
           </Button>
           <p className="text-muted-foreground">Configure task details and target appliances</p>
         </div>
-        <Button onClick={handleSaveTask}>Save Task</Button>
+        <Button onClick={handleSaveTask} disabled={saveTask.isPending}>
+          {saveTask.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+          Save Task
+        </Button>
       </div>
 
       {/* Task Details Section */}

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, SortConfig, Filter, Action } from "@/components/ui/data-table/types";
@@ -9,42 +9,16 @@ import { AddVersionDialog } from "@/components/fleet/AddVersionDialog";
 import { ViewImageLogsDialog } from "@/components/fleet/ViewImageLogsDialog";
 import { formatDate } from "@/lib/dateUtils";
 import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
-export interface ImageItem {
-  id: string;
-  provider: string;
-  agentOsName: string;
-  latestVersion: string;
-  updatedOn: string;
-  updatedBy: string;
-  defaultInstall?: boolean;
-}
-
-// Mock data based on user requirements
-const mockImageData: ImageItem[] = [
-  { id: "1", provider: "Appliance OS", agentOsName: "WireOS", latestVersion: "v4.1.9", updatedOn: "2024-01-10", updatedBy: "System", defaultInstall: true },
-  { id: "2", provider: "Appliance OS", agentOsName: "QWA-OS", latestVersion: "v3.14.21", updatedOn: "2024-01-08", updatedBy: "Admin" },
-  { id: "3", provider: "Appliance OS", agentOsName: "PartnerOS", latestVersion: "v3.12.14", updatedOn: "2024-01-05", updatedBy: "System" },
-  { id: "4", provider: "iCount", agentOsName: "iCount", latestVersion: "v2.5.17", updatedOn: "2024-01-12", updatedBy: "John Doe" },
-  { id: "5", provider: "Qlog", agentOsName: "Qlog Agent", latestVersion: "v1.3.2", updatedOn: "2024-01-09", updatedBy: "Jane Smith" },
-  { id: "6", provider: "Qube Wire", agentOsName: "Kadet (Agent Zero)", latestVersion: "v1.1.3", updatedOn: "2024-01-11", updatedBy: "Mike Johnson", defaultInstall: true },
-  { id: "7", provider: "Qube Wire", agentOsName: "Agent Redux", latestVersion: "v4.2.6", updatedOn: "2024-01-13", updatedBy: "System" },
-  { id: "8", provider: "Qube Wire", agentOsName: "Manifest Agent", latestVersion: "v4.0.0", updatedOn: "2024-01-07", updatedBy: "Admin" },
-  { id: "9", provider: "Qube Wire", agentOsName: "Content Ingest Agent", latestVersion: "v1.2.3", updatedOn: "2024-01-06", updatedBy: "Sarah Wilson" },
-  { id: "10", provider: "Qube Wire", agentOsName: "KDM Agent", latestVersion: "v4.5.6", updatedOn: "2024-01-14", updatedBy: "System" },
-  { id: "11", provider: "Qube Wire", agentOsName: "Inventory Agent", latestVersion: "v1.2.3", updatedOn: "2024-01-04", updatedBy: "John Doe" },
-  { id: "12", provider: "Qube Wire", agentOsName: "TDL Agent", latestVersion: "v0.12", updatedOn: "2024-01-03", updatedBy: "Admin" },
-  { id: "13", provider: "Qube Wire", agentOsName: "Configuration Agent", latestVersion: "v0.8", updatedOn: "2024-01-02", updatedBy: "Jane Smith" },
-  { id: "14", provider: "Qube Wire", agentOsName: "Live Wire", latestVersion: "v1.0.0", updatedOn: "2024-01-01", updatedBy: "System" },
-  { id: "15", provider: "Scheduler", agentOsName: "Scheduler Agent", latestVersion: "v1.10.1", updatedOn: "2024-01-15", updatedBy: "Mike Johnson" },
-  { id: "16", provider: "Scheduler", agentOsName: "Content Agent", latestVersion: "v2", updatedOn: "2024-01-10", updatedBy: "Admin" },
-  { id: "17", provider: "Scheduler", agentOsName: "AgentQS", latestVersion: "v2.1", updatedOn: "2024-01-09", updatedBy: "System" },
-  { id: "18", provider: "Slate", agentOsName: "AgentQ", latestVersion: "v6.9.56", updatedOn: "2024-01-08", updatedBy: "Sarah Wilson" },
-];
+import { QueryState } from "@/components/ui/query-state";
+import { useAddImageVersion, useFleetImages, useSetDefaultInstall, type AddVersionInput } from "@/hooks/api/fleet";
+import type { ImageItem } from "@/data/fleetData";
+export type { ImageItem } from "@/data/fleetData";
 
 const ImageManagement = () => {
   const navigate = useNavigate();
-  const [images, setImages] = useState<ImageItem[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
+  const imagesQuery = useFleetImages();
+  const setDefaultInstall = useSetDefaultInstall();
+  const addVersion = useAddImageVersion();
   
   // Dialog states
   const [addVersionOpen, setAddVersionOpen] = useState(false);
@@ -107,17 +81,18 @@ const ImageManagement = () => {
   ];
 
   const handleToggleDefaultInstall = (image: ImageItem) => {
-    const updated = mockImageData.map(i => 
-      i.id === image.id ? { ...i, defaultInstall: !i.defaultInstall } : i
+    setDefaultInstall.mutate(
+      { id: image.id, defaultInstall: !image.defaultInstall },
+      {
+        onSuccess: () =>
+          toast.success(
+            image.defaultInstall
+              ? `"${image.agentOsName}" unmarked as Default Install on New WireTAP.`
+              : `"${image.agentOsName}" marked as Default Install on New WireTAP.`,
+          ),
+        onError: (err) => toast.error(`Could not update "${image.agentOsName}": ${err.message}`),
+      },
     );
-    // Update the source array in place for persistence across fetches
-    mockImageData.splice(0, mockImageData.length, ...updated);
-    fetchData();
-    if (image.defaultInstall) {
-      toast.success(`"${image.agentOsName}" unmarked as Default Install on New WireTAP.`);
-    } else {
-      toast.success(`"${image.agentOsName}" marked as Default Install on New WireTAP.`);
-    }
   };
 
   const getActionsForImage = (image: ImageItem): Action<ImageItem>[] => {
@@ -153,9 +128,9 @@ const ImageManagement = () => {
     ];
   };
 
-  // Simulate data fetching with server-side operations
-  const fetchData = useCallback(() => {
-    let filteredData = [...mockImageData];
+  // Server-side style paging over the list fetched from the API
+  const { images, totalCount } = useMemo(() => {
+    let filteredData = [...(imagesQuery.data ?? [])];
 
     // Apply search - only on Agent / OS Name as per requirements
     if (searchTerm) {
@@ -192,18 +167,10 @@ const ImageManagement = () => {
       });
     }
 
-    setTotalCount(filteredData.length);
-
     // Apply pagination
     const start = (currentPage - 1) * pageSize;
-    const paginatedData = filteredData.slice(start, start + pageSize);
-
-    setImages(paginatedData);
-  }, [currentPage, pageSize, searchTerm, sortConfig, filters]);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    return { images: filteredData.slice(start, start + pageSize), totalCount: filteredData.length };
+  }, [imagesQuery.data, currentPage, pageSize, searchTerm, sortConfig, filters]);
 
   const handlePaginationChange = (page: number, size: number) => {
     setCurrentPage(page);
@@ -224,10 +191,7 @@ const ImageManagement = () => {
     setCurrentPage(1);
   };
 
-  const handleAddVersion = (versionData: any) => {
-    console.log("New version added:", versionData);
-    fetchData();
-  };
+  const handleAddVersion = (versionData: AddVersionInput) => addVersion.mutateAsync(versionData);
 
   return (
     <div className="space-y-6">
@@ -235,6 +199,8 @@ const ImageManagement = () => {
         Manage agent and OS images and versions
       </p>
 
+      <QueryState query={imagesQuery} label="images">
+        {() => (
       <DataTable
         data={images}
         columns={columns}
@@ -249,6 +215,8 @@ const ImageManagement = () => {
         onSortChange={handleSortChange}
         onFilterChange={handleFilterChange}
       />
+        )}
+      </QueryState>
 
       <AddVersionDialog
         open={addVersionOpen}

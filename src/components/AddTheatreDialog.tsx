@@ -7,19 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Theatre } from "@/types";
 import { toast } from "sonner";
+import { useCreateTheatre } from "@/hooks/api/theatres";
 
 interface AddTheatreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (theatre: Partial<Theatre>) => void;
 }
 
 export const AddTheatreDialog = ({
   open,
   onOpenChange,
-  onSave,
 }: AddTheatreDialogProps) => {
   const navigate = useNavigate();
+  const createTheatre = useCreateTheatre();
   const [formData, setFormData] = useState<Partial<Theatre>>({
     name: "",
     displayName: "",
@@ -32,7 +32,7 @@ export const AddTheatreDialog = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -41,38 +41,24 @@ export const AddTheatreDialog = ({
       return;
     }
     
-    // Create theatre with minimal info
-    const newTheatre: Partial<Theatre> = {
-      id: crypto.randomUUID(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      name: formData.name,
-      displayName: formData.displayName,
-      address: formData.address,
-      city: "",
-      state: "",
-      country: "",
-      postalCode: "",
-      phoneNumber: "",
-      email: "",
-      chainId: "",
-      chainName: "",
-      companyId: "",
-      companyName: "",
-      listing: "Listed",
-      type: "Multiplex",
-      status: "Active",
-      screenCount: 0,
-    };
-    
-    // Save the theatre
-    onSave(newTheatre);
-    
-    // Close dialog
-    onOpenChange(false);
-    
-    // Navigate to edit page
-    navigate(`/theatre/${newTheatre.id}/edit`);
+    try {
+      // Create theatre with minimal info
+      const created = await createTheatre.mutateAsync({
+        name: formData.name,
+        displayName: formData.displayName,
+        address: formData.address,
+        listing: "Listed",
+        type: "Multiplex",
+        status: "Active",
+      });
+      toast.success(`Theatre "${created.name}" created successfully`);
+      setFormData({ name: "", displayName: "", address: "", status: "Active" });
+      onOpenChange(false);
+      // Navigate to edit page to fill in the rest
+      navigate(`/theatre/${created.id}/edit`);
+    } catch (err) {
+      toast.error(`Could not create theatre: ${(err as Error).message}`);
+    }
   };
   
   return (
@@ -126,8 +112,8 @@ export const AddTheatreDialog = ({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              Create Theatre
+            <Button type="submit" disabled={createTheatre.isPending}>
+              {createTheatre.isPending ? "Creating…" : "Create Theatre"}
             </Button>
           </DialogFooter>
         </form>

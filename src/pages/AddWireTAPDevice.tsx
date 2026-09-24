@@ -19,15 +19,18 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import BasicDetailsForm from "@/components/wiretap/BasicDetailsForm";
 import HardwareSpecsForm from "@/components/wiretap/HardwareSpecsForm";
 import ConnectivitySpecsForm from "@/components/wiretap/ConnectivitySpecsForm";
+import { toWireTAPPayload, useCreateWireTAPDevice } from "@/hooks/api/wiretap";
 
 const AddWireTAPDevice = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("basic-details");
+  const createDevice = useCreateWireTAPDevice();
   const [formData, setFormData] = useState({
     // Basic Details
     hardwareSerialNumber: "",
     applicationSerialNumber: "",
     hostName: "",
+    clusterName: "",
     applianceType: "WireTAP",
     mappingStatus: "No",
     theatreId: "",
@@ -110,10 +113,13 @@ const AddWireTAPDevice = () => {
       return;
     }
 
-    // Submit the form - in a real app, this would be an API call
-    console.log("Submitting form data:", formData);
-    toast.success("WireTAP device added successfully");
-    navigate("/wiretap-devices");
+    createDevice.mutate(toWireTAPPayload(formData), {
+      onSuccess: () => {
+        toast.success("WireTAP device added successfully");
+        navigate("/wiretap-devices");
+      },
+      onError: (err) => toast.error(`Could not add device: ${err.message}`),
+    });
   };
 
   const handleNext = () => {
@@ -197,8 +203,8 @@ const AddWireTAPDevice = () => {
                   Next <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               ) : (
-                <Button onClick={handleSubmit}>
-                  <Save className="h-4 w-4 mr-2" /> Save Device
+                <Button onClick={handleSubmit} disabled={createDevice.isPending}>
+                  <Save className="h-4 w-4 mr-2" /> {createDevice.isPending ? "Saving…" : "Save Device"}
                 </Button>
               )}
             </div>

@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Combobox } from "@/components/ui/combobox";
 import { TheatreMapping } from "@/types";
 
 interface EditTheatreMappingDialogProps {
@@ -68,22 +68,14 @@ export const EditTheatreMappingDialog = ({
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="domain">Domain</Label>
-              <Select
+              <Combobox
+                id="domain"
                 value={formData.domain}
-                onValueChange={(value) => setFormData({ ...formData, domain: value })}
+                onChange={(value) => setFormData({ ...formData, domain: value ?? "" })}
+                options={domainOptions}
+                placeholder="Select domain"
                 disabled={isReadOnly}
-              >
-                <SelectTrigger id="domain">
-                  <SelectValue placeholder="Select domain" />
-                </SelectTrigger>
-                <SelectContent>
-                  {domainOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
             
             <div className="space-y-2">

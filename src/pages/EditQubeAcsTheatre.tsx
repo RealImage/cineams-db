@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ArrowLeft, Pencil, CheckCircle2, Circle } from "lucide-react";
@@ -10,16 +10,17 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { qubeAcsTheatres, QubeAcsScreenDevice } from "@/data/qubeAcsData";
+import type { QubeAcsScreenDevice, QubeAcsTheatre } from "@/data/qubeAcsData";
+import { useApplianceTheatre, useUpdateApplianceTheatre } from "@/hooks/api/appliances";
+import { QueryState } from "@/components/ui/query-state";
 import { cn } from "@/lib/utils";
 import EditScreenDeviceDialog from "@/components/qube-acs/EditScreenDeviceDialog";
 
 type Status = "Active" | "Device Paused" | "Inactive";
 
-const EditQubeAcsTheatre = () => {
-  const { id } = useParams();
+const EditQubeAcsTheatreForm = ({ theatre }: { theatre: QubeAcsTheatre }) => {
   const navigate = useNavigate();
-  const theatre = useMemo(() => qubeAcsTheatres.find((t) => t.id === id), [id]);
+  const save = useUpdateApplianceTheatre("qube-acs");
 
   const [editDetails, setEditDetails] = useState(false);
   const [editDeviceOpen, setEditDeviceOpen] = useState(false);
@@ -27,7 +28,7 @@ const EditQubeAcsTheatre = () => {
     latitude: theatre?.latitude ?? 0,
     longitude: theatre?.longitude ?? 0,
   });
-  const [screens, setScreens] = useState<QubeAcsScreenDevice[]>(() => theatre ? [...theatre.screens] : []);
+  const [screens, setScreens] = useState<QubeAcsScreenDevice[]>(() => theatre.screens.map((s) => ({ ...s })));
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null);
 
   if (!theatre) {
@@ -48,8 +49,13 @@ const EditQubeAcsTheatre = () => {
     updateScreen(sid, { hasDevice: checked, status: checked ? "Active" : "Inactive" });
 
   const onSave = () => {
-    toast.success(`${theatre.theatreName} updated`);
-    navigate("/qube-appliances/qube-acs");
+    save.mutate({ id: theatre.id, ...details, screens }, {
+      onSuccess: () => {
+        toast.success(`${theatre.theatreName} updated`);
+        navigate("/qube-appliances/qube-acs");
+      },
+      onError: (err) => toast.error(`Could not save ${theatre.theatreName}: ${err.message}`),
+    });
   };
 
   return (
@@ -66,7 +72,7 @@ const EditQubeAcsTheatre = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate("/qube-appliances/qube-acs")}>Cancel</Button>
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onSave} disabled={save.isPending}>{save.isPending ? "Saving…" : "Save"}</Button>
         </div>
       </div>
 
@@ -184,6 +190,16 @@ const EditQubeAcsTheatre = () => {
         onSave={(patch) => active && updateScreen(active.screenId, patch)}
       />
     </div>
+  );
+};
+
+const EditQubeAcsTheatre = () => {
+  const { id } = useParams();
+  const theatreQuery = useApplianceTheatre("qube-acs", id);
+  return (
+    <QueryState query={theatreQuery} label="theatre">
+      {(theatre) => <EditQubeAcsTheatreForm key={theatre.id} theatre={theatre} />}
+    </QueryState>
   );
 };
 

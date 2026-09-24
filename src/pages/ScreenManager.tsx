@@ -13,12 +13,22 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ScreenFilterPanel, type ScreenFilters } from "@/components/screen-manager/ScreenFilterPanel";
 import { FilterButton } from "@/components/ui/filter-drawer";
 import { EditScreenDialog } from "@/components/screen-manager/EditScreenDialog";
-import { screenManagerData, ScreenRecord } from "@/data/screenManagerData";
+import type { ScreenRecord } from "@/data/screenManagerData";
+import { QueryState } from "@/components/ui/query-state";
+import { usePulseScreens } from "@/hooks/api/screenPulse";
 
 const defaultFilters: ScreenFilters = { chain: "all", location: "all", pulseStatus: "all", lionisStatus: "all" };
 
 const ScreenManager = () => {
-  const [data, setData] = useState<ScreenRecord[]>(screenManagerData);
+  const screensQuery = usePulseScreens();
+  return (
+    <QueryState query={screensQuery} label="screens">
+      {(data) => <ScreenManagerContent data={data} />}
+    </QueryState>
+  );
+};
+
+const ScreenManagerContent = ({ data }: { data: ScreenRecord[] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [editScreen, setEditScreen] = useState<ScreenRecord | null>(null);
@@ -61,10 +71,6 @@ const ScreenManager = () => {
 
   const handleApplyFilters = (next: ScreenFilters) => {
     setFilters(next);
-  };
-
-  const handleSave = (updated: ScreenRecord) => {
-    setData((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
   };
 
   return (
@@ -188,7 +194,7 @@ const ScreenManager = () => {
       />
 
       {/* Edit Dialog */}
-      <EditScreenDialog open={!!editScreen} onOpenChange={(o) => !o && setEditScreen(null)} screen={editScreen} onSave={handleSave} />
+      <EditScreenDialog open={!!editScreen} onOpenChange={(o) => !o && setEditScreen(null)} screen={editScreen} />
     </div>
   );
 };

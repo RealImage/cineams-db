@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { PartnerRequest, partnersData } from "@/data/partnersData";
+import { PartnerRequest } from "@/data/partnersData";
+import { usePartnerRequests } from "@/hooks/api/approvals";
+import { QueryState } from "@/components/ui/query-state";
 import { PartnerDetailSheet } from "@/components/partners/PartnerDetailSheet";
 import { formatDate } from "@/lib/dateUtils";
 
@@ -24,6 +26,7 @@ const columns: Column<PartnerRequest>[] = [
 ];
 
 const Partners = () => {
+  const partnersQuery = usePartnerRequests();
   const [selectedPartner, setSelectedPartner] = useState<PartnerRequest | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -37,13 +40,17 @@ const Partners = () => {
       <p className="text-sm text-muted-foreground">
         Review and manage pending partner requests.
       </p>
-      <DataTable
-        data={partnersData}
-        columns={columns}
-        searchable
-        searchPlaceholder="Search partners..."
-        onRowClick={handleRowClick}
-      />
+      <QueryState query={partnersQuery} label="partner requests">
+        {(partners) => (
+          <DataTable
+            data={partners}
+            columns={columns}
+            searchable
+            searchPlaceholder="Search partners..."
+            onRowClick={handleRowClick}
+          />
+        )}
+      </QueryState>
       <PartnerDetailSheet
         partner={selectedPartner}
         open={sheetOpen}
