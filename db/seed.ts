@@ -74,7 +74,7 @@ class Seeder {
     if (rows[0].n !== SEEDED_TABLES.length) throw new Error("Schema missing — run `npm run db:migrate` first.");
 
     const { rows: existing } = await this.client.query<{ has_data: boolean }>(
-      `SELECT EXISTS (SELECT 1 FROM theatres) OR EXISTS (SELECT 1 FROM tdl_devices) AS has_data`,
+`SELECT EXISTS (SELECT 1 FROM companies) OR EXISTS (SELECT 1 FROM chains) OR EXISTS (SELECT 1 FROM theatres) OR EXISTS (SELECT 1 FROM theatre_mappings) OR EXISTS (SELECT 1 FROM screens) OR EXISTS (SELECT 1 FROM screen_devices) OR EXISTS (SELECT 1 FROM screen_ip_addresses) OR EXISTS (SELECT 1 FROM tdl_devices) OR EXISTS (SELECT 1 FROM wiretap_devices) OR EXISTS (SELECT 1 FROM theatre_appliance_configs) OR EXISTS (SELECT 1 FROM screen_appliances) OR EXISTS (SELECT 1 FROM icount_cameras) OR EXISTS (SELECT 1 FROM screen_sensor_readings) OR EXISTS (SELECT 1 FROM screen_sensor_thresholds) OR EXISTS (SELECT 1 FROM flm_feeds) OR EXISTS (SELECT 1 FROM company_claims) OR EXISTS (SELECT 1 FROM partner_requests) AS has_data`,
     );
     if (!existing[0].has_data) return;
     if (!this.force) {
