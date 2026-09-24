@@ -19,7 +19,9 @@ interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   device: CredentialDevice | null;
-  onSave: (patch: Partial<CredentialDevice>) => void;
+  /** Resolves when saved (the dialog then closes); rejects to keep it open. */
+  onSave: (patch: Partial<CredentialDevice>) => Promise<unknown>;
+  saving?: boolean;
 }
 
 type Form = {
@@ -34,7 +36,7 @@ type Form = {
 
 const toList = (s: string) => Array.from(new Set(s.split(",").map((x) => x.trim()).filter(Boolean)));
 
-export const EditCredentialDeviceDialog = ({ open, onOpenChange, device, onSave }: Props) => {
+export const EditCredentialDeviceDialog = ({ open, onOpenChange, device, onSave, saving = false }: Props) => {
   const [form, setForm] = useState<Form | null>(null);
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export const EditCredentialDeviceDialog = ({ open, onOpenChange, device, onSave 
   if (!form) return null;
 
   const upd = (patch: Partial<Form>) => setForm((f) => (f ? { ...f, ...patch } : f));
-  const canSave = form.brand.trim() !== "" && form.model.trim() !== "";
+  const canSave = form.brand.trim() !== "" && form.model.trim() !== "" && !saving;
 
   const handleSave = () => {
     onSave({
@@ -63,8 +65,7 @@ export const EditCredentialDeviceDialog = ({ open, onOpenChange, device, onSave 
       dci: form.dci,
       credentialFormat: form.credentialFormat,
       translations: toList(form.translations),
-    });
-    onOpenChange(false);
+    }).then(() => onOpenChange(false), () => {});
   };
 
   return (
@@ -131,7 +132,7 @@ export const EditCredentialDeviceDialog = ({ open, onOpenChange, device, onSave 
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={!canSave}>Save</Button>
+          <Button onClick={handleSave} disabled={!canSave}>{saving ? "Saving…" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

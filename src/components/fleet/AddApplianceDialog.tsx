@@ -28,8 +28,9 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Check, AlertTriangle, X, Search } from "lucide-react";
-import { theatres } from "@/data/mockData";
 import type { TaskAppliance } from "@/pages/FleetTaskEdit";
+import type { FleetTheatre } from "@/data/fleetData";
+import { useFleetAppliances, useFleetTheatres } from "@/hooks/api/fleet";
 
 interface AddApplianceDialogProps {
   open: boolean;
@@ -46,143 +47,8 @@ type AddMethod =
   | "theatreId" 
   | "theatreName";
 
-// Mock available appliances for search - expanded dataset
-const availableAppliances: TaskAppliance[] = [
-  {
-    id: "1",
-    applianceSerialNumber: "QWA-L28038",
-    hardwareSerialNumber: "HWS-L28038",
-    nodeId: "NODE-001",
-    clusterName: "Cluster Alpha",
-    theatreName: "AMC Empire 25",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "AMC Theatres",
-    chainAddress: { city: "Leawood", state: "KS", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "2",
-    applianceSerialNumber: "QWA-M12304",
-    hardwareSerialNumber: "HWS-M12304",
-    nodeId: "NODE-002",
-    clusterName: "Cluster Beta",
-    theatreName: "Regal LA Live",
-    theatreLocation: { city: "Los Angeles", state: "CA", country: "USA" },
-    chainName: "Regal Cinemas",
-    chainAddress: { city: "Knoxville", state: "TN", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "3",
-    applianceSerialNumber: "QWA-T23893",
-    hardwareSerialNumber: "HWS-T23893",
-    nodeId: "NODE-003",
-    clusterName: "Cluster Gamma",
-    theatreName: "Cinemark XD",
-    theatreLocation: { city: "Dallas", state: "TX", country: "USA" },
-    chainName: "Cinemark",
-    chainAddress: { city: "Plano", state: "TX", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "4",
-    applianceSerialNumber: "QWA-L45678",
-    hardwareSerialNumber: "HWS-L45678",
-    nodeId: "NODE-004",
-    clusterName: "Cluster Delta",
-    theatreName: "Marcus Theatres",
-    theatreLocation: { city: "Milwaukee", state: "WI", country: "USA" },
-    chainName: "Marcus Corporation",
-    chainAddress: { city: "Milwaukee", state: "WI", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "5",
-    applianceSerialNumber: "QWA-M98765",
-    hardwareSerialNumber: "HWS-M98765",
-    nodeId: "NODE-005",
-    clusterName: "Cluster Epsilon",
-    theatreName: "Alamo Drafthouse",
-    theatreLocation: { city: "Austin", state: "TX", country: "USA" },
-    chainName: "Alamo Drafthouse Cinema",
-    chainAddress: { city: "Austin", state: "TX", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  // Additional appliances linked to theatres from mockData
-  {
-    id: "6",
-    applianceSerialNumber: "QWA-T11111",
-    hardwareSerialNumber: "HWS-T11111",
-    nodeId: "NODE-006",
-    clusterName: "Cluster Alpha",
-    theatreName: "Cinema City Metropolis",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "Cinema City International",
-    chainAddress: { city: "New York", state: "NY", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "7",
-    applianceSerialNumber: "QWA-L22222",
-    hardwareSerialNumber: "HWS-L22222",
-    nodeId: "NODE-007",
-    clusterName: "Cluster Beta",
-    theatreName: "Regal Cinema Downtown",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "Regal Cinemas",
-    chainAddress: { city: "Knoxville", state: "TN", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "8",
-    applianceSerialNumber: "QWA-M33333",
-    hardwareSerialNumber: "HWS-M33333",
-    nodeId: "NODE-008",
-    clusterName: "Cluster Gamma",
-    theatreName: "AMC Lincoln Square",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "AMC Theatres",
-    chainAddress: { city: "Leawood", state: "KS", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "9",
-    applianceSerialNumber: "QWA-T44444",
-    hardwareSerialNumber: "HWS-T44444",
-    nodeId: "NODE-009",
-    clusterName: "Cluster Alpha",
-    theatreName: "Alamo Drafthouse Brooklyn",
-    theatreLocation: { city: "Brooklyn", state: "NY", country: "USA" },
-    chainName: "Alamo Drafthouse",
-    chainAddress: { city: "Austin", state: "TX", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-  {
-    id: "10",
-    applianceSerialNumber: "QWA-L55555",
-    hardwareSerialNumber: "HWS-L55555",
-    nodeId: "NODE-010",
-    clusterName: "Cluster Delta",
-    theatreName: "Cinépolis Chelsea",
-    theatreLocation: { city: "New York", state: "NY", country: "USA" },
-    chainName: "Cinépolis",
-    chainAddress: { city: "New York", state: "NY", country: "USA" },
-    updateStatus: "Pending",
-    updatedOn: new Date().toISOString(),
-  },
-];
-
-// Extract unique clusters from appliances
-const uniqueClusters = [...new Set(availableAppliances.map(a => a.clusterName))];
+const EMPTY_APPLIANCES: TaskAppliance[] = [];
+const EMPTY_THEATRES: FleetTheatre[] = [];
 
 interface SearchResult {
   found: TaskAppliance[];
@@ -201,6 +67,13 @@ export const AddApplianceDialog = ({
   const [selectedTheatre, setSelectedTheatre] = useState<string>("");
   const [searchResults, setSearchResults] = useState<SearchResult | null>(null);
   const [searched, setSearched] = useState(false);
+
+  const appliancesQuery = useFleetAppliances();
+  const theatresQuery = useFleetTheatres();
+  const availableAppliances = appliancesQuery.data ?? EMPTY_APPLIANCES;
+  const theatres = theatresQuery.data ?? EMPTY_THEATRES;
+  const uniqueClusters = useMemo(() => [...new Set(availableAppliances.map(a => a.clusterName))], [availableAppliances]);
+  const loadError = appliancesQuery.error ?? theatresQuery.error;
 
   const parseInput = (input: string): string[] => {
     return input
@@ -265,15 +138,18 @@ export const AddApplianceDialog = ({
               app => app.clusterName.toLowerCase() === valueLower
             );
             break;
-          case "theatreId":
-            // Match by theatre ID from mockData theatres
-            const theatre = theatres.find(t => t.id === value || t.thirdPartyId === value);
+          case "theatreId": {
+            // Match by theatre ID (id, business code or third-party ID)
+            const theatre = theatres.find(
+              t => t.id === value || t.code?.toLowerCase() === valueLower || t.thirdPartyId?.toLowerCase() === valueLower
+            );
             if (theatre) {
-              matchingAppliances = availableAppliances.filter(
-                app => app.theatreName.toLowerCase() === theatre.name.toLowerCase()
+              matchingAppliances = availableAppliances.filter(app =>
+                app.theatreId ? app.theatreId === theatre.id : app.theatreName.toLowerCase() === theatre.name.toLowerCase()
               );
             }
             break;
+          }
         }
 
         if (matchingAppliances.length > 0) {
@@ -342,7 +218,7 @@ export const AddApplianceDialog = ({
     },
     theatreId: { 
       label: "Theatre IDs", 
-      placeholder: "Enter theatre IDs (one per line or comma-separated):\n1\n2\n3" 
+      placeholder: "Enter theatre IDs (one per line or comma-separated):\n1\nT10000\nCCM001" 
     },
     theatreName: { 
       label: "Theatre Name (Search & Select)", 
@@ -353,11 +229,11 @@ export const AddApplianceDialog = ({
   const theatreOptions = useMemo(() => {
     // Get unique theatre names from available appliances
     const applianceTheatres = [...new Set(availableAppliances.map(a => a.theatreName))];
-    // Also include theatres from mockData
-    const mockTheatreNames = theatres.map(t => t.name);
-    const allTheatres = [...new Set([...applianceTheatres, ...mockTheatreNames])];
+    // Also include every theatre in the database
+    const theatreNames = theatres.map(t => t.name);
+    const allTheatres = [...new Set([...applianceTheatres, ...theatreNames])];
     return allTheatres.sort();
-  }, []);
+  }, [availableAppliances, theatres]);
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -453,16 +329,30 @@ export const AddApplianceDialog = ({
             )}
           </div>
 
+          {loadError && (
+            <p className="text-sm text-red-500" role="alert">
+              Could not load appliances: {loadError.message}{" "}
+              <button
+                type="button"
+                className="underline"
+                onClick={() => { appliancesQuery.refetch(); theatresQuery.refetch(); }}
+              >
+                Retry
+              </button>
+            </p>
+          )}
+
           {/* Search Button */}
           <Button 
             type="button" 
             onClick={handleSearch}
-            disabled={(addMethod === "theatreName" && !selectedTheatre) || 
+            disabled={appliancesQuery.isPending || theatresQuery.isPending ||
+                     (addMethod === "theatreName" && !selectedTheatre) || 
                      (addMethod !== "theatreName" && !inputValue.trim())}
             className="w-full"
           >
             <Search className="h-4 w-4 mr-2" />
-            Search
+            {appliancesQuery.isPending || theatresQuery.isPending ? "Loading appliances…" : "Search"}
           </Button>
 
           {/* Results Preview */}

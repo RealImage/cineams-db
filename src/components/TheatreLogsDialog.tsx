@@ -7,6 +7,7 @@ import { Calendar, User } from "lucide-react";
 import { Theatre } from "@/types";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatDateTime } from "@/lib/dateUtils";
+import { useTheatreLogs } from "@/hooks/api/theatres";
 
 interface TheatreLogsDialogProps {
   open: boolean;
@@ -14,89 +15,12 @@ interface TheatreLogsDialogProps {
   theatre?: Theatre;
 }
 
-type LogEntry = {
-  id: string;
-  date: string;
-  section: "General Information" | "Location & Systems" | "Connectivity Details" | "Content & Key Delivery" | "Screen Management" | "IP & Suites";
-  action: "Created" | "Updated" | "Listed" | "Unlisted" | "Deleted";
-  updatedBy: {
-    name: string;
-    email: string;
-    phone?: string;
-  };
-  oldValue?: string;
-  newValue?: string;
-};
-
 export function TheatreLogsDialog({ open, onOpenChange, theatre }: TheatreLogsDialogProps) {
   const [showAllLogs, setShowAllLogs] = useState(false);
+  const logsQuery = useTheatreLogs(open ? theatre?.id : undefined);
+  const logs = logsQuery.data ?? [];
 
-  // Mock data for theatre logs
-  const mockLogs: LogEntry[] = [
-    {
-      id: "1",
-      date: new Date().toISOString(),
-      section: "General Information",
-      action: "Created",
-      updatedBy: {
-        name: "John Doe",
-        email: "john.doe@example.com",
-        phone: "+1 234-567-8901"
-      },
-      newValue: theatre?.name || "Cinema City Metropolis"
-    },
-    {
-      id: "2",
-      date: new Date(Date.now() - 86400000).toISOString(),
-      section: "Screen Management",
-      action: "Updated",
-      updatedBy: {
-        name: "Jane Smith",
-        email: "jane.smith@example.com"
-      },
-      oldValue: "7 screens",
-      newValue: "8 screens"
-    },
-    {
-      id: "3",
-      date: new Date(Date.now() - 86400000 * 3).toISOString(),
-      section: "Connectivity Details",
-      action: "Updated",
-      updatedBy: {
-        name: "Alice Johnson",
-        email: "alice.johnson@example.com",
-        phone: "+1 234-567-8902"
-      },
-      oldValue: "192.168.1.100",
-      newValue: "192.168.1.150"
-    },
-    {
-      id: "4",
-      date: new Date(Date.now() - 86400000 * 7).toISOString(),
-      section: "General Information",
-      action: "Listed",
-      updatedBy: {
-        name: "Bob Wilson",
-        email: "bob.wilson@example.com"
-      },
-      oldValue: "Inactive",
-      newValue: "Active"
-    },
-    {
-      id: "5",
-      date: new Date(Date.now() - 86400000 * 14).toISOString(),
-      section: "Content & Key Delivery",
-      action: "Updated",
-      updatedBy: {
-        name: "Carol Davis",
-        email: "carol.davis@example.com"
-      },
-      oldValue: "FTP",
-      newValue: "SFTP"
-    }
-  ];
-
-  const displayedLogs = showAllLogs ? mockLogs : mockLogs.slice(0, 3);
+  const displayedLogs = showAllLogs ? logs : logs.slice(0, 3);
 
   const formatDateLocal = (dateString: string) => {
     return formatDateTime(dateString);
@@ -138,7 +62,20 @@ export function TheatreLogsDialog({ open, onOpenChange, theatre }: TheatreLogsDi
               </TableRow>
             </TableHeader>
             <TableBody>
-              {displayedLogs.length > 0 ? (
+              {logsQuery.isPending ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-muted-foreground">
+                    Loading logs…
+                  </TableCell>
+                </TableRow>
+              ) : logsQuery.isError ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="h-24 text-center text-red-500">
+                    Could not load logs: {logsQuery.error.message}{" "}
+                    <Button variant="link" className="h-auto p-0" onClick={() => logsQuery.refetch()}>Retry</Button>
+                  </TableCell>
+                </TableRow>
+              ) : displayedLogs.length > 0 ? (
                 displayedLogs.map((log) => (
                   <TableRow key={log.id}>
                     <TableCell className="text-sm">
@@ -167,7 +104,7 @@ export function TheatreLogsDialog({ open, onOpenChange, theatre }: TheatreLogsDi
                           </TooltipTrigger>
                           <TooltipContent className="p-2">
                             <div className="text-xs">
-                              <div>Email: {log.updatedBy.email}</div>
+                              {log.updatedBy.email && <div>Email: {log.updatedBy.email}</div>}
                               {log.updatedBy.phone && <div>Phone: {log.updatedBy.phone}</div>}
                             </div>
                           </TooltipContent>

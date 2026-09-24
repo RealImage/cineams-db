@@ -10,14 +10,13 @@ import {
   CredentialScope,
   GLOBAL_REF,
   ScopedCredential,
-  chainOptions,
   countryOptions,
   credentialFieldLabels,
   credentialScopes,
   getCredentialFormat,
   secretFields,
-  theatreOptions,
 } from "@/data/credentialsManagerData";
+import { useCredentialRefOptions } from "@/hooks/api/credentials";
 
 export type CredentialDraft = Omit<ScopedCredential, "id" | "updatedBy" | "updatedAt"> & { id?: string };
 
@@ -30,16 +29,16 @@ interface Props {
   credential: ScopedCredential | null;
   /** Refs already used in this scope, to prevent duplicates. */
   takenRefs: string[];
-  onSave: (draft: CredentialDraft) => void;
+  /** Resolves when saved (the dialog then closes); rejects to keep it open. */
+  onSave: (draft: CredentialDraft) => Promise<unknown>;
+  saving?: boolean;
 }
 
-const refOptions: Partial<Record<CredentialScope, string[]>> = {
-  global: [GLOBAL_REF, ...countryOptions],
-  chain: chainOptions,
-  theatre: theatreOptions,
-};
+const globalRefOptions = [GLOBAL_REF, ...countryOptions];
 
-export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, credential, takenRefs, onSave }: Props) => {
+export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, credential, takenRefs, onSave, saving = false }: Props) => {
+  const needsRefOptions = scope === "chain" || scope === "theatre";
+  const refOptionsQuery = useCredentialRefOptions(open && needsRefOptions);
   const [ref, setRef] = useState("");
   const [location, setLocation] = useState("");
   const [values, setValues] = useState<Partial<Record<CredentialField, string>>>({});
@@ -53,10 +52,19 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
 
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
   const fields = getCredentialFormat(device.credentialFormat).fields;
-  const options = refOptions[scope];
+  const loadedOptions =
+    scope === "global" ? globalRefOptions
+    : scope === "chain" ? refOptionsQuery.data?.chains
+    : scope === "theatre" ? refOptionsQuery.data?.theatres
+    : undefined;
+  // Keep the row's current ref selectable even if it's no longer in the list.
+  const options = loadedOptions && credential?.ref && !loadedOptions.includes(credential.ref)
+    ? [credential.ref, ...loadedOptions]
+    : loadedOptions;
+  const optionsLoading = needsRefOptions && !loadedOptions;
   const trimmedRef = ref.trim();
   const duplicate = trimmedRef !== "" && trimmedRef !== credential?.ref && takenRefs.includes(trimmedRef);
-  const canSave = trimmedRef !== "" && !duplicate && fields.every((f) => (values[f] ?? "").trim() !== "");
+  const canSave = trimmedRef !== "" && !duplicate && !saving && fields.every((f) => (values[f] ?? "").trim() !== "");
 
   const handleSave = () => {
     onSave({
@@ -66,8 +74,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
       ref: trimmedRef,
       location: scope === "device" ? location.trim() || undefined : undefined,
       values: Object.fromEntries(fields.map((f) => [f, values[f]!.trim()])),
-    });
-    onOpenChange(false);
+    }).then(() => onOpenChange(false), () => {});
   };
 
   return (
@@ -83,7 +90,13 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
         <div className="grid grid-cols-1 gap-4 py-2">
           <div className="space-y-1">
             <Label className="text-xs">{scopeInfo.refLabel}</Label>
-            {options ? (
+            {optionsLoading ? (
+              <Select disabled>
+                <SelectTrigger>
+                  <SelectValue placeholder={refOptionsQuery.isError ? `Could not load ${scopeInfo.refLabel.toLowerCase()} list` : "Loading…"} />
+                </SelectTrigger>
+              </Select>
+            ) : options ? (
               <Select value={ref} onValueChange={setRef}>
                 <SelectTrigger><SelectValue placeholder={`Select ${scopeInfo.refLabel.toLowerCase()}`} /></SelectTrigger>
                 <SelectContent>
@@ -118,7 +131,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
-          <Button onClick={handleSave} disabled={!canSave}>Save</Button>
+          <Button onClick={handleSave} disabled={!canSave}>{saving ? "Saving…" : "Save"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

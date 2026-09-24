@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { ArrowLeft, Pencil, CalendarIcon, CheckCircle2, Circle } from "lucide-react";
@@ -13,15 +13,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { edgeTheatres, EdgeScreenDevice } from "@/data/edgeData";
+import type { EdgeScreenDevice } from "@/data/edgeData";
+import type { QubeAcsTheatre } from "@/data/qubeAcsData";
+import { useApplianceTheatre, useUpdateApplianceTheatre } from "@/hooks/api/appliances";
+import { QueryState } from "@/components/ui/query-state";
 import { cn } from "@/lib/utils";
 
 type Status = "Active" | "Device Paused" | "Inactive";
 
-const EditEdgeTheatre = () => {
-  const { id } = useParams();
+const EditEdgeTheatreForm = ({ theatre }: { theatre: QubeAcsTheatre }) => {
   const navigate = useNavigate();
-  const theatre = useMemo(() => edgeTheatres.find((t) => t.id === id), [id]);
+  const save = useUpdateApplianceTheatre("edge");
 
   const [editDetails, setEditDetails] = useState(false);
   const [editDevice, setEditDevice] = useState(false);
@@ -31,7 +33,7 @@ const EditEdgeTheatre = () => {
     networkId: theatre?.networkId ?? "",
     networkPassword: theatre?.networkPassword ?? "",
   });
-  const [screens, setScreens] = useState<EdgeScreenDevice[]>(() => theatre ? [...theatre.screens] : []);
+  const [screens, setScreens] = useState<EdgeScreenDevice[]>(() => theatre.screens.map((s) => ({ ...s })));
   const [activeScreenId, setActiveScreenId] = useState<string | null>(null);
 
   if (!theatre) {
@@ -52,8 +54,13 @@ const EditEdgeTheatre = () => {
     updateScreen(sid, { hasDevice: checked, status: checked ? "Active" : "Inactive" });
 
   const onSave = () => {
-    toast.success(`${theatre.theatreName} updated`);
-    navigate("/qube-appliances/edge");
+    save.mutate({ id: theatre.id, ...details, screens }, {
+      onSuccess: () => {
+        toast.success(`${theatre.theatreName} updated`);
+        navigate("/qube-appliances/edge");
+      },
+      onError: (err) => toast.error(`Could not save ${theatre.theatreName}: ${err.message}`),
+    });
   };
 
   return (
@@ -70,7 +77,7 @@ const EditEdgeTheatre = () => {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => navigate("/qube-appliances/edge")}>Cancel</Button>
-          <Button onClick={onSave}>Save</Button>
+          <Button onClick={onSave} disabled={save.isPending}>{save.isPending ? "Saving…" : "Save"}</Button>
         </div>
       </div>
 
@@ -230,6 +237,16 @@ const EditEdgeTheatre = () => {
         </div>
       </Card>
     </div>
+  );
+};
+
+const EditEdgeTheatre = () => {
+  const { id } = useParams();
+  const theatreQuery = useApplianceTheatre("edge", id);
+  return (
+    <QueryState query={theatreQuery} label="theatre">
+      {(theatre) => <EditEdgeTheatreForm key={theatre.id} theatre={theatre} />}
+    </QueryState>
   );
 };
 

@@ -28,6 +28,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { useWireTAPTheatreOptions } from "@/hooks/api/wiretap";
+import type { WireTAPTheatreOption } from "@/types/wireTAP";
 
 interface BasicDetailsFormProps {
   formData: any;
@@ -45,25 +47,19 @@ const applianceTypes = [
   "WireTAP Lite"
 ];
 
-// Mock theatre data for the theatre search functionality
-const theatres = [
-  { id: "th-001", name: "Grand Avenue Cinema" },
-  { id: "th-002", name: "Michigan Avenue Cineplex" },
-  { id: "th-003", name: "Broadway Cinema" },
-  { id: "th-004", name: "Ocean Drive Theatre" },
-  { id: "th-005", name: "Pike Place Screens" },
-  { id: "th-006", name: "Peachtree Cinema" },
-];
-
 const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showTheatreSearch, setShowTheatreSearch] = useState(false);
 
-  const filteredTheatres = theatres.filter(theatre => 
-    theatre.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const theatresQuery = useWireTAPTheatreOptions();
+  const filteredTheatres = (theatresQuery.data ?? [])
+    .filter(theatre => {
+      const q = searchTerm.toLowerCase();
+      return theatre.name.toLowerCase().includes(q) || (theatre.code ?? "").toLowerCase().includes(q);
+    })
+    .slice(0, 100);
 
-  const handleTheatreSelect = (theatre: typeof theatres[0]) => {
+  const handleTheatreSelect = (theatre: WireTAPTheatreOption) => {
     onChange({
       theatreId: theatre.id,
       theatreName: theatre.name
@@ -79,8 +75,8 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
           <Label htmlFor="applianceSerialNumber">Appliance Serial Number *</Label>
           <Input 
             id="applianceSerialNumber" 
-            value={formData.applianceSerialNumber}
-            onChange={(e) => onChange({ applianceSerialNumber: e.target.value })}
+            value={formData.applicationSerialNumber}
+            onChange={(e) => onChange({ applicationSerialNumber: e.target.value })}
             placeholder="e.g., QWA-L28038"
             pattern="^QWA-[A-Z]\d{5}$"
             title="Format: QWA-[Letter][5 digits] (e.g., QWA-L28038, QWA-M12304)"
@@ -219,7 +215,13 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
                       />
                     </div>
                     <ul className="max-h-60 overflow-auto">
-                      {filteredTheatres.length > 0 ? (
+                      {theatresQuery.isPending ? (
+                        <li className="px-4 py-2 text-muted-foreground" role="status">Loading theatres…</li>
+                      ) : theatresQuery.isError ? (
+                        <li className="px-4 py-2 text-red-500" role="alert">
+                          Could not load theatres: {theatresQuery.error.message}
+                        </li>
+                      ) : filteredTheatres.length > 0 ? (
                         filteredTheatres.map(theatre => (
                           <li 
                             key={theatre.id}
@@ -227,6 +229,7 @@ const BasicDetailsForm = ({ formData, onChange }: BasicDetailsFormProps) => {
                             onClick={() => handleTheatreSelect(theatre)}
                           >
                             {theatre.name}
+                            {theatre.code && <span className="text-muted-foreground"> ({theatre.code})</span>}
                           </li>
                         ))
                       ) : (

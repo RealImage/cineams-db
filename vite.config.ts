@@ -8,6 +8,10 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      // API server (server/index.ts) in front of Postgres
+      "/api": `http://localhost:${process.env.API_PORT ?? 3001}`,
+    },
   },
   plugins: [
     react(),

@@ -37,7 +37,8 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { flmFeeds } from "@/data/flmFeedsData";
+import { useFlmFeeds, useIgnoreFlmFeed } from "@/hooks/api/flm";
+import { QueryState } from "@/components/ui/query-state";
 import { formatDate, formatTime } from "@/lib/dateUtils";
 
 const SOURCES = ["MACCS", "DCIP", "Qube Radar", "Cinergy", "Sony", "KDMx"];
@@ -59,7 +60,8 @@ const FLMFeeds = () => {
   const [draft, setDraft] = useFilterDraft(filters, filterOpen);
   const { source, status, isNew } = filters;
   const [mapFeed, setMapFeed] = useState<FlmFeed | null>(null);
-  const [ignoredIds, setIgnoredIds] = useState<Set<string>>(new Set());
+  const feedsQuery = useFlmFeeds();
+  const ignoreFeed = useIgnoreFlmFeed();
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text).then(() => {
@@ -67,13 +69,18 @@ const FLMFeeds = () => {
     });
   };
 
-  const handleIgnore = (feed: FlmFeed) => {
-    setIgnoredIds((prev) => new Set(prev).add(feed.id));
-    toast({ title: "Update ignored", description: `${feed.theatreName} feed update has been ignored.` });
+  const handleIgnore = async (feed: FlmFeed) => {
+    try {
+      await ignoreFeed.mutateAsync(feed.id);
+      toast({ title: "Update ignored", description: `${feed.theatreName} feed update has been ignored.` });
+    } catch (err) {
+      toast({ title: "Could not ignore update", description: (err as Error).message, variant: "destructive" });
+    }
   };
 
+  // The feed detail page has the create-theatre flow.
   const handleAddTheatre = (feed: FlmFeed) => {
-    toast({ title: "Add Theatre", description: `Starting add-theatre flow for ${feed.theatreName}.` });
+    navigate(`/theatres/flm-feeds/${feed.id}`, { state: { createMode: true } });
   };
 
   const clearFilters = () => {
@@ -90,11 +97,7 @@ const FLMFeeds = () => {
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const filtered = flmFeeds.map((f): FlmFeed => {
-      const savedStatus = sessionStorage.getItem(`flm-feed-status:${f.id}`);
-      return savedStatus === "Auto-Updated / Mapped" ? { ...f, status: "Auto-Updated / Mapped" } : f;
-    }).filter((f) => {
-      if (ignoredIds.has(f.id)) return false;
+    const filtered = (feedsQuery.data ?? []).filter((f) => {
       const matchesSearch =
         !q ||
         [f.theatreName, f.chain, f.theatreIdFeed, f.theatreUuid]
@@ -110,7 +113,7 @@ const FLMFeeds = () => {
     return [...filtered].sort(
       (a, b) => new Date(b.receivedOn).getTime() - new Date(a.receivedOn).getTime()
     );
-  }, [search, source, status, isNew, ignoredIds]);
+  }, [feedsQuery.data, search, source, status, isNew]);
 
   const resetKey = useMemo(() => [search, filters], [search, filters]);
   const { page: currentPage, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: pagedRows } =
@@ -179,6 +182,8 @@ const FLMFeeds = () => {
         </div>
       )}
 
+      <QueryState query={feedsQuery} label="FLM feeds">
+      {() => (<>
       <div className="rounded-md border border-border">
         <Table>
           <TableHeader>
@@ -333,6 +338,8 @@ const FLMFeeds = () => {
         handlePageChange={setPage}
         handleRowsPerPageChange={setPageSize}
       />
+      </>)}
+      </QueryState>
 
       <FilterDrawer
         open={filterOpen}

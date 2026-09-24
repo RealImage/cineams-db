@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Monitor } from "lucide-react";
@@ -6,12 +5,12 @@ import { ScreenIPsTable } from "./ScreenIPsTable";
 import { ScreenDevicesTable } from "./ScreenDevicesTable";
 import { ScreenSuitesSection } from "./ScreenSuitesSection";
 
-interface Screen {
-  id: string;
-  name: string;
-  number: string;
-  status: string;
-}
+import type { IPAddress, Screen as ScreenRecord } from "@/types";
+import type { ScreenDeviceConfig, SuiteConfig } from "@/hooks/api/screens";
+
+/** A screen with whatever device configuration it already has. */
+type Screen = Pick<ScreenRecord, "id" | "name" | "number" | "status"> &
+  Partial<{ devices: ScreenDeviceConfig[]; ipAddresses: IPAddress[]; suites: SuiteConfig[] }>;
 
 interface ScreenIP {
   id: string;
@@ -20,12 +19,14 @@ interface ScreenIP {
   gateway: string;
 }
 
+type LocalCertStatus = 'Active' | 'Inactive' | 'Unknown';
+
 interface ScreenDevice {
   id: string;
   deviceModel: string;
   serialNumber: string;
   deviceRole: string;
-  certificateStatus: 'Active' | 'Inactive' | 'Unknown';
+  certificateStatus: LocalCertStatus;
   certificateAutoSync: boolean;
   softwareVersion: string;
   ipAddress?: string;
@@ -38,7 +39,7 @@ interface SuiteDevice {
   deviceModel: string;
   serialNumber: string;
   deviceRole: string;
-  certificateStatus: 'Active' | 'Inactive' | 'Unknown';
+  certificateStatus: LocalCertStatus;
   softwareVersion: string;
 }
 
@@ -50,58 +51,113 @@ interface ScreenSuite {
   devices: SuiteDevice[];
 }
 
+type DataType = 'devices' | 'ipAddresses' | 'suites';
+
 interface IPSuitesTabContentProps {
   screens: Screen[];
-  onScreenDataChange: (screenId: string, dataType: 'ips' | 'devices' | 'suites', data: any) => void;
+  /** Called with the screen's new list in the API / `Screen` shape. */
+  onScreenDataChange: (screenId: string, dataType: DataType, data: ScreenDeviceConfig[] | IPAddress[] | SuiteConfig[]) => void;
 }
 
+// --- Conversions between the stored screen shape and this tab's table rows ---
+
+const toLocalCert = (status: ScreenDeviceConfig["certificateStatus"]): LocalCertStatus =>
+  status === "Valid" ? "Active" : status === "Unknown" ? "Unknown" : "Inactive";
+
+const fromLocalCert = (status: LocalCertStatus, original?: ScreenDeviceConfig): ScreenDeviceConfig["certificateStatus"] => {
+  if (original && toLocalCert(original.certificateStatus) === status) return original.certificateStatus;
+  return status === "Active" ? "Valid" : status === "Inactive" ? "Invalid" : "Unknown";
+};
+
+const toLocalDevice = (d: ScreenDeviceConfig): ScreenDevice => ({
+  id: d.id,
+  deviceModel: d.model,
+  serialNumber: d.serialNumber,
+  deviceRole: d.role ?? "",
+  certificateStatus: toLocalCert(d.certificateStatus),
+  certificateAutoSync: !!d.certificateAutoSync,
+  softwareVersion: d.softwareVersion ?? "",
+  ipAddress: d.ipAddress ?? undefined,
+  subnetMask: d.subnetMask ?? undefined,
+  gateway: d.gateway ?? undefined,
+});
+
+const fromLocalDevice = (d: ScreenDevice, original?: ScreenDeviceConfig): ScreenDeviceConfig => ({
+  id: d.id,
+  manufacturer: original?.manufacturer ?? "",
+  model: d.deviceModel,
+  serialNumber: d.serialNumber,
+  role: d.deviceRole || undefined,
+  certificateStatus: fromLocalCert(d.certificateStatus, original),
+  certificateLockStatus: original?.certificateLockStatus ?? "Unlocked",
+  softwareVersion: d.softwareVersion,
+  certificateAutoSync: d.certificateAutoSync,
+  ipAddress: d.ipAddress || null,
+  subnetMask: d.subnetMask || null,
+  gateway: d.gateway || null,
+});
+
+const toSuiteDevice = (d: ScreenDevice): SuiteDevice => ({
+  id: d.id,
+  deviceModel: d.deviceModel,
+  serialNumber: d.serialNumber,
+  deviceRole: d.deviceRole,
+  certificateStatus: d.certificateStatus,
+  softwareVersion: d.softwareVersion,
+});
+
+/** Same rule the suite cards show: needs an SM/RMB and every device's certificate active. */
+const suiteIsValid = (devices: SuiteDevice[]) =>
+  devices.some((d) => d.deviceRole === "Server (SM)" || d.deviceRole === "Root Media Block (RMB)") &&
+  devices.every((d) => d.certificateStatus === "Active");
+
+const toLocal = (screen: Screen) => {
+  const devices = (screen.devices ?? []).map(toLocalDevice);
+  const byId = new Map(devices.map((d) => [d.id, d]));
+  return {
+    ips: (screen.ipAddresses ?? []).map((ip, i): ScreenIP => ({
+      id: `ip-${i}`, ipAddress: ip.address, subnetMask: ip.subnet ?? "", gateway: ip.gateway ?? "",
+    })),
+    devices,
+    suites: (screen.suites ?? []).map((su): ScreenSuite => ({
+      id: su.id,
+      suiteNumber: su.name,
+      creationDate: (su.createdAt ?? "").slice(0, 10),
+      effectiveFromDate: su.effectiveFrom ?? "",
+      devices: su.devices.flatMap((id) => (byId.has(id) ? [toSuiteDevice(byId.get(id)!)] : [])),
+    })),
+  };
+};
+
 export const IPSuitesTabContent = ({ screens, onScreenDataChange }: IPSuitesTabContentProps) => {
-  // Mock data - in a real application, this would come from props or API
-  const [screenData, setScreenData] = useState<Record<string, {
-    ips: ScreenIP[];
-    devices: ScreenDevice[];
-    suites: ScreenSuite[];
-  }>>({});
+  // Rows are derived from the screens passed in; edits go straight back to the owner.
+  const getScreenData = (screenId: string) => {
+    const screen = screens.find((s) => s.id === screenId);
+    return screen ? toLocal(screen) : { ips: [], devices: [], suites: [] };
+  };
 
   const handleIPsChange = (screenId: string, ips: ScreenIP[]) => {
-    setScreenData(prev => ({
-      ...prev,
-      [screenId]: {
-        ...prev[screenId],
-        ips
-      }
-    }));
-    onScreenDataChange(screenId, 'ips', ips);
+    onScreenDataChange(screenId, 'ipAddresses', ips.map((ip) => ({
+      address: ip.ipAddress, subnet: ip.subnetMask, gateway: ip.gateway,
+    })));
   };
 
   const handleDevicesChange = (screenId: string, devices: ScreenDevice[]) => {
-    setScreenData(prev => ({
-      ...prev,
-      [screenId]: {
-        ...prev[screenId],
-        devices
-      }
-    }));
-    onScreenDataChange(screenId, 'devices', devices);
+    const originals = new Map((screens.find((s) => s.id === screenId)?.devices ?? []).map((d) => [d.id, d]));
+    onScreenDataChange(screenId, 'devices', devices.map((d) => fromLocalDevice(d, originals.get(d.id))));
   };
 
   const handleSuitesChange = (screenId: string, suites: ScreenSuite[]) => {
-    setScreenData(prev => ({
-      ...prev,
-      [screenId]: {
-        ...prev[screenId],
-        suites
-      }
-    }));
-    onScreenDataChange(screenId, 'suites', suites);
-  };
-
-  const getScreenData = (screenId: string) => {
-    return screenData[screenId] || {
-      ips: [],
-      devices: [],
-      suites: []
-    };
+    const originals = new Map((screens.find((s) => s.id === screenId)?.suites ?? []).map((su) => [su.id, su]));
+    onScreenDataChange(screenId, 'suites', suites.map((su): SuiteConfig => ({
+      id: su.id,
+      name: su.suiteNumber,
+      status: suiteIsValid(su.devices) ? "Valid" : "Invalid",
+      devices: su.devices.map((d) => d.id),
+      ipAddresses: originals.get(su.id)?.ipAddresses ?? [],
+      effectiveFrom: su.effectiveFromDate || null,
+      createdAt: originals.get(su.id)?.createdAt,
+    })));
   };
 
   const getAvailableDevicesForSuite = (screenId: string): SuiteDevice[] => {
@@ -113,14 +169,7 @@ export const IPSuitesTabContent = ({ screens, onScreenDataChange }: IPSuitesTabC
         device.certificateStatus === 'Active' && 
         !assignedDeviceIds.includes(device.id)
       )
-      .map(device => ({
-        id: device.id,
-        deviceModel: device.deviceModel,
-        serialNumber: device.serialNumber,
-        deviceRole: device.deviceRole,
-        certificateStatus: device.certificateStatus,
-        softwareVersion: device.softwareVersion
-      }));
+      .map(toSuiteDevice);
   };
 
   if (screens.length === 0) {

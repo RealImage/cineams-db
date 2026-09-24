@@ -1,49 +1,44 @@
-
-import { useState, useEffect } from "react";
 import { Theatre } from "@/types";
 import { toast } from "sonner";
+import { useDeleteTheatre, useSetTheatreStatus, useUpdateTheatre } from "@/hooks/api/theatres";
 
-export const useTheatres = (initialTheatres: Theatre[]) => {
-  const [theatres, setTheatres] = useState<Theatre[]>(initialTheatres);
-  
-  const handleSaveTheatre = (theatreData: Partial<Theatre>, editingTheatre?: Theatre) => {
-    if (editingTheatre) {
-      setTheatres(
-        theatres.map((t) => 
-          t.id === editingTheatre.id ? { ...t, ...theatreData, updatedAt: new Date().toISOString() } as Theatre : t
-        )
-      );
-    } else {
-      const newTheatre: Theatre = {
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        ...theatreData,
-      } as Theatre;
-      
-      setTheatres([newTheatre, ...theatres]);
+/** Theatre list actions, persisted through the API with success/error toasts. */
+export const useTheatreHandlers = () => {
+  const updateTheatre = useUpdateTheatre();
+  const deleteTheatre = useDeleteTheatre();
+  const setStatus = useSetTheatreStatus();
+
+  const handleSaveTheatre = async (theatreData: Partial<Theatre>, editingTheatre?: Theatre) => {
+    const id = editingTheatre?.id ?? theatreData.id;
+    if (!id) return;
+    try {
+      await updateTheatre.mutateAsync({ ...theatreData, id });
+    } catch (err) {
+      toast.error(`Could not save theatre: ${(err as Error).message}`);
+      throw err;
     }
   };
-  
-  const handleDeleteTheatre = (theatreId: string) => {
-    setTheatres(theatres.filter((t) => t.id !== theatreId));
+
+  const handleDeleteTheatre = async (theatre: Theatre) => {
+    try {
+      await deleteTheatre.mutateAsync(theatre.id);
+      toast.success(`Theatre "${theatre.name}" deleted successfully`);
+      return true;
+    } catch (err) {
+      toast.error(`Could not delete theatre: ${(err as Error).message}`);
+      return false;
+    }
   };
-  
-  const handleToggleStatus = (theatre: Theatre) => {
+
+  const handleToggleStatus = async (theatre: Theatre) => {
     const newStatus = theatre.status === "Active" ? "Inactive" : "Active";
-    const updatedTheatres = theatres.map((t) => 
-      t.id === theatre.id ? { ...t, status: newStatus, updatedAt: new Date().toISOString() } as Theatre : t
-    );
-    
-    setTheatres(updatedTheatres);
-    return newStatus;
+    try {
+      await setStatus.mutateAsync({ id: theatre.id, status: newStatus });
+      toast.success(`Theatre "${theatre.name}" ${newStatus === "Active" ? "activated" : "deactivated"} successfully`);
+    } catch (err) {
+      toast.error(`Could not update theatre status: ${(err as Error).message}`);
+    }
   };
-  
-  return {
-    theatres,
-    setTheatres,
-    handleSaveTheatre,
-    handleDeleteTheatre,
-    handleToggleStatus
-  };
+
+  return { handleSaveTheatre, handleDeleteTheatre, handleToggleStatus, deleting: deleteTheatre.isPending };
 };

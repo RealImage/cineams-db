@@ -12,12 +12,18 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { FilterButton, FilterDrawer, FilterGroup, useFilterDraft } from "@/components/ui/filter-drawer";
 import { formatDateTime } from "@/lib/dateUtils";
 import {
-  CredentialDevice,
+  CredentialDeviceWithStatus as CredentialDevice,
   dciOptions,
+  deviceCredentialsPath,
   deviceTypes,
-  hasDefaultCredentials,
 } from "@/data/credentialsManagerData";
-import { credentialsStore, deviceCredentialsPath, useCredentialsStore } from "@/data/credentialsStore";
+import { QueryState } from "@/components/ui/query-state";
+import {
+  DevicePatch,
+  useCredentialDevices,
+  useDeviceCredentials,
+  useUpdateCredentialDevice,
+} from "@/hooks/api/credentials";
 import { CredentialDeviceSheet } from "@/components/credentials-manager/CredentialDeviceSheet";
 import { EditCredentialDeviceDialog } from "@/components/credentials-manager/EditCredentialDeviceDialog";
 import { DefaultCredentialsDialog } from "@/components/credentials-manager/DefaultCredentialsDialog";
@@ -29,9 +35,13 @@ const MAX_TRANSLATIONS_SHOWN = 2;
 type Filters = { brand: string; type: string; dci: string; credentials: string };
 const emptyFilters: Filters = { brand: ALL, type: ALL, dci: ALL, credentials: ALL };
 
+const EMPTY: CredentialDevice[] = [];
+
 const CredentialsManager = () => {
   const navigate = useNavigate();
-  const { devices, credentials } = useCredentialsStore();
+  const devicesQuery = useCredentialDevices();
+  const devices = devicesQuery.data ?? EMPTY;
+  const updateDevice = useUpdateCredentialDevice();
   const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState<Filters>(emptyFilters);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -43,9 +53,10 @@ const CredentialsManager = () => {
   const [credentialsOpen, setCredentialsOpen] = useState(false);
 
   const selected = devices.find((d) => d.id === selectedId) ?? null;
+  const selectedCredentials = useDeviceCredentials(selected?.id, credentialsOpen);
   const devicesWithDefaults = useMemo(
-    () => new Set(devices.filter((d) => hasDefaultCredentials(d.id, credentials)).map((d) => d.id)),
-    [devices, credentials],
+    () => new Set(devices.filter((d) => d.hasDefaultCredentials).map((d) => d.id)),
+    [devices],
   );
   const brands = useMemo(() => Array.from(new Set(devices.map((d) => d.brand))).sort(), [devices]);
 
@@ -74,10 +85,12 @@ const CredentialsManager = () => {
   const openCredentials = (d: CredentialDevice) => { setSelectedId(d.id); setDetailsOpen(false); setCredentialsOpen(true); };
   const manageCredentials = (d: CredentialDevice) => navigate(deviceCredentialsPath(d.id));
 
-  const handleSaveDevice = (patch: Partial<CredentialDevice>) => {
-    if (!selected) return;
-    credentialsStore.updateDevice(selected.id, patch);
-    toast.success(`Updated ${patch.brand ?? selected.brand} ${patch.model ?? selected.model}`);
+  const handleSaveDevice = (patch: DevicePatch) => {
+    if (!selected) return Promise.resolve();
+    return updateDevice.mutateAsync({ id: selected.id, patch }).then(
+      (d) => { toast.success(`Updated ${d.brand} ${d.model}`); },
+      (err: Error) => { toast.error(`Could not update ${selected.brand} ${selected.model}: ${err.message}`); throw err; },
+    );
   };
 
   const columns: Column<CredentialDevice>[] = [
@@ -204,17 +217,23 @@ const CredentialsManager = () => {
         </FilterGroup>
       </FilterDrawer>
 
-      <p className="text-sm text-muted-foreground">
-        Showing {filteredDevices.length} of {devices.length} devices
-      </p>
+      <QueryState query={devicesQuery} label="devices">
+        {() => (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredDevices.length} of {devices.length} devices
+            </p>
 
-      <DataTable
-        data={filteredDevices}
-        columns={columns}
-        searchable={false}
-        actions={actions}
-        onRowClick={openDetails}
-      />
+            <DataTable
+              data={filteredDevices}
+              columns={columns}
+              searchable={false}
+              actions={actions}
+              onRowClick={openDetails}
+            />
+          </>
+        )}
+      </QueryState>
 
       <CredentialDeviceSheet
         device={selected}
@@ -229,10 +248,11 @@ const CredentialsManager = () => {
         open={editOpen}
         onOpenChange={setEditOpen}
         onSave={handleSaveDevice}
+        saving={updateDevice.isPending}
       />
       <DefaultCredentialsDialog
         device={selected}
-        credentials={selected ? credentials.filter((c) => c.deviceId === selected.id) : []}
+        credentialsQuery={selectedCredentials}
         open={credentialsOpen}
         onOpenChange={setCredentialsOpen}
         onManage={manageCredentials}

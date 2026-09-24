@@ -21,39 +21,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { FleetTask } from "@/pages/TaskManagement";
+import { FLEET_TIMEZONES as timezones, type FleetTaskOptions } from "@/data/fleetData";
+import { useFleetTaskOptions } from "@/hooks/api/fleet";
 
 interface AddTaskDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddTask: (task: Omit<FleetTask, "id">) => void;
 }
 
-const timezones = ["PST", "EST", "CST", "MST", "GMT", "UTC", "IST", "AEST"];
+const EMPTY_OPTIONS: FleetTaskOptions = { wireOSVersions: [], partnerOSVersions: [], agents: [] };
 
-// Mock data for versions
-const wireOSVersions = ["3.2.1", "3.2.0", "3.1.5", "3.1.4", "3.0.9"];
-const partnerOSVersions = ["2.5.0", "2.4.3", "2.4.2", "2.3.8", "2.3.7"];
-
-// Agent list with their versions
-const agents = [
-  { id: "icount", name: "iCount - iCount", versions: ["1.4.2", "1.4.1", "1.4.0", "1.3.9"] },
-  { id: "qlog", name: "QLog - Qlog Agent", versions: ["2.1.0", "2.0.8", "2.0.7"] },
-  { id: "qw-redux", name: "QW - Agent Redux", versions: ["4.2.1", "4.2.0", "4.1.5"] },
-  { id: "qw-config", name: "QW - Configuration Agent", versions: ["1.8.3", "1.8.2", "1.8.1"] },
-  { id: "qw-ingest", name: "QW - Content Ingest Agent", versions: ["3.0.4", "3.0.3", "3.0.2"] },
-  { id: "qw-inventory", name: "QW - Inventory Agent", versions: ["2.3.1", "2.3.0", "2.2.9"] },
-  { id: "qw-kadet", name: "QW - Kadet (Agent Zero)", versions: ["5.1.0", "5.0.9", "5.0.8"] },
-  { id: "qw-kdm", name: "QW - KDM Agent", versions: ["1.9.2", "1.9.1", "1.9.0"] },
-  { id: "qw-livewire", name: "QW - Live Wire", versions: ["2.6.0", "2.5.9", "2.5.8"] },
-  { id: "qw-manifest", name: "QW - Manifest Agent", versions: ["1.5.4", "1.5.3", "1.5.2"] },
-  { id: "qw-tdl", name: "QW - TDL Agent", versions: ["3.2.1", "3.2.0", "3.1.9"] },
-  { id: "scheduler-qs", name: "Scheduler - AgentQS", versions: ["2.0.5", "2.0.4", "2.0.3"] },
-  { id: "scheduler-content", name: "Scheduler - Content Agent", versions: ["1.7.2", "1.7.1", "1.7.0"] },
-  { id: "scheduler-scheduler", name: "Scheduler - Scheduler Agent", versions: ["3.4.1", "3.4.0", "3.3.9"] },
-  { id: "slate-agentq", name: "Slate - AgentQ", versions: ["4.0.2", "4.0.1", "4.0.0"] },
-];
-
-export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogProps) => {
+export const AddTaskDialog = ({ open, onOpenChange }: AddTaskDialogProps) => {
+  const optionsQuery = useFleetTaskOptions();
+  const { wireOSVersions, partnerOSVersions, agents } = optionsQuery.data ?? EMPTY_OPTIONS;
   const navigate = useNavigate();
   
   // Get current date, time, and timezone
@@ -204,7 +184,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                 onValueChange={(value) => setFormData(prev => ({ ...prev, targetVersion: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select WireOS version" />
+                  <SelectValue placeholder={optionsQuery.isPending ? "Loading versions…" : "Select WireOS version"} />
                 </SelectTrigger>
                 <SelectContent>
                   {wireOSVersions.map(version => (
@@ -225,7 +205,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                   onValueChange={handleAgentChange}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select agent" />
+                    <SelectValue placeholder={optionsQuery.isPending ? "Loading agents…" : "Select agent"} />
                   </SelectTrigger>
                   <SelectContent>
                     {agents.map(agent => (
@@ -284,7 +264,7 @@ export const AddTaskDialog = ({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                 onValueChange={(value) => setFormData(prev => ({ ...prev, targetVersion: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select PartnerOS version" />
+                  <SelectValue placeholder={optionsQuery.isPending ? "Loading versions…" : "Select PartnerOS version"} />
                 </SelectTrigger>
                 <SelectContent>
                   {partnerOSVersions.map(version => (

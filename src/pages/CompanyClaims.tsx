@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { DataTable, Column } from "@/components/ui/data-table";
-import { CompanyClaim, companyClaimsData } from "@/data/companyClaimsData";
+import { CompanyClaim } from "@/data/companyClaimsData";
+import { useCompanyClaims } from "@/hooks/api/approvals";
+import { QueryState } from "@/components/ui/query-state";
 import { ClaimDetailSheet } from "@/components/company-claims/ClaimDetailSheet";
 import { formatDate } from "@/lib/dateUtils";
 
@@ -25,6 +27,7 @@ const columns: Column<CompanyClaim>[] = [
 ];
 
 const CompanyClaims = () => {
+  const claimsQuery = useCompanyClaims();
   const [selectedClaim, setSelectedClaim] = useState<CompanyClaim | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -38,13 +41,17 @@ const CompanyClaims = () => {
       <p className="text-sm text-muted-foreground">
         Review and manage pending company claims.
       </p>
-      <DataTable
-        data={companyClaimsData}
-        columns={columns}
-        searchable
-        searchPlaceholder="Search claims..."
-        onRowClick={handleRowClick}
-      />
+      <QueryState query={claimsQuery} label="company claims">
+        {(claims) => (
+          <DataTable
+            data={claims}
+            columns={columns}
+            searchable
+            searchPlaceholder="Search claims..."
+            onRowClick={handleRowClick}
+          />
+        )}
+      </QueryState>
       <ClaimDetailSheet
         claim={selectedClaim}
         open={sheetOpen}

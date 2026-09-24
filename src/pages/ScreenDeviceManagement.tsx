@@ -11,7 +11,8 @@ import { PaginationControls } from "@/components/ui/data-table/pagination";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { theatres as mockTheatres } from "@/data/mockData";
+import { useTheatres } from "@/hooks/api/theatres";
+import { QueryState } from "@/components/ui/query-state";
 import { Theatre } from "@/types";
 import { TheatreLogsDialog } from "@/components/TheatreLogsDialog";
 import { ScreenDeviceFilterPanel, ScreenDeviceFilters } from "@/components/screen-device-management/ScreenDeviceFilterPanel";
@@ -31,14 +32,16 @@ const ScreenDeviceManagement = () => {
   const [filters, setFilters] = useState<ScreenDeviceFilters>(defaultFilters);
   const [logsTheatre, setLogsTheatre] = useState<Theatre | undefined>(undefined);
 
-  const chains = useMemo(() => [...new Set(mockTheatres.map((t) => t.chainName))].sort(), []);
+  const theatresQuery = useTheatres({ withScreens: true });
+  const allTheatres = useMemo(() => theatresQuery.data ?? [], [theatresQuery.data]);
+  const chains = useMemo(() => [...new Set(allTheatres.map((t) => t.chainName).filter(Boolean))].sort(), [allTheatres]);
   const locations = useMemo(
-    () => [...new Set(mockTheatres.map((t) => `${t.city}, ${t.state}, ${t.country}`))].sort(),
-    []
+    () => [...new Set(allTheatres.map((t) => `${t.city}, ${t.state}, ${t.country}`))].sort(),
+    [allTheatres]
   );
 
   const filtered = useMemo(() => {
-    let r = mockTheatres;
+    let r = allTheatres;
     if (searchTerm) {
       const q = searchTerm.toLowerCase();
       r = r.filter((t) => {
@@ -90,7 +93,7 @@ const ScreenDeviceManagement = () => {
       );
     }
     return r;
-  }, [searchTerm, filters]);
+  }, [allTheatres, searchTerm, filters]);
 
   const resetKey = useMemo(() => [searchTerm, filters], [searchTerm, filters]);
   const { page, setPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginated } = usePagination(filtered, resetKey);
@@ -122,6 +125,8 @@ const ScreenDeviceManagement = () => {
         <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
       </div>
 
+      <QueryState query={theatresQuery} label="theatres">
+      {() => (<>
       <div className="rounded-md border overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
@@ -213,6 +218,8 @@ const ScreenDeviceManagement = () => {
         handlePageChange={setPage}
         handleRowsPerPageChange={setPageSize}
       />
+      </>)}
+      </QueryState>
 
       <ScreenDeviceFilterPanel
         open={filtersOpen}

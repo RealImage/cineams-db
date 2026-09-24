@@ -7,36 +7,55 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { theatres as mockTheatres } from "@/data/mockData";
-import { Theatre } from "@/types";
+import { Screen } from "@/types";
 import { IPSuitesTabContent } from "@/components/theatres/ip-suites/IPSuitesTabContent";
+import { QueryState } from "@/components/ui/query-state";
+import { useTheatre } from "@/hooks/api/theatres";
+import { useSaveScreenDeviceConfig } from "@/hooks/api/screens";
+import { ApiError } from "@/lib/api";
 
 const EditScreenDeviceList = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [theatre, setTheatre] = useState<Theatre | undefined>(undefined);
+  const theatreQuery = useTheatre(id);
+  const saveConfig = useSaveScreenDeviceConfig();
+  const theatre = theatreQuery.data;
+  // Working copy of the screens; edited in place and saved on "Save Changes".
+  const [screens, setScreens] = useState<Screen[]>([]);
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    const found = mockTheatres.find((t) => t.id === id);
-    if (found) setTheatre(JSON.parse(JSON.stringify(found)));
-    else {
+    if (theatre) {
+      setScreens(theatre.screens ?? []);
+      setDirty(new Set());
+    }
+  }, [theatre]);
+
+  useEffect(() => {
+    if (theatreQuery.error instanceof ApiError && theatreQuery.error.status === 404) {
       toast.error("Theatre not found");
       navigate("/theatre-device-management/screen-devices");
     }
-  }, [id, navigate]);
+  }, [theatreQuery.error, navigate]);
 
-  const screensForTab = useMemo(
-    () =>
-      (theatre?.screens || []).map((s) => ({
-        id: s.id,
-        name: s.name,
-        number: s.number,
-        status: s.status,
-      })),
-    [theatre]
-  );
+  const screensForTab = useMemo(() => screens, [screens]);
 
-  if (!theatre) return null;
+  const handleSave = async () => {
+    const changed = screens.filter((s) => dirty.has(s.id));
+    try {
+      if (changed.length > 0) {
+        await saveConfig.mutateAsync(
+          changed.map((s) => ({ id: s.id, devices: s.devices, ipAddresses: s.ipAddresses, suites: s.suites })),
+        );
+      }
+      toast.success("Screen device list saved");
+      navigate("/theatre-device-management/screen-devices");
+    } catch (err) {
+      toast.error(`Could not save screen device list: ${(err as Error).message}`);
+    }
+  };
+
+  if (!theatre) return <QueryState query={theatreQuery} label="theatre">{() => null}</QueryState>;
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
@@ -54,13 +73,8 @@ const EditScreenDeviceList = () => {
             {theatre.chainName} · {theatre.city}, {theatre.state}, {theatre.country}
           </p>
         </div>
-        <Button
-          onClick={() => {
-            toast.success("Screen device list saved");
-            navigate("/theatre-device-management/screen-devices");
-          }}
-        >
-          <Save className="h-4 w-4 mr-2" /> Save Changes
+        <Button onClick={handleSave} disabled={saveConfig.isPending}>
+          <Save className="h-4 w-4 mr-2" /> {saveConfig.isPending ? "Saving…" : "Save Changes"}
         </Button>
       </div>
 
@@ -103,7 +117,13 @@ const EditScreenDeviceList = () => {
           <CardTitle className="text-base">Screen Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <IPSuitesTabContent screens={screensForTab} onScreenDataChange={() => {}} />
+          <IPSuitesTabContent
+            screens={screensForTab}
+            onScreenDataChange={(screenId, dataType, data) => {
+              setScreens((prev) => prev.map((s) => (s.id === screenId ? { ...s, [dataType]: data } : s)));
+              setDirty((prev) => new Set(prev).add(screenId));
+            }}
+          />
         </CardContent>
       </Card>
     </motion.div>

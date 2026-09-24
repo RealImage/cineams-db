@@ -23,7 +23,7 @@ import {
   credentialScopes,
   getCredentialFormat,
 } from "@/data/credentialsManagerData";
-import { credentialsStore } from "@/data/credentialsStore";
+import { useDeleteDeviceCredential, useSaveDeviceCredential } from "@/hooks/api/credentials";
 import { CredentialCell } from "./CredentialValues";
 import { ViewScopedCredentialDialog } from "./ViewScopedCredentialDialog";
 import { EditScopedCredentialDialog, CredentialDraft } from "./EditScopedCredentialDialog";
@@ -54,6 +54,8 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
   const fields = getCredentialFormat(device.credentialFormat).fields;
   const selected = credentials.find((c) => c.id === selectedId) ?? null;
+  const saveCredential = useSaveDeviceCredential();
+  const deleteCredential = useDeleteDeviceCredential();
 
   // Keep the Global row first, then alphabetical.
   const rows = [...credentials].sort((a, b) =>
@@ -64,16 +66,26 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
   const openEdit = (c: ScopedCredential | null) => { setSelectedId(c?.id ?? null); setViewOpen(false); setEditOpen(true); };
   const openDelete = (c: ScopedCredential) => { setSelectedId(c.id); setDeleteOpen(true); };
 
-  const handleSave = (draft: CredentialDraft) => {
-    credentialsStore.saveCredential(draft);
-    toast.success(`${draft.id ? "Updated" : "Added"} credentials for ${draft.ref}`);
-  };
+  const handleSave = (draft: CredentialDraft) =>
+    saveCredential.mutateAsync(draft).then(
+      (saved) => { toast.success(`${draft.id ? "Updated" : "Added"} credentials for ${saved.ref}`); },
+      (err: Error) => {
+        toast.error(`Could not save credentials for ${draft.ref}: ${err.message}`);
+        throw err;
+      },
+    );
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.preventDefault(); // keep the confirmation open until the delete finishes
     if (!selected) return;
-    credentialsStore.deleteCredential(selected.id);
-    toast.success(`Deleted credentials for ${selected.ref}`);
-    setDeleteOpen(false);
+    const target = selected;
+    deleteCredential.mutate({ deviceId: target.deviceId, id: target.id }, {
+      onSuccess: () => {
+        toast.success(`Deleted credentials for ${target.ref}`);
+        setDeleteOpen(false);
+      },
+      onError: (err) => toast.error(`Could not delete credentials for ${target.ref}: ${err.message}`),
+    });
   };
 
   const columns: Column<ScopedCredential>[] = [
@@ -137,6 +149,7 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
         credential={selected}
         takenRefs={credentials.map((c) => c.ref)}
         onSave={handleSave}
+        saving={saveCredential.isPending}
       />
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
@@ -150,8 +163,12 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={deleteCredential.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteCredential.isPending ? "Deleting…" : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

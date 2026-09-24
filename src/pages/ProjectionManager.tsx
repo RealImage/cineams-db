@@ -12,7 +12,9 @@ import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { ProjectionFilterPanel, type ProjectionFilters } from "@/components/projection-manager/ProjectionFilterPanel";
-import { projectionScreenData, projectionScoreBins, type QualityStatus } from "@/data/projectionManagerData";
+import { projectionScoreBins, type QualityStatus, type ProjectionScreenRecord } from "@/data/projectionManagerData";
+import { QueryState } from "@/components/ui/query-state";
+import { useProjectionScreens } from "@/hooks/api/screenPulse";
 
 const defaultFilters: ProjectionFilters = {
   chain: "all",
@@ -43,26 +45,35 @@ const QualityCell = ({ value, status }: { value: string; status: QualityStatus }
 const chartConfig = { count: { label: "Screens", color: "hsl(var(--primary))" } };
 
 const ProjectionManager = () => {
+  const screensQuery = useProjectionScreens();
+  return (
+    <QueryState query={screensQuery} label="projection ratings">
+      {(data) => <ProjectionManagerContent data={data} />}
+    </QueryState>
+  );
+};
+
+const ProjectionManagerContent = ({ data }: { data: ProjectionScreenRecord[] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<ProjectionFilters>(defaultFilters);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
 
-  const chains = useMemo(() => [...new Set(projectionScreenData.map((s) => s.chainName))].sort(), []);
-  const locationOptions = useMemo(() => [...new Set(projectionScreenData.map((s) => `${s.city}, ${s.state}, ${s.country}`))].sort(), []);
+  const chains = useMemo(() => [...new Set(data.map((s) => s.chainName))].sort(), [data]);
+  const locationOptions = useMemo(() => [...new Set(data.map((s) => `${s.city}, ${s.state}, ${s.country}`))].sort(), [data]);
 
   const histogramData = useMemo(
     () => projectionScoreBins.map((bin) => ({
       range: bin.label,
-      count: projectionScreenData.filter((s) => s.score >= bin.min && s.score <= bin.max).length,
+      count: data.filter((s) => s.score >= bin.min && s.score <= bin.max).length,
       min: bin.min,
       max: bin.max,
     })),
-    []
+    [data]
   );
 
   const filteredData = useMemo(() => {
-    let result = [...projectionScreenData];
+    let result = [...data];
 
     if (selectedBar) {
       const bin = projectionScoreBins.find((b) => b.label === selectedBar);
@@ -88,7 +99,7 @@ const ProjectionManager = () => {
     if (filters.soundQuality !== "all") result = result.filter((s) => s.soundQuality.status === filters.soundQuality);
 
     return result;
-  }, [searchTerm, filters, selectedBar]);
+  }, [data, searchTerm, filters, selectedBar]);
 
   const resetKey = useMemo(() => [searchTerm, filters, selectedBar], [searchTerm, filters, selectedBar]);
   const { page: currentPage, setPage: setCurrentPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginatedData } =

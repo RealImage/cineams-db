@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { edgeLookupTheatres, edgeTheatres } from "@/data/edgeData";
+import { useApplianceLookup } from "@/hooks/api/appliances";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -18,16 +18,16 @@ export const AddEdgeTheatreLookupDialog = ({ open, onOpenChange }: Props) => {
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const enabledIds = useMemo(() => new Set(edgeTheatres.map((t) => t.theatreId)), []);
+  // The API returns only theatres not yet enrolled.
+  const lookup = useApplianceLookup("edge", open);
 
   const matches = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
-    return edgeLookupTheatres
-      .filter((t) => !enabledIds.has(t.theatreId))
+    return (lookup.data ?? [])
       .filter((t) => t.theatreName.toLowerCase().includes(q) || t.theatreId.toLowerCase().includes(q))
       .slice(0, 50);
-  }, [query, enabledIds]);
+  }, [query, lookup.data]);
 
   const proceed = () => {
     if (!selectedId) return;
@@ -52,7 +52,14 @@ export const AddEdgeTheatreLookupDialog = ({ open, onOpenChange }: Props) => {
           </div>
           <div className="border rounded-md">
             <ScrollArea className="h-72">
-              {query.trim() === "" ? (
+              {lookup.isPending ? (
+                <p className="text-sm text-muted-foreground p-4 text-center" role="status">Loading theatres…</p>
+              ) : lookup.isError ? (
+                <div className="p-4 text-center space-y-2" role="alert">
+                  <p className="text-sm text-red-500">Could not load theatres: {lookup.error.message}</p>
+                  <Button variant="outline" size="sm" onClick={() => lookup.refetch()}>Retry</Button>
+                </div>
+              ) : query.trim() === "" ? (
                 <p className="text-sm text-muted-foreground p-4 text-center">Start typing to find theatres.</p>
               ) : matches.length === 0 ? (
                 <p className="text-sm text-muted-foreground p-4 text-center">No matching theatres found.</p>

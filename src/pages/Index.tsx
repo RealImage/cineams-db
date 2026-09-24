@@ -1,44 +1,58 @@
-
-import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Building2, Users, Film, Monitor, ClipboardCheck, AlertTriangle } from "lucide-react";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { WireTAPMonitoringWidget } from "@/components/dashboard/WireTAPMonitoringWidget";
-import { DashboardStats } from "@/types";
+import { Button } from "@/components/ui/button";
+import { Theatre } from "@/types";
+import { formatDate } from "@/lib/dateUtils";
+import { useDashboardStats } from "@/hooks/api/theatres";
+import { useApprovalsSummary } from "@/hooks/api/approvals";
+
+const sum = (items: { count: number }[] | undefined) => (items ?? []).reduce((n, i) => n + i.count, 0);
+
+const TheatreList = ({ theatres, dateOf, empty }: { theatres: Theatre[]; dateOf: (t: Theatre) => string; empty: string }) => {
+  const navigate = useNavigate();
+  if (theatres.length === 0) return <div className="text-sm text-muted-foreground">{empty}</div>;
+  return (
+    <div className="divide-y divide-border">
+      {theatres.map((t) => (
+        <button
+          key={t.id}
+          type="button"
+          className="flex w-full items-center justify-between gap-3 py-2 text-left hover:bg-muted/50 rounded-md px-2"
+          onClick={() => navigate(`/theatre/${t.id}/edit`)}
+        >
+          <span>
+            <span className="block text-sm font-medium">{t.name}</span>
+            <span className="block text-xs text-muted-foreground">
+              {[t.chainName, [t.city, t.country].filter(Boolean).join(", ")].filter(Boolean).join(" · ")}
+            </span>
+          </span>
+          <span className="text-xs text-muted-foreground">{formatDate(dateOf(t))}</span>
+        </button>
+      ))}
+    </div>
+  );
+};
 
 export default function Index() {
   const navigate = useNavigate();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [loading, setLoading] = useState(true);
+  const statsQuery = useDashboardStats();
+  const summaryQuery = useApprovalsSummary();
+  const stats = statsQuery.data;
+  const loading = statsQuery.isPending;
 
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setStats({
-        totalTheatres: 1245,
-        activeTheatres: 1156,
-        totalScreens: 5678,
-        totalDevices: 9876,
-        totalCompanies: 245,
-        totalChains: 89,
-        recentlyAddedTheatres: [],
-        recentlyUpdatedTheatres: [],
-        theatresByStatus: [
-          { status: "Active", count: 1156 },
-          { status: "Inactive", count: 76 },
-          { status: "Deleted", count: 13 },
-        ],
-        theatresByType: [
-          { type: "Multiplex", count: 856 },
-          { type: "Single Screen", count: 234 },
-          { type: "Drive-in", count: 34 },
-          { type: "IMAX", count: 121 },
-        ],
-      });
-      setLoading(false);
-    }, 1000);
-  }, []);
+  if (statsQuery.isError) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center" role="alert">
+        <p className="flex items-center gap-2 text-sm text-red-500">
+          <AlertTriangle className="h-4 w-4" /> Could not load dashboard: {statsQuery.error.message}
+        </p>
+        <Button variant="outline" onClick={() => statsQuery.refetch()}>Retry</Button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -109,14 +123,14 @@ export default function Index() {
         <div onClick={() => navigate("/approvals-conflicts")} className="cursor-pointer">
           <StatCard
             title="Approvals Pending"
-            value={50}
+            value={summaryQuery.data ? sum(summaryQuery.data.approvals) : 0}
             icon={<ClipboardCheck className="h-4 w-4" />}
           />
         </div>
         <div onClick={() => navigate("/approvals-conflicts")} className="cursor-pointer">
           <StatCard
             title="Conflicts Pending"
-            value={192056}
+            value={summaryQuery.data ? sum(summaryQuery.data.conflicts) : 0}
             icon={<AlertTriangle className="h-4 w-4" />}
           />
         </div>
@@ -182,15 +196,11 @@ export default function Index() {
       <WireTAPMonitoringWidget />
       
       <DashboardCard title="Recently Added Theatres">
-        <div className="text-sm text-muted-foreground">
-          No theatres added recently.
-        </div>
+        <TheatreList theatres={stats.recentlyAddedTheatres} dateOf={(t) => t.createdAt} empty="No theatres added recently." />
       </DashboardCard>
       
       <DashboardCard title="Recently Updated Theatres">
-        <div className="text-sm text-muted-foreground">
-          No theatres updated recently.
-        </div>
+        <TheatreList theatres={stats.recentlyUpdatedTheatres} dateOf={(t) => t.updatedAt} empty="No theatres updated recently." />
       </DashboardCard>
     </div>
   );

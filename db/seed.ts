@@ -15,8 +15,9 @@ import { flmFeeds } from "../src/data/flmFeedsData";
 import { companyClaimsData } from "../src/data/companyClaimsData";
 import { partnersData } from "../src/data/partnersData";
 import { generateScreenTimeSeries } from "../src/data/environmentTimeSeriesData";
+import { extraSeeders } from "./seeds";
 
-const SENSOR_SCREEN_LIMIT = 25;
+const SENSOR_SCREEN_LIMIT = 25; // screens that get a month of sensor history
 
 // Tables this script populates. A forced re-seed truncates them with CASCADE,
 // which also empties rows that reference them (e.g. suites, closures).
@@ -25,7 +26,8 @@ const SEEDED_TABLES = [
   "screen_ip_addresses", "tdl_devices", "wiretap_devices", "theatre_appliance_configs",
   "screen_appliances", "icount_cameras", "screen_sensor_readings", "screen_sensor_thresholds",
   "flm_feeds", "company_claims", "partner_requests",
-]; // screens that get a month of sensor history
+];
+const ALL_SEEDED_TABLES = [...SEEDED_TABLES, ...extraSeeders.flatMap((s) => s.tables)];
 
 type ApplianceTheatre = {
   theatreId: string;
@@ -64,14 +66,15 @@ class Seeder {
     await this.sensorReadings();
     await this.flm();
     await this.approvals();
+    for (const seeder of extraSeeders) await seeder.run(this.client);
   }
 
   private async truncate() {
     const { rows } = await this.client.query<{ n: number }>(
       `SELECT count(*)::int AS n FROM pg_tables WHERE schemaname = 'public' AND tablename = ANY($1)`,
-      [SEEDED_TABLES],
+      [ALL_SEEDED_TABLES],
     );
-    if (rows[0].n !== SEEDED_TABLES.length) throw new Error("Schema missing — run `npm run db:migrate` first.");
+    if (rows[0].n !== ALL_SEEDED_TABLES.length) throw new Error("Schema missing — run `npm run db:migrate` first.");
 
     const { rows: existing } = await this.client.query<{ has_data: boolean }>(
 `SELECT EXISTS (SELECT 1 FROM companies) OR EXISTS (SELECT 1 FROM chains) OR EXISTS (SELECT 1 FROM theatres) OR EXISTS (SELECT 1 FROM theatre_mappings) OR EXISTS (SELECT 1 FROM screens) OR EXISTS (SELECT 1 FROM screen_devices) OR EXISTS (SELECT 1 FROM screen_ip_addresses) OR EXISTS (SELECT 1 FROM tdl_devices) OR EXISTS (SELECT 1 FROM wiretap_devices) OR EXISTS (SELECT 1 FROM theatre_appliance_configs) OR EXISTS (SELECT 1 FROM screen_appliances) OR EXISTS (SELECT 1 FROM icount_cameras) OR EXISTS (SELECT 1 FROM screen_sensor_readings) OR EXISTS (SELECT 1 FROM screen_sensor_thresholds) OR EXISTS (SELECT 1 FROM flm_feeds) OR EXISTS (SELECT 1 FROM company_claims) OR EXISTS (SELECT 1 FROM partner_requests) AS has_data`,
@@ -83,7 +86,7 @@ class Seeder {
         "run `npm run db:seed -- --force` or `npm run db:reset`.",
       );
     }
-    await this.client.query(`TRUNCATE ${SEEDED_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
+    await this.client.query(`TRUNCATE ${ALL_SEEDED_TABLES.join(", ")} RESTART IDENTITY CASCADE`);
   }
 
   private async organizations() {

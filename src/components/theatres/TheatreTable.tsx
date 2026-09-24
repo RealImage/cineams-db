@@ -23,7 +23,6 @@ export const TheatreTable = ({
 }: TheatreTableProps) => {
   const [filteredTheatres, setFilteredTheatres] = useState<Theatre[]>([]);
   const [totalTheatres, setTotalTheatres] = useState<number>(0);
-  const [loading, setLoading] = useState<boolean>(false);
   const [paginationState, setPaginationState] = useState({
     page: 1,
     pageSize: DEFAULT_PAGE_SIZE,
@@ -74,12 +73,9 @@ export const TheatreTable = ({
     }));
   };
   
-  // Fetch data based on pagination, filtering, and sorting
+  // Filter, sort and page the full list the API returned
   const fetchData = useCallback(() => {
-    setLoading(true);
-    
-    // Simulate network delay
-    setTimeout(() => {
+    {
       // Apply search filtering
       let filtered = [...theatres];
       
@@ -152,8 +148,7 @@ export const TheatreTable = ({
       );
       
       setFilteredTheatres(paginatedResults);
-      setLoading(false);
-    }, 300);
+    }
   }, [theatres, paginationState]);
   
   // Fetch data whenever pagination state changes

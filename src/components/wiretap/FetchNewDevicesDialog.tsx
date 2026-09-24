@@ -25,6 +25,8 @@ interface FetchNewDevicesDialogProps {
   onOpenChange: (open: boolean) => void;
   newDevices: WireTAPDevice[];
   onAddDevices: (selectedDevices: WireTAPDevice[]) => void;
+  isLoading?: boolean;
+  error?: Error | null;
 }
 
 export function FetchNewDevicesDialog({
@@ -32,6 +34,8 @@ export function FetchNewDevicesDialog({
   onOpenChange,
   newDevices,
   onAddDevices,
+  isLoading = false,
+  error = null,
 }: FetchNewDevicesDialogProps) {
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<Set<string>>(new Set());
 
@@ -73,14 +77,22 @@ export function FetchNewDevicesDialog({
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>
-            {newDevices.length} New Device{newDevices.length !== 1 ? 's' : ''} Available
+            {isLoading || error ? "New Devices" : <>{newDevices.length} New Device{newDevices.length !== 1 ? 's' : ''} Available</>}
           </DialogTitle>
           <DialogDescription>
             The following devices are registered but not yet available in this Inventory portal
           </DialogDescription>
         </DialogHeader>
 
-        {newDevices.length === 0 ? (
+        {isLoading ? (
+          <div className="py-8 text-center text-muted-foreground" role="status">
+            Fetching new devices…
+          </div>
+        ) : error ? (
+          <div className="py-8 text-center text-red-500" role="alert">
+            Could not fetch new devices: {error.message}
+          </div>
+        ) : newDevices.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             No new devices found
           </div>

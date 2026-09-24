@@ -55,7 +55,8 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { wireTapDevices } from "@/data/wireTapDevices";
+import { useChains } from "@/hooks/api/chains";
+import { useAddWireTAPToTheatre, useCompanies, usePullOutWireTAP, useTheatreWireTAPDevices } from "@/hooks/api/theatres";
 import { WireTAPDevice as WireTAPDeviceType } from "@/types/wireTAP";
 import { Badge } from "@/components/ui/badge";
 import { formatDateTime } from "@/lib/dateUtils";
@@ -73,11 +74,11 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
   const [pullOutDialogOpen, setPullOutDialogOpen] = useState(false);
   const [selectedDevice, setSelectedDevice] = useState<WireTAPDeviceType | null>(null);
   
-  // Filter devices mapped to this theatre
-  const theatreDevices = useMemo(() => {
-    if (!theatreId) return [];
-    return wireTapDevices.filter(device => device.theatreId === theatreId);
-  }, [theatreId]);
+  // Devices mapped to this theatre
+  const devicesQuery = useTheatreWireTAPDevices(theatreId);
+  const addWireTAP = useAddWireTAPToTheatre(theatreId ?? "");
+  const pullOutWireTAP = usePullOutWireTAP(theatreId ?? "");
+  const theatreDevices = useMemo(() => devicesQuery.data ?? [], [devicesQuery.data]);
   
   // Separate active and pulled out devices
   const activeDevices = useMemo(() => 
@@ -98,8 +99,13 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
     );
   };
 
-  const handleAddWireTAP = (device: WireTAPDeviceType) => {
-    toast.success(`WireTAP ${device.applicationSerialNumber} added to theatre successfully`);
+  const handleAddWireTAP = async (device: WireTAPDeviceType) => {
+    try {
+      await addWireTAP.mutateAsync(device.id);
+      toast.success(`WireTAP ${device.applicationSerialNumber} added to theatre successfully`);
+    } catch (err) {
+      toast.error(`Could not add WireTAP: ${(err as Error).message}`);
+    }
   };
 
   const handleViewDetails = (device: WireTAPDeviceType) => {
@@ -115,10 +121,15 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
     setPullOutDialogOpen(true);
   };
 
-  const handlePullOutConfirm = (device: WireTAPDeviceType, reason: string, comments: string) => {
-    toast.success(`Device ${device.applicationSerialNumber} pulled out successfully. Reason: ${reason}`);
+  const handlePullOutConfirm = async (device: WireTAPDeviceType, reason: string, comments: string) => {
     setPullOutDialogOpen(false);
     setSelectedDevice(null);
+    try {
+      await pullOutWireTAP.mutateAsync({ deviceId: device.id, reason, comments });
+      toast.success(`Device ${device.applicationSerialNumber} pulled out successfully. Reason: ${reason}`);
+    } catch (err) {
+      toast.error(`Could not pull out device: ${(err as Error).message}`);
+    }
   };
 
   const DeviceTable = ({ devices, showActions = true }: { devices: WireTAPDeviceType[], showActions?: boolean }) => (
@@ -188,7 +199,7 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
           <Server className="h-5 w-5" />
           WireTAP
         </h3>
-        <Button type="button" size="sm" className="gap-1" onClick={() => setAddDialogOpen(true)}>
+        <Button type="button" size="sm" className="gap-1" onClick={() => setAddDialogOpen(true)} disabled={!theatreId}>
           <Plus className="h-4 w-4" />
           Add WireTAP
         </Button>
@@ -208,7 +219,16 @@ const WireTAPAppliancesSection = ({ theatreId }: { theatreId?: string }) => {
         onConfirm={handlePullOutConfirm}
       />
       
-      {activeDevices.length > 0 ? (
+      {devicesQuery.isPending && theatreId ? (
+        <div className="rounded-lg border p-4 bg-muted/30">
+          <p className="text-sm text-muted-foreground">Loading WireTAP devices…</p>
+        </div>
+      ) : devicesQuery.isError ? (
+        <div className="rounded-lg border p-4 bg-muted/30 flex items-center justify-between">
+          <p className="text-sm text-red-500">Could not load WireTAP devices: {devicesQuery.error.message}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => devicesQuery.refetch()}>Retry</Button>
+        </div>
+      ) : activeDevices.length > 0 ? (
         <DeviceTable devices={activeDevices} />
       ) : (
         <div className="rounded-lg border p-4 bg-muted/30">
@@ -239,7 +259,8 @@ interface TheatreDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   theatre?: Theatre;
-  onSave: (theatre: Partial<Theatre>) => void;
+  /** May return a promise; the form stays open (and shows no success toast) if it rejects. */
+  onSave: (theatre: Partial<Theatre>) => void | Promise<void>;
   isFullPage?: boolean;
 }
 
@@ -306,6 +327,9 @@ export const TheatreDialog = ({
   const [editingScreen, setEditingScreen] = useState<Screen | undefined>(undefined);
   const [mappingDialogOpen, setMappingDialogOpen] = useState(false);
   const [editingMapping, setEditingMapping] = useState<TheatreMapping | undefined>(undefined);
+  const [saving, setSaving] = useState(false);
+  const chainsQuery = useChains();
+  const companiesQuery = useCompanies();
   
   useEffect(() => {
     if (theatre) {
@@ -561,9 +585,17 @@ export const TheatreDialog = ({
     });
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSave(formData);
+    setSaving(true);
+    try {
+      // Screens (incl. their devices, IPs and suites) are saved with the theatre.
+      await onSave({ ...formData, screens });
+    } catch {
+      return; // the caller reported the error; keep the form open
+    } finally {
+      setSaving(false);
+    }
     onOpenChange(false);
     
     toast.success(
@@ -586,7 +618,7 @@ export const TheatreDialog = ({
   
   const handleDeleteScreen = (screen: Screen) => {
     setScreens(screens.filter((s) => s.id !== screen.id));
-    toast.success(`Screen "${screen.name}" deleted successfully`);
+    toast.success(`Screen "${screen.name}" removed. Update the theatre to save the change.`);
   };
   
   const handleSaveScreen = (screenData: Partial<Screen>) => {
@@ -789,28 +821,20 @@ export const TheatreDialog = ({
                   <div className="space-y-2">
                     <Label htmlFor="chainName">Chain Name</Label>
                     <Select
-                      value={formData.chainName || ""}
+                      value={formData.chainId || ""}
                       onValueChange={(value) => {
-                        handleSelectChange("chainName", value);
-                        const chainMapping: Record<string, string> = {
-                          "AMC Theatres": "AMC001",
-                          "Regal Cinemas": "REG001", 
-                          "Cinemark": "CIN001",
-                          "Marcus Theatres": "MAR001",
-                          "Harkins Theatres": "HAR001"
-                        };
-                        handleSelectChange("chainId", chainMapping[value] || "");
+                        const chain = chainsQuery.data?.find((c) => c.id === value);
+                        handleSelectChange("chainId", value);
+                        handleSelectChange("chainName", chain?.name ?? "");
                       }}
                     >
                       <SelectTrigger id="chainName">
-                        <SelectValue placeholder="Select chain" />
+                        <SelectValue placeholder={chainsQuery.isPending ? "Loading chains…" : "Select chain"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="AMC Theatres">AMC Theatres</SelectItem>
-                        <SelectItem value="Regal Cinemas">Regal Cinemas</SelectItem>
-                        <SelectItem value="Cinemark">Cinemark</SelectItem>
-                        <SelectItem value="Marcus Theatres">Marcus Theatres</SelectItem>
-                        <SelectItem value="Harkins Theatres">Harkins Theatres</SelectItem>
+                        {(chainsQuery.data ?? []).map((chain) => (
+                          <SelectItem key={chain.id} value={chain.id}>{chain.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -830,28 +854,20 @@ export const TheatreDialog = ({
                   <div className="space-y-2">
                     <Label htmlFor="companyName">Company Name</Label>
                     <Select
-                      value={formData.companyName || ""}
+                      value={formData.companyId || ""}
                       onValueChange={(value) => {
-                        handleSelectChange("companyName", value);
-                        const companyMapping: Record<string, string> = {
-                          "AMC Entertainment Holdings": "AMC_ENT001",
-                          "Cineworld Group": "CIN_GRP001",
-                          "Cinemark Holdings": "CIN_HLD001",
-                          "Marcus Corporation": "MAR_CRP001",
-                          "Harkins Theatres LLC": "HAR_LLC001"
-                        };
-                        handleSelectChange("companyId", companyMapping[value] || "");
+                        const company = companiesQuery.data?.find((c) => c.id === value);
+                        handleSelectChange("companyId", value);
+                        handleSelectChange("companyName", company?.name ?? "");
                       }}
                     >
                       <SelectTrigger id="companyName">
-                        <SelectValue placeholder="Select company" />
+                        <SelectValue placeholder={companiesQuery.isPending ? "Loading companies…" : "Select company"} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="AMC Entertainment Holdings">AMC Entertainment Holdings</SelectItem>
-                        <SelectItem value="Cineworld Group">Cineworld Group</SelectItem>
-                        <SelectItem value="Cinemark Holdings">Cinemark Holdings</SelectItem>
-                        <SelectItem value="Marcus Corporation">Marcus Corporation</SelectItem>
-                        <SelectItem value="Harkins Theatres LLC">Harkins Theatres LLC</SelectItem>
+                        {(companiesQuery.data ?? []).map((company) => (
+                          <SelectItem key={company.id} value={company.id}>{company.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -2220,8 +2236,7 @@ export const TheatreDialog = ({
               <IPSuitesTabContent 
                 screens={screens}
                 onScreenDataChange={(screenId, dataType, data) => {
-                  // Handle screen-specific IP/device/suite data changes
-                  console.log('Screen data changed:', { screenId, dataType, data });
+                  setScreens((prev) => prev.map((s) => (s.id === screenId ? { ...s, [dataType]: data } : s)));
                 }}
               />
             </TabsContent>
@@ -2235,9 +2250,9 @@ export const TheatreDialog = ({
             >
               Cancel
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={saving}>
               <Save className="h-4 w-4 mr-2" />
-              {isEditing ? "Update Theatre" : "Create Theatre"}
+              {saving ? "Saving…" : isEditing ? "Update Theatre" : "Create Theatre"}
             </Button>
           </div>
         </form>
@@ -2264,6 +2279,7 @@ export const TheatreDialog = ({
       )}
       
       <ScreenDialog
+        key={`${editingScreen?.id ?? "new"}-${screenDialogOpen}`}
         open={screenDialogOpen}
         onOpenChange={setScreenDialogOpen}
         theatreId={formData.id || ""}

@@ -1,30 +1,56 @@
+import type { UseQueryResult } from "@tanstack/react-query";
 import { KeyRound, Settings2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   CredentialDevice,
+  CredentialField,
   GLOBAL_REF,
   ScopedCredential,
   getCredentialFormat,
 } from "@/data/credentialsManagerData";
+import { QueryState } from "@/components/ui/query-state";
 import { CredentialValues } from "./CredentialValues";
 
 interface Props {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   device: CredentialDevice | null;
-  credentials: ScopedCredential[]; // all credentials for this device
+  /** All credentials for this device. */
+  credentialsQuery: UseQueryResult<ScopedCredential[]>;
   onManage: (device: CredentialDevice) => void;
 }
 
-/** Read-only view of a device's Global-tab credentials (defaults + country variants). */
-export const DefaultCredentialsDialog = ({ open, onOpenChange, device, credentials, onManage }: Props) => {
-  if (!device) return null;
-  const fields = getCredentialFormat(device.credentialFormat).fields;
+const GlobalCredentials = ({ credentials, fields }: { credentials: ScopedCredential[]; fields: readonly CredentialField[] }) => {
   const global = credentials
     .filter((c) => c.scope === "global")
     .sort((a, b) => (a.ref === GLOBAL_REF ? -1 : b.ref === GLOBAL_REF ? 1 : a.ref.localeCompare(b.ref)));
   const overrides = credentials.length - global.length;
+  return (
+    <>
+      {global.length === 0 ? (
+        <p className="text-sm text-muted-foreground italic py-6 text-center">No default credentials recorded for this device.</p>
+      ) : (
+        global.map((c) => (
+          <div key={c.id} className="rounded-lg border p-3 space-y-3">
+            <p className="text-sm font-semibold">{c.ref}</p>
+            <CredentialValues credential={c} fields={fields} />
+          </div>
+        ))
+      )}
+      {overrides > 0 && (
+        <p className="text-xs text-muted-foreground">
+          {overrides} chain, theatre or device-specific credential set{overrides === 1 ? "" : "s"} also recorded.
+        </p>
+      )}
+    </>
+  );
+};
+
+/** Read-only view of a device's Global-tab credentials (defaults + country variants). */
+export const DefaultCredentialsDialog = ({ open, onOpenChange, device, credentialsQuery, onManage }: Props) => {
+  if (!device) return null;
+  const fields = getCredentialFormat(device.credentialFormat).fields;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -37,21 +63,9 @@ export const DefaultCredentialsDialog = ({ open, onOpenChange, device, credentia
         </DialogHeader>
 
         <div className="space-y-3 py-2 max-h-[60vh] overflow-y-auto">
-          {global.length === 0 ? (
-            <p className="text-sm text-muted-foreground italic py-6 text-center">No default credentials recorded for this device.</p>
-          ) : (
-            global.map((c) => (
-              <div key={c.id} className="rounded-lg border p-3 space-y-3">
-                <p className="text-sm font-semibold">{c.ref}</p>
-                <CredentialValues credential={c} fields={fields} />
-              </div>
-            ))
-          )}
-          {overrides > 0 && (
-            <p className="text-xs text-muted-foreground">
-              {overrides} chain, theatre or device-specific credential set{overrides === 1 ? "" : "s"} also recorded.
-            </p>
-          )}
+          <QueryState query={credentialsQuery} label="credentials">
+            {(credentials) => <GlobalCredentials credentials={credentials} fields={fields} />}
+          </QueryState>
         </div>
 
         <DialogFooter>

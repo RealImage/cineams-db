@@ -13,7 +13,9 @@ import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Cell } from "recharts";
 import { EnvironmentFilterPanel, type EnvironmentFilters } from "@/components/environment-manager/EnvironmentFilterPanel";
 import { ScreenDetailDialog } from "@/components/environment-manager/ScreenDetailDialog";
-import { environmentScreenData, scoreRangeBins, type EnvironmentMetric, type RatingStatus, type EnvironmentScreenRecord } from "@/data/environmentManagerData";
+import { scoreRangeBins, type EnvironmentMetric, type RatingStatus, type EnvironmentScreenRecord } from "@/data/environmentManagerData";
+import { QueryState } from "@/components/ui/query-state";
+import { useEnvironmentScreens } from "@/hooks/api/screenPulse";
 
 const defaultFilters: EnvironmentFilters = {
   chain: "all",
@@ -64,25 +66,34 @@ const chartConfig = {
 };
 
 const EnvironmentManager = () => {
+  const screensQuery = useEnvironmentScreens();
+  return (
+    <QueryState query={screensQuery} label="environment ratings">
+      {(data) => <EnvironmentManagerContent data={data} />}
+    </QueryState>
+  );
+};
+
+const EnvironmentManagerContent = ({ data }: { data: EnvironmentScreenRecord[] }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [filters, setFilters] = useState<EnvironmentFilters>(defaultFilters);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
   const [selectedScreen, setSelectedScreen] = useState<EnvironmentScreenRecord | null>(null);
 
-  const chains = useMemo(() => [...new Set(environmentScreenData.map((s) => s.chainName))].sort(), []);
+  const chains = useMemo(() => [...new Set(data.map((s) => s.chainName))].sort(), [data]);
 
   const histogramData = useMemo(() => {
     return scoreRangeBins.map((bin) => ({
       range: bin.label,
-      count: environmentScreenData.filter((s) => s.score >= bin.min && s.score <= bin.max).length,
+      count: data.filter((s) => s.score >= bin.min && s.score <= bin.max).length,
       min: bin.min,
       max: bin.max,
     }));
-  }, []);
+  }, [data]);
 
   const filteredData = useMemo(() => {
-    let result = [...environmentScreenData];
+    let result = [...data];
 
     if (selectedBar) {
       const bin = scoreRangeBins.find((b) => b.label === selectedBar);
@@ -113,7 +124,7 @@ const EnvironmentManager = () => {
     if (filters.offDust !== "all") result = result.filter((s) => s.offDust.status === filters.offDust);
 
     return result;
-  }, [searchTerm, filters, selectedBar]);
+  }, [data, searchTerm, filters, selectedBar]);
 
   const resetKey = useMemo(() => [searchTerm, filters, selectedBar], [searchTerm, filters, selectedBar]);
   const { page: currentPage, setPage: setCurrentPage, pageSize, setPageSize, totalPages, totalItems, pageItems: paginatedData } =
