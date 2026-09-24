@@ -1,18 +1,21 @@
 
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
-import { Building2, Monitor, Activity, Eye, EyeOff, Filter, Pencil } from "lucide-react";
+import { Building2, Monitor, Activity, Eye, EyeOff, Pencil } from "lucide-react";
 import { StatCard } from "@/components/dashboard/StatCard";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ScreenFilterPanel } from "@/components/screen-manager/ScreenFilterPanel";
+import { ScreenFilterPanel, type ScreenFilters } from "@/components/screen-manager/ScreenFilterPanel";
+import { FilterButton } from "@/components/ui/filter-drawer";
 import { EditScreenDialog } from "@/components/screen-manager/EditScreenDialog";
 import { screenManagerData, ScreenRecord } from "@/data/screenManagerData";
 
 const PAGE_SIZE = 100;
+
+const defaultFilters: ScreenFilters = { chain: "all", location: "all", pulseStatus: "all", lionisStatus: "all" };
 
 const ScreenManager = () => {
   const [data, setData] = useState<ScreenRecord[]>(screenManagerData);
@@ -20,7 +23,7 @@ const ScreenManager = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [editScreen, setEditScreen] = useState<ScreenRecord | null>(null);
-  const [filters, setFilters] = useState({ chain: "all", location: "all", pulseStatus: "all", lionisStatus: "all" });
+  const [filters, setFilters] = useState<ScreenFilters>(defaultFilters);
 
   const chains = useMemo(() => [...new Set(data.map((s) => s.chainName))].sort(), [data]);
   const locations = useMemo(() => [...new Set(data.map((s) => `${s.city}, ${s.state}, ${s.country}`))].sort(), [data]);
@@ -56,8 +59,8 @@ const ScreenManager = () => {
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "all").length;
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const handleApplyFilters = (next: ScreenFilters) => {
+    setFilters(next);
     setCurrentPage(1);
   };
 
@@ -86,18 +89,10 @@ const ScreenManager = () => {
           onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           className="max-w-md"
         />
-        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
         <span className="text-sm text-muted-foreground ml-auto">
           {filteredData.length} screen{filteredData.length !== 1 ? "s" : ""}
         </span>
+        <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
       </div>
 
       {/* Table */}
@@ -195,8 +190,9 @@ const ScreenManager = () => {
         chains={chains}
         locations={locations}
         filters={filters}
-        onFilterChange={handleFilterChange}
-        onClear={() => { setFilters({ chain: "all", location: "all", pulseStatus: "all", lionisStatus: "all" }); setCurrentPage(1); }}
+        defaultFilters={defaultFilters}
+        onApply={handleApplyFilters}
+        onClear={() => { setFilters(defaultFilters); setCurrentPage(1); }}
       />
 
       {/* Edit Dialog */}

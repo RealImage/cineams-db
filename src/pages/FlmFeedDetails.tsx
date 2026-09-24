@@ -301,7 +301,7 @@ const FlmFeedDetails = () => {
         </div>
       )}
 
-      {isActionable && (selectedTheatre || createMode) && <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-end gap-3 border-t border-border bg-background/95 px-6 py-4 backdrop-blur md:left-64"><Button variant="outline" onClick={() => navigate("/theatres/flm-feeds")}>Cancel</Button><Button disabled={!createMode && selectedChanges.length === 0} onClick={() => setConfirmOpen(true)}>{createMode ? "Create New Theatre" : feed.isNewTheatre ? "Map & Update Theatre" : "Update Theatre"}</Button></div>}
+      {isActionable && (selectedTheatre || createMode) && <div className="fixed bottom-0 left-0 right-0 z-20 flex items-center justify-end gap-3 border-t border-border bg-card px-6 py-4 shadow-xl md:left-64"><Button variant="outline" onClick={() => navigate("/theatres/flm-feeds")}>Cancel</Button><Button disabled={!createMode && selectedChanges.length === 0} onClick={() => setConfirmOpen(true)}>{createMode ? "Create New Theatre" : feed.isNewTheatre ? "Map & Update Theatre" : "Update Theatre"}</Button></div>}
 
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent className="max-w-2xl">

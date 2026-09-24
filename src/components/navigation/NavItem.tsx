@@ -25,12 +25,12 @@ export const NavItem = ({
   collapsed = false
 }: NavItemProps) => {
   const baseClasses = cn(
-    "flex items-center py-2 rounded-md text-sm transition-colors",
+    "flex min-h-10 items-center rounded-md py-2 text-sm font-medium transition-colors duration-150",
     collapsed ? "px-2 justify-center" : "px-3",
     isActive
-      ? "bg-primary/10 text-primary font-medium"
-      : "text-muted-foreground hover:bg-muted",
-    disabled && "opacity-50 pointer-events-none",
+      ? "bg-grey-10 text-grey-800 font-semibold shadow-[inset_0_0_0_1px_theme(colors.grey.100)]"
+      : "text-grey-700 hover:bg-black/5 [&_svg]:text-grey-500 hover:[&_svg]:text-grey-800",
+    disabled && "pointer-events-none text-grey-300 [&_svg]:text-grey-300",
     className
   );
   

@@ -40,8 +40,8 @@ export const NavItemWithSubmenu = ({
       <div className="relative group">
         <div
           className={cn(
-            "flex items-center justify-center rounded-lg p-3 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground cursor-pointer",
-            isAnyChildActive && "bg-accent text-foreground"
+            "flex min-h-10 cursor-pointer items-center justify-center rounded-md p-2 text-grey-500 transition-colors duration-150 hover:bg-black/5 hover:text-grey-800",
+            isAnyChildActive && "bg-grey-10 text-grey-800 font-semibold shadow-[inset_0_0_0_1px_theme(colors.grey.100)]"
           )}
         >
           <Icon className="h-5 w-5" />
@@ -57,8 +57,8 @@ export const NavItemWithSubmenu = ({
                 key={item.path}
                 to={item.path}
                 className={cn(
-                  "flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors",
-                  location.pathname.startsWith(item.path) && "bg-accent text-foreground"
+                  "flex items-center gap-2 px-3 py-2 text-sm text-grey-700 hover:bg-black/5 transition-colors",
+                  location.pathname.startsWith(item.path) && "bg-grey-10 font-semibold text-grey-800"
                 )}
               >
                 {item.icon && <item.icon className="h-4 w-4" />}
@@ -76,8 +76,8 @@ export const NavItemWithSubmenu = ({
       <button
         onClick={handleToggle}
         className={cn(
-          "flex w-full items-center justify-between rounded-lg px-3 py-2 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-          isAnyChildActive && "bg-accent/50 text-foreground"
+          "flex min-h-10 w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-grey-700 transition-colors duration-150 hover:bg-black/5 [&_svg]:text-grey-500",
+          (isAnyChildActive || isOpen) && "bg-grey-10 text-grey-800 shadow-[inset_0_0_0_1px_theme(colors.grey.100)] [&_svg]:text-grey-800"
         )}
       >
         <div className="flex items-center gap-3">
@@ -107,8 +107,8 @@ export const NavItemWithSubmenu = ({
                   key={item.path}
                   to={item.path}
                   className={cn(
-                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
-                    location.pathname.startsWith(item.path) && "bg-accent text-foreground"
+                    "flex min-h-9 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-grey-700 transition-colors duration-150 hover:bg-black/5 [&_svg]:text-grey-500",
+                    location.pathname.startsWith(item.path) && "bg-grey-10 font-semibold text-grey-800 shadow-[inset_0_0_0_1px_theme(colors.grey.100)] [&_svg]:text-grey-800"
                   )}
                 >
                   {item.icon && <item.icon className="h-4 w-4" />}

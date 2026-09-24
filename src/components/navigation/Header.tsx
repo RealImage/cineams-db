@@ -30,6 +30,9 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path.startsWith("/theatre-device-management/screen-devices/") && path.endsWith("/edit"))
       return "Edit Screen Device List";
     if (path === "/theatre-device-management/tdl-devices" || path === "/tdl-devices") return "TDL Devices";
+    if (path === "/theatre-device-management/credentials-manager") return "Credentials Manager";
+    if (path.startsWith("/theatre-device-management/credentials-manager/") && path.endsWith("/credentials"))
+      return "Edit Device Credentials";
 
     // Qube Appliances
     if (path === "/qube-appliances/wiretap") return "WireTAP Devices";
@@ -75,7 +78,7 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
   };
   
   return (
-    <header className="sticky top-0 z-30 bg-background/95 backdrop-blur border-b border-border">
+    <header className="sticky top-0 z-30 bg-card border-b border-border">
       <div className="flex items-center justify-between h-16 px-6">
         {isMobile && (
           <Button 

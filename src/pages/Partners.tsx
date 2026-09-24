@@ -35,6 +35,7 @@ const Partners = () => {
         columns={columns}
         searchable
         searchPlaceholder="Search partners..."
+        showFilters={false}
         onRowClick={handleRowClick}
         pageSize={10}
       />

@@ -1,16 +1,16 @@
 import { useMemo, useState } from "react";
-import { Filter, Plus, Copy, Check, MoreHorizontal, Eye, Pencil, Settings2 } from "lucide-react";
+import { Plus, Copy, Check, MoreHorizontal, Eye, Pencil, Settings2 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { FilterButton } from "@/components/ui/filter-drawer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { qubeAcsTheatres, QubeAcsTheatre } from "@/data/qubeAcsData";
-import { QubeAcsFilterPanel, QubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
+import { QubeAcsFilterPanel, QubeAcsFilters, emptyQubeAcsFilters } from "@/components/qube-acs/QubeAcsFilterPanel";
 import { AddTheatreLookupDialog } from "@/components/qube-acs/AddTheatreLookupDialog";
 import { QubeAcsDetailSheet } from "@/components/qube-acs/QubeAcsDetailSheet";
 import SystemConstantsDialog from "@/components/qube-acs/SystemConstantsDialog";
@@ -26,7 +26,7 @@ const QubeACS = () => {
   const [constantsOpen, setConstantsOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [filters, setFilters] = useState<QubeAcsFilters>({ chain: "all", location: "all" });
+  const [filters, setFilters] = useState<QubeAcsFilters>(emptyQubeAcsFilters);
   const [detailTheatre, setDetailTheatre] = useState<QubeAcsTheatre | null>(null);
 
   const openDetails = (t: QubeAcsTheatre) => setDetailTheatre(t);
@@ -81,15 +81,7 @@ const QubeACS = () => {
           onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
           className="max-w-md"
         />
-        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
+        <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
         <span className="text-sm text-muted-foreground">
           {filtered.length} theatre{filtered.length !== 1 ? "s" : ""}
         </span>
@@ -192,7 +184,7 @@ const QubeACS = () => {
         locations={locations}
         filters={filters}
         onChange={(f) => { setFilters(f); setPage(1); }}
-        onClear={() => { setFilters({ chain: "all", location: "all" }); setPage(1); }}
+        onClear={() => { setFilters(emptyQubeAcsFilters); setPage(1); }}
       />
 
       <AddTheatreLookupDialog open={addOpen} onOpenChange={setAddOpen} />

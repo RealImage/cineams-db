@@ -1,11 +1,11 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Filter, MoreHorizontal, Eye, Pencil, History } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, History } from "lucide-react";
 import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { FilterButton } from "@/components/ui/filter-drawer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -120,18 +120,10 @@ const ScreenDeviceManagement = () => {
           }}
           className="max-w-md"
         />
-        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
-        <span className="text-sm text-muted-foreground">
+        <span className="text-sm text-muted-foreground ml-auto">
           {filtered.length} theatre{filtered.length !== 1 ? "s" : ""}
         </span>
+        <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
       </div>
 
       <div className="rounded-md border overflow-hidden">
@@ -244,7 +236,8 @@ const ScreenDeviceManagement = () => {
         chains={chains}
         locations={locations}
         filters={filters}
-        onChange={(f) => {
+        defaultFilters={defaultFilters}
+        onApply={(f) => {
           setFilters(f);
           setPage(1);
         }}

@@ -24,14 +24,13 @@ export function DataTable<T extends { id: string }>({
   onSortChange,
   onFilterChange,
   showFilters = true,
+  toolbar,
 }: DataTableProps<T>) {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(pageSize);
   const [sortConfig, setSortConfig] = useState<SortConfig<T>>({ key: null, direction: null });
   const [activeFilters, setActiveFilters] = useState<Filter<T>[]>([]);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const [useSheetFilter, setUseSheetFilter] = useState(window.innerWidth < 768);
   
   // Keep the latest onSearchChange without recreating the debounced function
   const onSearchChangeRef = useRef<typeof onSearchChange>(onSearchChange);
@@ -208,33 +207,15 @@ export function DataTable<T extends { id: string }>({
     }
   };
   
-  // Handle filter change
-  const handleFilterChange = (column: keyof T, value: string | string[] | { from?: Date; to?: Date }) => {
-    const newFilters = activeFilters.filter(filter => filter.column !== column);
-    
-    if (value !== "" && !(Array.isArray(value) && value.length === 0) && 
-        !(typeof value === 'object' && !Array.isArray(value) && !value.from && !value.to)) {
-      newFilters.push({ column, value });
-    }
-    
+  // Commit a full set of filters (FilterDrawer Apply / Clear all)
+  const applyFilters = (newFilters: Filter<T>[]) => {
     setActiveFilters(newFilters);
-    
     if (serverSide && onFilterChange) {
       onFilterChange(newFilters);
     }
-    
-    // Reset to first page when filter changes
     setCurrentPage(1);
   };
-  
-  // Clear all filters
-  const clearAllFilters = () => {
-    setActiveFilters([]);
-    if (serverSide && onFilterChange) {
-      onFilterChange([]);
-    }
-  };
-  
+
   // Get row actions
   const getRowActions = (row: T) => {
     if (!actions) return [];
@@ -252,19 +233,6 @@ export function DataTable<T extends { id: string }>({
     return column.filterOptions;
   };
   
-  // Get active filter count
-  const getActiveFilterCount = () => activeFilters.length;
-  
-  // Check screen size to determine filter UI type
-  useEffect(() => {
-    const handleResize = () => {
-      setUseSheetFilter(window.innerWidth < 768);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-  
   // Show actions column flag
   const showActions = Boolean(actions && actions.length > 0);
   
@@ -276,19 +244,15 @@ export function DataTable<T extends { id: string }>({
           setSearchTerm={setSearchTerm}
           searchPlaceholder={searchPlaceholder}
         >
-          {showFilters && (
+          {showFilters && columns.some((c) => c.filterable) && (
             <Filters
               columns={columns}
               activeFilters={activeFilters}
-              handleFilterChange={handleFilterChange}
-              clearAllFilters={clearAllFilters}
+              applyFilters={applyFilters}
               getFilterOptions={getFilterOptions}
-              showFilters={filtersOpen}
-              setShowFilters={setFiltersOpen}
-              useSheetFilter={useSheetFilter}
-              getActiveFilterCount={getActiveFilterCount}
             />
           )}
+          {toolbar}
         </SearchExport>
       )}
       

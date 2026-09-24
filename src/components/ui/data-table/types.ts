@@ -44,4 +44,6 @@ export interface DataTableProps<T> {
   onSortChange?: (sortKey: keyof T | null, direction: SortDirection) => void;
   onFilterChange?: (filters: Filter<T>[]) => void;
   showFilters?: boolean;
+  /** Extra controls rendered at the right end of the search row (e.g. a page's own FilterButton). */
+  toolbar?: ReactNode;
 }

@@ -1,9 +1,10 @@
 
 import { useState, useMemo, useCallback } from "react";
-import { Filter, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { FilterButton } from "@/components/ui/filter-drawer";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { DashboardCard } from "@/components/dashboard/DashboardCard";
@@ -121,14 +122,14 @@ const EnvironmentManager = () => {
 
   const activeFilterCount = Object.values(filters).filter((v) => v !== "all").length + (selectedBar ? 1 : 0);
 
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters((prev) => ({ ...prev, [key]: value }));
+  const handleApplyFilters = (next: EnvironmentFilters) => {
+    setFilters(next);
     setCurrentPage(1);
   };
 
-  const handleBarClick = useCallback((data: any) => {
+  const handleBarClick = useCallback((data: { activePayload?: { payload?: { range?: string } }[] } | null) => {
     if (data && data.activePayload) {
-      const clickedRange = data.activePayload[0]?.payload?.range;
+      const clickedRange = data.activePayload[0]?.payload?.range ?? null;
       setSelectedBar((prev) => (prev === clickedRange ? null : clickedRange));
       setCurrentPage(1);
     }
@@ -191,23 +192,23 @@ const EnvironmentManager = () => {
           onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
           className="max-w-md"
         />
-        <Button variant="outline" onClick={() => setFiltersOpen(true)} className="relative">
-          <Filter className="h-4 w-4 mr-2" />
-          Filters
-          {activeFilterCount > 0 && (
-            <Badge className="absolute -top-2 -right-2 h-5 w-5 p-0 flex items-center justify-center text-[10px]">
-              {activeFilterCount}
-            </Badge>
-          )}
-        </Button>
         {selectedBar && (
-          <Badge variant="secondary" className="cursor-pointer" onClick={() => { setSelectedBar(null); setCurrentPage(1); }}>
-            Score: {selectedBar} ✕
+          <Badge variant="secondary" className="flex items-center gap-1">
+            Score: {selectedBar}
+            <button
+              type="button"
+              aria-label="Remove score filter"
+              className="hover:text-destructive"
+              onClick={() => { setSelectedBar(null); setCurrentPage(1); }}
+            >
+              <X className="h-3 w-3" />
+            </button>
           </Badge>
         )}
         <span className="text-sm text-muted-foreground ml-auto">
           {filteredData.length} screen{filteredData.length !== 1 ? "s" : ""}
         </span>
+        <FilterButton count={activeFilterCount} onClick={() => setFiltersOpen(true)} />
       </div>
 
       {/* Table */}
@@ -288,7 +289,8 @@ const EnvironmentManager = () => {
         onOpenChange={setFiltersOpen}
         chains={chains}
         filters={filters}
-        onFilterChange={handleFilterChange}
+        defaultFilters={defaultFilters}
+        onApply={handleApplyFilters}
         onClear={clearAll}
       />
 

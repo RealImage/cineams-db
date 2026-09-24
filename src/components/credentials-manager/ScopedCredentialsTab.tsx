@@ -1,0 +1,148 @@
+import { useState } from "react";
+import { Eye, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { DataTable, Column } from "@/components/ui/data-table";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { formatDateTime } from "@/lib/dateUtils";
+import {
+  CredentialDevice,
+  CredentialScope,
+  GLOBAL_REF,
+  ScopedCredential,
+  credentialFieldLabels,
+  credentialScopes,
+  getCredentialFormat,
+} from "@/data/credentialsManagerData";
+import { credentialsStore } from "@/data/credentialsStore";
+import { CredentialCell } from "./CredentialValues";
+import { ViewScopedCredentialDialog } from "./ViewScopedCredentialDialog";
+import { EditScopedCredentialDialog, CredentialDraft } from "./EditScopedCredentialDialog";
+
+interface Props {
+  device: CredentialDevice;
+  scope: CredentialScope;
+  credentials: ScopedCredential[]; // already filtered to this device + scope
+}
+
+const scopeHints: Record<CredentialScope, string> = {
+  global: "Defaults the device ships with. Add a country row where the default differs by region.",
+  chain: "Overrides the global credentials for every theatre in a chain.",
+  theatre: "Overrides chain and global credentials for a single theatre.",
+  device: "Credentials for one specific unit, identified by serial number.",
+};
+
+export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
+  const fields = getCredentialFormat(device.credentialFormat).fields;
+  const selected = credentials.find((c) => c.id === selectedId) ?? null;
+
+  // Keep the Global row first, then alphabetical.
+  const rows = [...credentials].sort((a, b) =>
+    a.ref === GLOBAL_REF ? -1 : b.ref === GLOBAL_REF ? 1 : a.ref.localeCompare(b.ref),
+  );
+
+  const openView = (c: ScopedCredential) => { setSelectedId(c.id); setViewOpen(true); };
+  const openEdit = (c: ScopedCredential | null) => { setSelectedId(c?.id ?? null); setViewOpen(false); setEditOpen(true); };
+  const openDelete = (c: ScopedCredential) => { setSelectedId(c.id); setDeleteOpen(true); };
+
+  const handleSave = (draft: CredentialDraft) => {
+    credentialsStore.saveCredential(draft);
+    toast.success(`${draft.id ? "Updated" : "Added"} credentials for ${draft.ref}`);
+  };
+
+  const handleDelete = () => {
+    if (!selected) return;
+    credentialsStore.deleteCredential(selected.id);
+    toast.success(`Deleted credentials for ${selected.ref}`);
+    setDeleteOpen(false);
+  };
+
+  const columns: Column<ScopedCredential>[] = [
+    {
+      header: scopeInfo.refLabel,
+      accessor: "ref",
+      cell: (row) => (
+        <div>
+          <p className="font-medium">{row.ref}</p>
+          {row.location && <p className="text-xs text-muted-foreground">{row.location}</p>}
+        </div>
+      ),
+    },
+    ...fields.map((f): Column<ScopedCredential> => ({
+      header: credentialFieldLabels[f],
+      accessor: (row) => row.values[f] ?? "",
+      cell: (row) => <CredentialCell field={f} value={row.values[f]} />,
+    })),
+    { header: "Updated By", accessor: "updatedBy" },
+    { header: "Updated At", accessor: "updatedAt", cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.updatedAt)}</span> },
+  ];
+
+  const actions = [
+    { label: "View Credentials", icon: <Eye className="h-4 w-4" />, onClick: openView },
+    { label: "Edit Credentials", icon: <Pencil className="h-4 w-4" />, onClick: (c: ScopedCredential) => openEdit(c) },
+    { label: "Delete Credentials", icon: <Trash2 className="h-4 w-4" />, onClick: openDelete },
+  ];
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{scopeHints[scope]}</p>
+        <Button size="sm" onClick={() => openEdit(null)}>
+          <Plus className="h-4 w-4 mr-1" /> Add credentials
+        </Button>
+      </div>
+
+      {rows.length === 0 ? (
+        <div className="rounded-lg border border-dashed py-10 text-center text-sm text-muted-foreground">
+          No {scopeInfo.label.toLowerCase()} for this device yet.
+        </div>
+      ) : (
+        <DataTable data={rows} columns={columns} searchable={false} actions={actions} onRowClick={openView} />
+      )}
+
+      <ViewScopedCredentialDialog open={viewOpen} onOpenChange={setViewOpen} device={device} credential={selected} onEdit={openEdit} />
+      <EditScopedCredentialDialog
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        device={device}
+        scope={scope}
+        credential={selected}
+        takenRefs={credentials.map((c) => c.ref)}
+        onSave={handleSave}
+      />
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete credentials for {selected?.ref}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selected?.scope === "global" && selected.ref === GLOBAL_REF
+                ? "These are the device's default credentials. It will show as missing default credentials until new ones are added."
+                : "This removes this credential set. Broader-scope credentials will apply instead."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+};
