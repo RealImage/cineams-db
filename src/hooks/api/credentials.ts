@@ -58,7 +58,11 @@ export const useUpdateCredentialDevice = () => {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: DevicePatch }) =>
       api.patch<CredentialDeviceWithStatus>(`/credentials/devices/${id}`, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: credentialKeys.devices() }),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: credentialKeys.devices() });
+      // Format changes (e.g. Masked toggled) change how the stored values are returned
+      qc.invalidateQueries({ queryKey: credentialKeys.deviceCredentials(id) });
+    },
   });
 };
 

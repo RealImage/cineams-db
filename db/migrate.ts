@@ -5,11 +5,12 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient, describeDatabase } from "./client";
-import { syncCredentialEncryption } from "./secrets";
+import { assertEncryptionKey, syncCredentialEncryption } from "./secrets";
 
 const migrationsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
 async function main() {
+  assertEncryptionKey();
   const client = createClient();
   await client.connect();
   try {

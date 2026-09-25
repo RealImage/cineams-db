@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type pg from "pg";
 import { randomUUID } from "node:crypto";
 import { query, transaction } from "../db";
-import { decryptValue, encryptValue, syncCredentialEncryption } from "../../db/secrets";
+import { decryptValue, encryptValue, isEncrypted, syncCredentialEncryption } from "../../db/secrets";
 import { CURRENT_USER, httpError, notFound } from "../http";
 import {
   CredentialDeviceInput,
@@ -41,16 +41,22 @@ const CREDENTIAL_COLUMNS = `
 type CredentialRow = Omit<ScopedCredential, "location" | "maskedKeys"> & { location: string | null };
 
 /**
- * API shape of a stored row: masked values are withheld (only which ones are
- * set is reported) and a null location is dropped to match `location?: string`.
+ * API shape of a stored row: only fields in the current format are included;
+ * masked values are withheld (only which ones are set is reported) and a null
+ * location is dropped to match `location?: string`.
+ *
+ * Nothing is decrypted here. A value that's still encrypted is reported as
+ * masked even if `fields` says otherwise (e.g. a format read just before a
+ * concurrent change), so a list can never leak a masked value.
  */
 function toCredential({ location, values, ...rest }: CredentialRow, fields: readonly CredentialFieldDef[]): ScopedCredential {
-  const masked = new Set(fields.filter((f) => f.masked).map((f) => f.key));
   const plain: CredentialValues = {};
   const maskedKeys: string[] = [];
-  for (const [k, v] of Object.entries(values)) {
-    if (masked.has(k)) maskedKeys.push(k);
-    else plain[k] = decryptValue(v, rest.id, k); // plain unless the flag changed mid-sync
+  for (const f of fields) {
+    const v = values[f.key];
+    if (v === undefined) continue;
+    if (f.masked || isEncrypted(v)) maskedKeys.push(f.key);
+    else plain[f.key] = v;
   }
   const out = { ...rest, values: plain, maskedKeys };
   return location == null ? out : { ...out, location };
@@ -283,45 +289,71 @@ function parseCredential(
 const duplicateRef = (label: string, ref: string) =>
   httpError(409, `${label} for ${ref} already exist for this device`);
 
+/**
+ * Run a credential write with the device row share-locked. A device PATCH
+ * (which may toggle Masked and re-encrypt) then waits for the write, and the
+ * write waits for a PATCH in progress, so values are always encoded for the
+ * format that's actually stored.
+ */
+async function withLockedDevice<T>(deviceId: string, fn: (db: pg.PoolClient, device: CredentialDeviceWithStatus) => Promise<T>) {
+  return transaction(async (db) => {
+    const { rows: [device] } = await db.query<CredentialDeviceWithStatus>(`${DEVICE_SELECT} WHERE d.id = $1 FOR SHARE OF d`, [deviceId]);
+    if (!device) throw notFound("Device");
+    return fn(db, device);
+  });
+}
+
 credentials.post("/devices/:id/credentials", async (c) => {
-  const device = await getDevice(c.req.param("id"));
+  const body = await readJson(c);
   // The id is chosen here because it's bound into the encryption of masked values
   const id = randomUUID();
-  const input = parseCredential(await readJson(c), device, id);
+  let scopeLabel = "", ref = "";
   try {
-    const [row] = await query<CredentialRow>(
-      `INSERT INTO device_credentials (id, device_id, scope, ref, location, "values", updated_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${CREDENTIAL_COLUMNS}`,
-      [id, device.id, input.scope, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
-    );
-    return c.json(toCredential(row, device.credentialFields), 201);
+    const { row, fields } = await withLockedDevice(c.req.param("id"), async (db, device) => {
+      const input = parseCredential(body, device, id);
+      ({ scopeLabel, ref } = input);
+      const { rows: [row] } = await db.query<CredentialRow>(
+        `INSERT INTO device_credentials (id, device_id, scope, ref, location, "values", updated_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${CREDENTIAL_COLUMNS}`,
+        [id, device.id, input.scope, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
+      );
+      return { row, fields: device.credentialFields };
+    });
+    return c.json(toCredential(row, fields), 201);
   } catch (err) {
-    if (isUniqueViolation(err)) throw duplicateRef(input.scopeLabel, input.ref);
+    if (isUniqueViolation(err)) throw duplicateRef(scopeLabel, ref);
     throw err;
   }
 });
 
-async function getCredential(deviceId: string, credentialId: string) {
-  const [row] = await query<CredentialRow>(
-    `SELECT ${CREDENTIAL_COLUMNS} FROM device_credentials WHERE device_id = $1 AND id = $2`, [deviceId, credentialId]);
+async function getCredential(db: Pick<pg.PoolClient, "query"> | null, deviceId: string, credentialId: string) {
+  const sql = `SELECT ${CREDENTIAL_COLUMNS} FROM device_credentials WHERE device_id = $1 AND id = $2`;
+  const [row] = db
+    ? (await db.query<CredentialRow>(`${sql} FOR UPDATE`, [deviceId, credentialId])).rows
+    : await query<CredentialRow>(sql, [deviceId, credentialId]);
   if (!row) throw notFound("Credential");
   return row;
 }
 
 credentials.put("/devices/:id/credentials/:credentialId", async (c) => {
-  const device = await getDevice(c.req.param("id"));
-  const existing = await getCredential(device.id, c.req.param("credentialId"));
-  const input = parseCredential(await readJson(c), device, existing.id, existing);
+  const body = await readJson(c);
+  let scopeLabel = "", ref = "";
   try {
-    const [row] = await query<CredentialRow>(
-      `UPDATE device_credentials
-       SET ref = $2, location = $3, "values" = $4, updated_by = $5, updated_at = now()
-       WHERE id = $1 RETURNING ${CREDENTIAL_COLUMNS}`,
-      [existing.id, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
-    );
-    return c.json(toCredential(row, device.credentialFields));
+    const { row, fields } = await withLockedDevice(c.req.param("id"), async (db, device) => {
+      const existing = await getCredential(db, device.id, c.req.param("credentialId"));
+      const input = parseCredential(body, device, existing.id, existing);
+      ({ scopeLabel, ref } = input);
+      const { rows: [row] } = await db.query<CredentialRow>(
+        `UPDATE device_credentials
+         SET ref = $2, location = $3, "values" = $4, updated_by = $5, updated_at = now()
+         WHERE id = $1 RETURNING ${CREDENTIAL_COLUMNS}`,
+        [existing.id, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
+      );
+      return { row, fields: device.credentialFields };
+    });
+    return c.json(toCredential(row, fields));
   } catch (err) {
-    if (isUniqueViolation(err)) throw duplicateRef(input.scopeLabel, input.ref);
+    if (isUniqueViolation(err)) throw duplicateRef(scopeLabel, ref);
     throw err;
   }
 });
@@ -329,7 +361,7 @@ credentials.put("/devices/:id/credentials/:credentialId", async (c) => {
 /** Reveal one masked value. Lists never include masked values; the UI calls this on an explicit View. */
 credentials.get("/devices/:id/credentials/:credentialId/values/:fieldKey", async (c) => {
   const device = await getDevice(c.req.param("id"));
-  const credential = await getCredential(device.id, c.req.param("credentialId"));
+  const credential = await getCredential(null, device.id, c.req.param("credentialId"));
   const fieldKey = c.req.param("fieldKey");
   const field = device.credentialFields.find((f) => f.key === fieldKey);
   if (!field) throw notFound("Credential field");

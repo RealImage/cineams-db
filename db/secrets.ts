@@ -28,6 +28,14 @@ function key() {
   return cachedKey;
 }
 
+/**
+ * Check the key now instead of on first use, so a misconfigured server fails
+ * at startup. Call once when the API or a DB script starts.
+ */
+export function assertEncryptionKey() {
+  key();
+}
+
 const aad = (credentialId: string, fieldKey: string) => Buffer.from(`${credentialId}\0${fieldKey}`);
 
 export const isEncrypted = (v: unknown): v is string => typeof v === "string" && v.startsWith(PREFIX);
@@ -67,12 +75,16 @@ export async function syncCredentialEncryption(db: Queryable, deviceId?: string)
   let updated = 0;
   for (const row of rows) {
     const masked = new Set(row.fields.filter((f) => f.masked).map((f) => f.key));
+    // Only fields still in the format and explicitly unmasked are decrypted.
+    // Values of removed fields are left as they are, so a removed masked
+    // field's value stays encrypted.
+    const unmasked = new Set(row.fields.filter((f) => !f.masked).map((f) => f.key));
     const next: Record<string, unknown> = { ...row.values };
     let changed = false;
     for (const [k, v] of Object.entries(row.values)) {
       if (typeof v !== "string") continue;
       if (masked.has(k) && !isEncrypted(v)) { next[k] = encryptValue(v, row.id, k); changed = true; }
-      else if (!masked.has(k) && isEncrypted(v)) { next[k] = decryptValue(v, row.id, k); changed = true; }
+      else if (unmasked.has(k) && isEncrypted(v)) { next[k] = decryptValue(v, row.id, k); changed = true; }
     }
     if (changed) {
       await db.query(`UPDATE device_credentials SET "values" = $2 WHERE id = $1`, [row.id, JSON.stringify(next)]);

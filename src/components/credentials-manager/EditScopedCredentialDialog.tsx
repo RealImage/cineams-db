@@ -47,6 +47,8 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   /** Masked fields currently shown as plain text. */
   const [shown, setShown] = useState<Record<string, boolean>>({});
   const [revealing, setRevealing] = useState<string | null>(null);
+  /** Stored values loaded by the eye icon, so hiding one again can discard it. */
+  const [revealed, setRevealed] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!open) return;
@@ -55,6 +57,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
     // Masked values aren't loaded; leaving one blank keeps the stored value
     setValues(credential?.values ?? {});
     setShown({});
+    setRevealed({});
   }, [open, credential]);
 
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
@@ -74,13 +77,22 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   /** A masked field of an existing credential that already has a stored value. */
   const hasStored = (f: (typeof fields)[number]) => f.masked && !!credential?.maskedKeys.includes(f.key);
   const toggleShown = (f: (typeof fields)[number]) => {
-    if (shown[f.key]) return setShown((s) => ({ ...s, [f.key]: false }));
+    if (shown[f.key]) {
+      setShown((s) => ({ ...s, [f.key]: false }));
+      // Hiding an untouched revealed value discards it (the stored value is kept on save)
+      if (f.key in revealed && values[f.key] === revealed[f.key]) {
+        setValues((vals) => ({ ...vals, [f.key]: "" }));
+        setRevealed(({ [f.key]: _drop, ...rest }) => rest);
+      }
+      return;
+    }
     // Showing a blank field that has a stored value loads it for editing
     if (!(values[f.key] ?? "") && hasStored(f) && credential) {
       setRevealing(f.key);
       revealCredentialValue(device.id, credential.id, f.key)
         .then((v) => {
           setValues((vals) => ({ ...vals, [f.key]: v }));
+          setRevealed((r) => ({ ...r, [f.key]: v }));
           setShown((s) => ({ ...s, [f.key]: true }));
         }, (err: Error) => toast.error(`Could not show ${f.name.toLowerCase()}: ${err.message}`))
         .finally(() => setRevealing(null));

@@ -66,13 +66,16 @@ const MaskedValue = ({ credential, field, copyable = false }: { credential: Scop
   );
 };
 
+/** The server also reports a value as masked while it's still encrypted, whatever the field says. */
+const isMasked = (credential: ScopedCredential, field: CredentialFieldDef) =>
+  field.masked || credential.maskedKeys.includes(field.key);
 const hasValue = (credential: ScopedCredential, field: CredentialFieldDef) =>
-  field.masked ? credential.maskedKeys.includes(field.key) : !!credential.values[field.key];
+  isMasked(credential, field) ? credential.maskedKeys.includes(field.key) : !!credential.values[field.key];
 
 /** Table cell: masked values stay hidden until their eye icon is clicked. */
 export const CredentialCell = ({ field, credential }: { field: CredentialFieldDef; credential: ScopedCredential }) => {
   if (!hasValue(credential, field)) return <span className="text-muted-foreground">—</span>;
-  if (field.masked) return <MaskedValue credential={credential} field={field} />;
+  if (isMasked(credential, field)) return <MaskedValue key={credential.updatedAt} credential={credential} field={field} />;
   return <code className="text-sm">{credential.values[field.key]}</code>;
 };
 
@@ -84,8 +87,9 @@ const ValueRow = ({ field, credential }: { field: CredentialFieldDef; credential
       <p className="text-xs text-muted-foreground">{label}</p>
       {!hasValue(credential, field) ? (
         <p className="text-sm text-muted-foreground">—</p>
-      ) : field.masked ? (
-        <MaskedValue credential={credential} field={field} copyable />
+      ) : isMasked(credential, field) ? (
+        // Keyed by updatedAt so a revealed value is dropped once the stored one changes
+        <MaskedValue key={credential.updatedAt} credential={credential} field={field} copyable />
       ) : (
         <div className="flex items-center gap-1">
           <code className="text-sm">{value}</code>
