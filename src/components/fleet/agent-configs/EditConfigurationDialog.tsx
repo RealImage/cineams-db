@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -51,6 +51,8 @@ export const EditConfigurationDialog = ({ open, onOpenChange, agent, scope, row,
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   /** Bumped whenever the dialog opens, closes or switches row; a reveal from an older session is dropped. */
   const session = useRef(0);
+  /** Per-instance prefix: each scope tab has its own dialog, so field ids must not collide. */
+  const idPrefix = useId();
 
   useEffect(() => {
     session.current++;
@@ -147,13 +149,13 @@ export const EditConfigurationDialog = ({ open, onOpenChange, agent, scope, row,
           )}
           {fields.map((f) => (
             <div key={f.key} className="space-y-1">
-              <Label htmlFor={`cfg-${f.key}`} className="text-xs">
+              <Label htmlFor={`${idPrefix}-${f.key}`} className="text-xs">
                 {f.name}
                 {f.valueType !== "string" && <span className="font-normal text-muted-foreground"> ({configValueTypeLabels[f.valueType]})</span>}
               </Label>
               <div className="relative">
                 <Input
-                  id={`cfg-${f.key}`}
+                  id={`${idPrefix}-${f.key}`}
                   type={f.masked && !shown[f.key] ? "password" : "text"}
                   inputMode={inputMode(f)}
                   autoComplete={f.masked ? "new-password" : "off"}
