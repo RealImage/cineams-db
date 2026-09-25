@@ -22,7 +22,7 @@ wtf.get("/:theatreId", async (c) => {
   }>(
     `SELECT t.id, t.uuid, t.name, t.alternate_names, t.city, t.state, t.country, c.name AS chain_name,
             t.theatre_management_system AS tms, t.ticketing_system AS ticketing, t.delivery_settings AS delivery
-     FROM theatres t LEFT JOIN chains c ON c.id = t.chain_id WHERE t.id = $1`,
+     FROM theatres t LEFT JOIN chains c ON c.id = t.chain_id WHERE t.id = $1 AND t.status <> 'Deleted'`,
     [c.req.param("theatreId")],
   );
   if (!t) throw notFound("Theatre");
@@ -32,7 +32,7 @@ wtf.get("/:theatreId", async (c) => {
 
   const [screens, devices, agents] = await Promise.all([
     query<{ id: string; name: string | null; number: string | null; seating_capacity: number | null; projection: Projection | null; sound: Sound | null }>(
-      `SELECT id, name, number, seating_capacity, projection, sound FROM screens WHERE theatre_id = $1
+      `SELECT id, name, number, seating_capacity, projection, sound FROM screens WHERE theatre_id = $1 AND status <> 'Deleted'
        ORDER BY substring(number FROM '^\\d+')::int NULLS LAST, number, name`,
       [t.id],
     ),
@@ -88,7 +88,7 @@ async function screenDevices(theatreId: string, theatreName: string, chainName: 
   const [rows, models] = await Promise.all([
     query<{ id: string; screen_name: string | null; screen_number: string | null; manufacturer: string | null; model: string | null; role: string | null; serial_number: string | null }>(
       `SELECT d.id, s.name AS screen_name, s.number AS screen_number, d.manufacturer, d.model, d.role, d.serial_number
-       FROM screen_devices d JOIN screens s ON s.id = d.screen_id WHERE s.theatre_id = $1
+       FROM screen_devices d JOIN screens s ON s.id = d.screen_id WHERE s.theatre_id = $1 AND s.status <> 'Deleted'
        ORDER BY substring(s.number FROM '^\\d+')::int NULLS LAST, s.number, d.manufacturer, d.model`,
       [theatreId],
     ),
