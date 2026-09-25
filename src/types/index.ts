@@ -40,9 +40,14 @@ export type Dimensions = {
 };
 
 export type Projection = {
+  /** Projector technology as free text, e.g. Laser, Xenon. */
   type?: string;
   manufacturer?: string;
   masking?: boolean;
+  /** DCI, E-Cinema or Film (screenExperienceData.projectionTypes). */
+  projectionType?: string;
+  /** E.g. IMAX Laser, 4DX (screenExperienceData.projectionExperiences). */
+  experiences?: string[];
 };
 
 export type Sound = {
@@ -50,6 +55,8 @@ export type Sound = {
   speakers?: string;
   soundMixes: string[];  // This is required
   iabSupported?: boolean;
+  /** 5.1, 7.1, IAB (screenExperienceData.audioExperiences). */
+  audioExperiences?: string[];
 };
 
 export type TemporaryClosure = {
@@ -201,6 +208,10 @@ export type Theatre = {
   kdmDeliveryEmailsInFLMX?: string;
   autoIngestOfContentEnabled?: boolean;
   autoIngestContentTypes?: string[];
+  /** When enabled content types are auto-ingested; none means any time. */
+  autoIngestTimeSlots?: DeliveryTimeSlot[];
+  /** When KDMs are auto-ingested; none means any time. */
+  kdmAutoIngestTimeSlots?: DeliveryTimeSlot[];
   qcnTheatreIPAddressRange?: string;
   wireTAPDevices?: WireTAPDevice[];
   downloadRestrictionsEnabled?: boolean;

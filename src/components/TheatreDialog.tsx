@@ -65,6 +65,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 
 import { AddWireTAPToTheatreDialog } from "./theatres/AddWireTAPToTheatreDialog";
 import { PullOutDeviceDialog } from "./theatres/PullOutDeviceDialog";
+import { TimeSlotsEditor } from "./theatres/TimeSlotsEditor";
+import { contentTypeOptions } from "@/data/contentTypes";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, LogOut } from "lucide-react";
 
@@ -710,22 +712,7 @@ export const TheatreDialog = ({
     }
   ];
   
-  const contentTypeOptions = [
-    { id: "FTR", label: "Feature" },
-    { id: "TLR", label: "Trailer" },
-    { id: "ADV", label: "Advertisement" },
-    { id: "SHT", label: "Short" },
-    { id: "MTC", label: "Movie Teaser" },
-    { id: "NWS", label: "Newsreel" },
-    { id: "DOC", label: "Documentary" },
-    { id: "ANM", label: "Animated Film" },
-    { id: "MSC", label: "Music Video" },
-    { id: "SPV", label: "Special Venue" },
-    { id: "EDU", label: "Educational Film" },
-    { id: "ISR", label: "Intermission Reel" },
-    { id: "OTH", label: "Other" },
-    { id: "UNK", label: "Unknown" }
-  ];
+
   
   // Define the renderDialogContent function before using it
   const renderDialogContent = () => {
@@ -2104,6 +2091,13 @@ export const TheatreDialog = ({
                     </div>
                   </RadioGroup>
                 </div>
+
+                <TimeSlotsEditor
+                  label="KDM Auto-Ingestion Time Slots"
+                  slots={formData.kdmAutoIngestTimeSlots || []}
+                  onChange={(kdmAutoIngestTimeSlots) => setFormData((prev) => ({ ...prev, kdmAutoIngestTimeSlots }))}
+                  emptyText="No KDM auto-ingestion time slots. KDMs are ingested as soon as they arrive."
+                />
                 
                 {/* PART 3: INGEST SETTINGS */}
                 <div className="flex items-center space-x-2 pt-6 border-t mt-6">
@@ -2148,6 +2142,14 @@ export const TheatreDialog = ({
                       ))}
                     </div>
                   </div>
+                )}
+                {formData.autoIngestOfContentEnabled && (
+                  <TimeSlotsEditor
+                    label="Auto-Ingestion Time Slots"
+                    slots={formData.autoIngestTimeSlots || []}
+                    onChange={(autoIngestTimeSlots) => setFormData((prev) => ({ ...prev, autoIngestTimeSlots }))}
+                    emptyText="No auto-ingestion time slots. Content is ingested as soon as it arrives."
+                  />
                 )}
                 
                 {/* QCN Theatre IP Address Range */}

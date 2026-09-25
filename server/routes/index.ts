@@ -10,6 +10,7 @@ import { icount } from "./icount";
 import { credentials } from "./credentials";
 import { fleet } from "./fleet";
 import { agentConfigs } from "./agentConfigs";
+import { wtf } from "./wtf";
 import { screenPulse } from "./screenPulse";
 
 /** Mounted at /api/<key>. */
@@ -26,5 +27,6 @@ export const routes = {
   credentials,
   fleet,
   "agent-configs": agentConfigs,
+  wtf,
   "screen-pulse": screenPulse,
 };

@@ -10,6 +10,7 @@ type TheatreTableProps = {
   theatres: Theatre[];
   onViewTheatre: (theatre: Theatre) => void;
   onViewLogs: (theatre: Theatre) => void;
+  onViewWtf: (theatre: Theatre) => void;
   onToggleStatus: (theatre: Theatre) => void;
   onDelete: (theatre: Theatre) => void;
 };
@@ -18,6 +19,7 @@ export const TheatreTable = ({
   theatres,
   onViewTheatre,
   onViewLogs,
+  onViewWtf,
   onToggleStatus,
   onDelete
 }: TheatreTableProps) => {
@@ -161,6 +163,7 @@ export const TheatreTable = ({
       theatre,
       onViewDetails: onViewTheatre,
       onViewLogs: onViewLogs,
+      onViewWtf,
       onEdit: handleEditTheatre,
       onDelete: onDelete,
       onToggleStatus: onToggleStatus

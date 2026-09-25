@@ -4,6 +4,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Screen } from "@/types";
 import { soundMixOptions } from "../constants";
+import { audioExperiences } from "@/data/screenExperienceData";
 
 interface SoundTabProps {
   formData: Partial<Screen>;
@@ -14,7 +15,7 @@ export const SoundTab = ({
   formData,
   setFormData,
 }: SoundTabProps) => {
-  const handleSoundChange = (field: string, value: string | boolean | undefined) => {
+  const handleSoundChange = (field: string, value: string | boolean | string[] | undefined) => {
     setFormData((prev) => ({
       ...prev,
       sound: {
@@ -93,6 +94,25 @@ export const SoundTab = ({
           onCheckedChange={(checked) => handleSoundChange("iabSupported", !!checked)}
         />
         <Label htmlFor="iabSupported">IAB Supported</Label>
+      </div>
+
+      <div className="space-y-2">
+        <Label>Audio Experience</Label>
+        <div className="flex flex-wrap gap-4">
+          {audioExperiences.map((x) => {
+            const current = formData.sound?.audioExperiences || [];
+            return (
+              <div key={x} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`audio-experience-${x}`}
+                  checked={current.includes(x)}
+                  onCheckedChange={() => handleSoundChange("audioExperiences", current.includes(x) ? current.filter((e) => e !== x) : [...current, x])}
+                />
+                <Label htmlFor={`audio-experience-${x}`} className="text-sm">{x}</Label>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
