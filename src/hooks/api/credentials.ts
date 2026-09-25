@@ -58,7 +58,11 @@ export const useUpdateCredentialDevice = () => {
   return useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: DevicePatch }) =>
       api.patch<CredentialDeviceWithStatus>(`/credentials/devices/${id}`, patch),
-    onSuccess: () => qc.invalidateQueries({ queryKey: credentialKeys.devices() }),
+    onSuccess: (_data, { id }) => {
+      qc.invalidateQueries({ queryKey: credentialKeys.devices() });
+      // Format changes (e.g. Masked toggled) change how the stored values are returned
+      qc.invalidateQueries({ queryKey: credentialKeys.deviceCredentials(id) });
+    },
   });
 };
 
@@ -88,3 +92,14 @@ export const useDeleteDeviceCredential = () => {
     },
   });
 };
+
+/**
+ * Fetch one masked value for an explicit View or Copy. Deliberately not a
+ * query: the plain value isn't kept in the shared cache.
+ */
+export const revealCredentialValue = (deviceId: string, credentialId: string, fieldKey: string) =>
+  api
+    .get<{ value: string }>(
+      `/credentials/devices/${encodeURIComponent(deviceId)}/credentials/${encodeURIComponent(credentialId)}/values/${encodeURIComponent(fieldKey)}`,
+    )
+    .then((r) => r.value);

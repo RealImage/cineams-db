@@ -15,6 +15,7 @@ import {
   DeviceType,
   deviceRoles,
   deviceTypes,
+  looksSecret,
   nonDciTypes,
 } from "@/data/credentialsManagerData";
 import { RoleMultiSelect, TagInput } from "./form-controls";
@@ -31,8 +32,12 @@ interface Props {
   saving?: boolean;
 }
 
-/** A field row in the editor; `key` is empty for rows added in this session. */
-type FieldRow = CredentialFieldDef & { rowId: string };
+/**
+ * A field row in the editor; `key` is empty for rows added in this session.
+ * `maskedSet` is true once Masked was set by hand, so naming a new field
+ * "Password" no longer changes it.
+ */
+type FieldRow = CredentialFieldDef & { rowId: string; maskedSet?: boolean };
 
 type Form = Omit<CredentialDeviceInput, "type" | "credentialFields"> & {
   type: DeviceType | "";
@@ -41,7 +46,7 @@ type Form = Omit<CredentialDeviceInput, "type" | "credentialFields"> & {
 };
 
 let rowSeq = 0;
-const toRow = (f: CredentialFieldDef): FieldRow => ({ ...f, rowId: `row-${++rowSeq}` });
+const toRow = (f: CredentialFieldDef): FieldRow => ({ ...f, rowId: `row-${++rowSeq}`, maskedSet: !!f.key });
 
 const emptyForm = (): Form => ({
   brand: "",
@@ -102,8 +107,10 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
 
   const fieldsChanged =
     !!device &&
-    JSON.stringify(device.credentialFields.map((f) => [f.key, f.name, f.valueType])) !==
-      JSON.stringify(form.fields.map((f) => [f.key, f.name.trim(), f.valueType]));
+    JSON.stringify(device.credentialFields.map((f) => [f.key, f.name, f.valueType, f.masked])) !==
+      JSON.stringify(form.fields.map((f) => [f.key, f.name.trim(), f.valueType, f.masked]));
+  const maskingChanged =
+    !!device && form.fields.some((f) => device.credentialFields.some((d) => d.key === f.key && d.masked !== f.masked));
 
   const handleSave = () => {
     setSubmitted(true);
@@ -121,7 +128,7 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
       dci,
       translations: form.translations,
       serialNumberRequired: form.serialNumberRequired,
-      credentialFields: form.fields.map(({ key, name, valueType }) => ({ key, name: name.trim(), valueType })),
+      credentialFields: form.fields.map(({ key, name, valueType, masked }) => ({ key, name: name.trim(), valueType, masked })),
     }).then(() => onOpenChange(false), () => undefined);
   };
 
@@ -205,18 +212,24 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
 
           <fieldset className="space-y-2 md:col-span-2">
             <legend className="mb-1 text-xs font-medium">Credentials format<Required /></legend>
-            <div className="grid grid-cols-[1fr_9rem_2.125rem] gap-2 text-xs text-muted-foreground">
+            <div className="grid grid-cols-[1fr_9rem_4rem_2.125rem] items-center gap-2 text-xs text-muted-foreground">
               <span>Credential name</span>
               <span>Value type</span>
+              <span className="text-center" title="Masked values are stored encrypted and hidden until someone clicks View">Masked</span>
               <span className="sr-only">Remove</span>
             </div>
             {form.fields.map((row, i) => (
               <div key={row.rowId} className="space-y-1">
-                <div className="grid grid-cols-[1fr_9rem_2.125rem] gap-2">
+                <div className="grid grid-cols-[1fr_9rem_4rem_2.125rem] items-center gap-2">
                   <Input
                     aria-label={`Credential name ${i + 1}`}
                     value={row.name}
-                    onChange={(e) => updField(row.rowId, { name: e.target.value })}
+                    onChange={(e) =>
+                      updField(row.rowId, {
+                        name: e.target.value,
+                        // Suggest Masked for new fields named like a secret, until it's set by hand
+                        ...(!row.maskedSet && { masked: looksSecret(e.target.value) }),
+                      })}
                     placeholder="e.g. Username, Site ID, PIN"
                     aria-invalid={submitted && !!fieldError(row, i)}
                   />
@@ -227,6 +240,13 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
                       <SelectItem value="numeric">Numeric</SelectItem>
                     </SelectContent>
                   </Select>
+                  <div className="flex justify-center">
+                    <Checkbox
+                      checked={row.masked}
+                      onCheckedChange={(c) => updField(row.rowId, { masked: c === true, maskedSet: true })}
+                      aria-label={`Masked ${row.name || `field ${i + 1}`}`}
+                    />
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
@@ -240,13 +260,14 @@ export const DeviceModelDialog = ({ open, onOpenChange, device, onSave, saving =
                 {show(fieldError(row, i))}
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={() => upd({ fields: [...form.fields, toRow({ key: "", name: "", valueType: "string" })] })}>
+            <Button type="button" variant="outline" size="sm" onClick={() => upd({ fields: [...form.fields, toRow({ key: "", name: "", valueType: "string", masked: false })] })}>
               <Plus className="h-4 w-4" /> Add credential field
             </Button>
             {show(errors.fields === "Add at least one credential field" ? errors.fields : null)}
             {fieldsChanged && (
               <p className="text-xs text-muted-foreground">
                 Existing credentials keep their stored values. New fields stay blank until each credential is edited.
+                {maskingChanged && " Stored values of fields whose Masked setting changed are encrypted or decrypted when you save."}
               </p>
             )}
           </fieldset>

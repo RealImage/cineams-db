@@ -1,5 +1,6 @@
 import { insertMany } from "../client";
 import { credentialDevices, initialScopedCredentials } from "../../src/data/credentialsManagerSeedData";
+import { syncCredentialEncryption } from "../secrets";
 import type { ExtraSeeder } from "./types";
 
 export const credentialsSeeder: ExtraSeeder = {
@@ -32,5 +33,7 @@ export const credentialsSeeder: ExtraSeeder = {
       updated_by: c.updatedBy,
       updated_at: c.updatedAt,
     })));
+    // Sample values are plain text; encrypt the masked ones (e.g. Password)
+    await syncCredentialEncryption(client);
   },
 };
