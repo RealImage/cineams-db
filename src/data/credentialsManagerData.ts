@@ -51,14 +51,15 @@ export interface CredentialFieldDef {
   key: string;
   name: string;
   valueType: CredentialValueType;
+  /** Masked values are stored encrypted and shown as •••• until explicitly revealed. */
+  masked: boolean;
 }
 
 /** Values of one credential set, keyed by CredentialFieldDef.key. */
 export type CredentialValues = Record<string, string>;
 
-/** Fields whose values are masked in tables and dialogs (e.g. Password, PIN). */
-export const isSecretField = (field: Pick<CredentialFieldDef, "name">) =>
-  /pass|pin|secret|token|key/i.test(field.name);
+/** Default for the Masked checkbox of a new field: names that look like secrets (Password, PIN…). */
+export const looksSecret = (name: string) => /pass|pwd|pin|secret|token|key/i.test(name);
 
 export const isNumericValue = (v: string) => /^-?\d+(\.\d+)?$/.test(v.trim());
 
@@ -75,8 +76,8 @@ export const describeCredentialFields = (fields: CredentialFieldDef[]) =>
   fields.length ? fields.map((f) => f.name).join(", ") : "No fields defined";
 
 export const DEFAULT_CREDENTIAL_FIELDS: CredentialFieldDef[] = [
-  { key: "username", name: "Username", valueType: "string" },
-  { key: "password", name: "Password", valueType: "string" },
+  { key: "username", name: "Username", valueType: "string", masked: false },
+  { key: "password", name: "Password", valueType: "string", masked: true },
 ];
 
 // ---------------------------------------------------------------------------
@@ -105,7 +106,10 @@ export interface ScopedCredential {
   ref: string;
   /** Device scope only: where that unit is installed. */
   location?: string;
+  /** Values of unmasked fields. Masked values are never sent in lists; reveal them one at a time. */
   values: CredentialValues;
+  /** Keys of masked fields that have a stored (encrypted) value. */
+  maskedKeys: string[];
   updatedBy: string;
   updatedAt: string;
 }
@@ -147,7 +151,10 @@ export type CredentialDeviceInput = Pick<
   | "translations" | "serialNumberRequired" | "credentialFields"
 >;
 
-/** Fields a credential save sends; the server stamps id (for new rows), updatedBy and updatedAt. */
+/**
+ * Fields a credential save sends; the server stamps id (for new rows), updatedBy and updatedAt.
+ * On update, a masked field left out of `values` keeps its stored value.
+ */
 export type CredentialInput = Pick<ScopedCredential, "scope" | "ref" | "location" | "values">;
 
 export const CREDENTIALS_MANAGER_PATH = "/theatre-device-management/credentials-manager";

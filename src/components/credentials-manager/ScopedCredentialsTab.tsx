@@ -102,8 +102,9 @@ export const ScopedCredentialsTab = ({ device, scope, credentials }: Props) => {
     },
     ...fields.map((f): Column<ScopedCredential> => ({
       header: f.name,
-      accessor: (row) => row.values[f.key] ?? "",
-      cell: (row) => <CredentialCell field={f} value={row.values[f.key]} />,
+      // Masked values aren't sent to the browser, so they aren't searchable either
+      accessor: (row) => (f.masked ? "" : row.values[f.key] ?? ""),
+      cell: (row) => <CredentialCell field={f} credential={row} />,
     })),
     { header: "Updated By", accessor: "updatedBy", filterable: true, filterOptions: optionsFor("updatedBy") },
     { header: "Updated At", accessor: "updatedAt", filterable: true, filterType: "dateRange", cell: (row) => <span className="whitespace-nowrap">{formatDateTime(row.updatedAt)}</span> },

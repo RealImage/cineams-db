@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import type pg from "pg";
-import { query } from "../db";
+import { randomUUID } from "node:crypto";
+import { query, transaction } from "../db";
+import { decryptValue, encryptValue, syncCredentialEncryption } from "../../db/secrets";
 import { CURRENT_USER, httpError, notFound } from "../http";
 import {
   CredentialDeviceInput,
@@ -35,11 +37,24 @@ const CREDENTIAL_COLUMNS = `
   id, device_id AS "deviceId", scope, ref, location, "values",
   updated_by AS "updatedBy", updated_at AS "updatedAt"`;
 
-type CredentialRow = Omit<ScopedCredential, "location"> & { location: string | null };
+/** A row as stored: masked values are encrypted strings in `values`. */
+type CredentialRow = Omit<ScopedCredential, "location" | "maskedKeys"> & { location: string | null };
 
-/** Drop a null location so the response matches `location?: string`. */
-const toCredential = ({ location, ...rest }: CredentialRow): ScopedCredential =>
-  location == null ? rest : { ...rest, location };
+/**
+ * API shape of a stored row: masked values are withheld (only which ones are
+ * set is reported) and a null location is dropped to match `location?: string`.
+ */
+function toCredential({ location, values, ...rest }: CredentialRow, fields: readonly CredentialFieldDef[]): ScopedCredential {
+  const masked = new Set(fields.filter((f) => f.masked).map((f) => f.key));
+  const plain: CredentialValues = {};
+  const maskedKeys: string[] = [];
+  for (const [k, v] of Object.entries(values)) {
+    if (masked.has(k)) maskedKeys.push(k);
+    else plain[k] = decryptValue(v, rest.id, k); // plain unless the flag changed mid-sync
+  }
+  const out = { ...rest, values: plain, maskedKeys };
+  return location == null ? out : { ...out, location };
+}
 
 const isUniqueViolation = (err: unknown) => (err as pg.DatabaseError)?.code === "23505";
 
@@ -151,8 +166,9 @@ function parseCredentialFields(raw: unknown): CredentialFieldDef[] {
     if (!credentialValueTypes.includes(f.valueType as never)) {
       throw httpError(400, `Value type for "${name}" must be one of: ${credentialValueTypes.join(", ")}`);
     }
+    if (f.masked !== undefined && typeof f.masked !== "boolean") throw httpError(400, `Masked for "${name}" must be true or false`);
     const keyOk = typeof f.key === "string" && /^[A-Za-z0-9_]+$/.test(f.key) && !fields.some((x) => x.key === f.key);
-    fields.push({ key: keyOk ? (f.key as string) : makeFieldKey(name, fields), name, valueType: f.valueType! });
+    fields.push({ key: keyOk ? (f.key as string) : makeFieldKey(name, fields), name, valueType: f.valueType!, masked: f.masked === true });
   }
   return fields;
 }
@@ -163,24 +179,28 @@ async function saveDevice(id: string | null, d: CredentialDeviceInput) {
     d.type, d.dci, d.translations, d.serialNumberRequired, JSON.stringify(d.credentialFields), CURRENT_USER,
   ];
   try {
-    if (id === null) {
-      const [row] = await query<{ id: string }>(
-        `INSERT INTO credential_devices (brand, model, roles, primary_role, certificate_roles, additional_roles,
-           type, dci, translations, serial_number_required, credential_fields, updated_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
-        params,
+    return await transaction(async (db) => {
+      if (id === null) {
+        const { rows: [row] } = await db.query<{ id: string }>(
+          `INSERT INTO credential_devices (brand, model, roles, primary_role, certificate_roles, additional_roles,
+             type, dci, translations, serial_number_required, credential_fields, updated_by)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+          params,
+        );
+        return row.id;
+      }
+      await db.query(
+        `UPDATE credential_devices
+         SET brand = $1, model = $2, roles = $3, primary_role = $4, certificate_roles = $5, additional_roles = $6,
+             type = $7, dci = $8, translations = $9, serial_number_required = $10, credential_fields = $11,
+             updated_by = $12, updated_at = now()
+         WHERE id = $13`,
+        [...params, id],
       );
-      return row.id;
-    }
-    await query(
-      `UPDATE credential_devices
-       SET brand = $1, model = $2, roles = $3, primary_role = $4, certificate_roles = $5, additional_roles = $6,
-           type = $7, dci = $8, translations = $9, serial_number_required = $10, credential_fields = $11,
-           updated_by = $12, updated_at = now()
-       WHERE id = $13`,
-      [...params, id],
-    );
-    return id;
+      // Masked flags may have changed: encrypt or decrypt this model's stored values to match
+      await syncCredentialEncryption(db, id);
+      return id;
+    });
   } catch (err) {
     if (isUniqueViolation(err)) throw httpError(409, `A device model ${d.brand} ${d.model} already exists`);
     throw err;
@@ -193,7 +213,10 @@ credentials.post("/devices", async (c) => {
   return c.json(await getDevice(id), 201);
 });
 
-/** Partial update. Removing or renaming credential fields leaves stored values untouched. */
+/**
+ * Partial update. Removing or renaming credential fields leaves stored values
+ * untouched; toggling Masked encrypts or decrypts the stored values.
+ */
 credentials.patch("/devices/:id", async (c) => {
   const id = c.req.param("id");
   const current = await getDevice(id);
@@ -206,15 +229,24 @@ credentials.patch("/devices/:id", async (c) => {
 // ---------------------------------------------------------------------------
 
 credentials.get("/devices/:id/credentials", async (c) => {
-  const id = c.req.param("id");
-  await getDevice(id);
+  const device = await getDevice(c.req.param("id"));
   const rows = await query<CredentialRow>(
-    `SELECT ${CREDENTIAL_COLUMNS} FROM device_credentials WHERE device_id = $1 ORDER BY scope, ref`, [id]);
-  return c.json(rows.map(toCredential));
+    `SELECT ${CREDENTIAL_COLUMNS} FROM device_credentials WHERE device_id = $1 ORDER BY scope, ref`, [device.id]);
+  return c.json(rows.map((r) => toCredential(r, device.credentialFields)));
 });
 
-/** Validate a credential body against the device's credentials format. */
-function parseCredential(body: Record<string, unknown>, device: CredentialDeviceWithStatus, fixedScope?: string) {
+/**
+ * Validate a credential body against the device's credentials format and
+ * build the stored values, encrypting masked ones. On update (`existing`), a
+ * masked field that's left out or blank keeps its stored value.
+ */
+function parseCredential(
+  body: Record<string, unknown>,
+  device: CredentialDeviceWithStatus,
+  credentialId: string,
+  existing?: CredentialRow,
+) {
+  const fixedScope = existing?.scope;
   const scope = fixedScope ?? body.scope;
   const scopeInfo = credentialScopes.find((s) => s.id === scope);
   if (!scopeInfo) throw httpError(400, `Scope must be one of: ${credentialScopes.map((s) => s.id).join(", ")}`);
@@ -237,9 +269,13 @@ function parseCredential(body: Record<string, unknown>, device: CredentialDevice
   for (const field of device.credentialFields) {
     const v = (raw as Record<string, unknown>)[field.key];
     const str = typeof v === "number" ? String(v) : typeof v === "string" ? v.trim() : "";
-    if (!str) throw httpError(400, `${field.name} is required`);
+    const kept = field.masked ? existing?.values[field.key] : undefined;
+    if (!str) {
+      if (kept) { values[field.key] = kept; continue; }
+      throw httpError(400, `${field.name} is required`);
+    }
     if (field.valueType === "numeric" && !isNumericValue(str)) throw httpError(400, `${field.name} must be a number`);
-    values[field.key] = str;
+    values[field.key] = field.masked ? encryptValue(str, credentialId, field.key) : str;
   }
   return { scope: scopeInfo.id, scopeLabel: scopeInfo.label, ref, location, values };
 }
@@ -249,14 +285,16 @@ const duplicateRef = (label: string, ref: string) =>
 
 credentials.post("/devices/:id/credentials", async (c) => {
   const device = await getDevice(c.req.param("id"));
-  const input = parseCredential(await readJson(c), device);
+  // The id is chosen here because it's bound into the encryption of masked values
+  const id = randomUUID();
+  const input = parseCredential(await readJson(c), device, id);
   try {
     const [row] = await query<CredentialRow>(
-      `INSERT INTO device_credentials (device_id, scope, ref, location, "values", updated_by)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING ${CREDENTIAL_COLUMNS}`,
-      [device.id, input.scope, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
+      `INSERT INTO device_credentials (id, device_id, scope, ref, location, "values", updated_by)
+       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING ${CREDENTIAL_COLUMNS}`,
+      [id, device.id, input.scope, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
     );
-    return c.json(toCredential(row), 201);
+    return c.json(toCredential(row, device.credentialFields), 201);
   } catch (err) {
     if (isUniqueViolation(err)) throw duplicateRef(input.scopeLabel, input.ref);
     throw err;
@@ -273,7 +311,7 @@ async function getCredential(deviceId: string, credentialId: string) {
 credentials.put("/devices/:id/credentials/:credentialId", async (c) => {
   const device = await getDevice(c.req.param("id"));
   const existing = await getCredential(device.id, c.req.param("credentialId"));
-  const input = parseCredential(await readJson(c), device, existing.scope);
+  const input = parseCredential(await readJson(c), device, existing.id, existing);
   try {
     const [row] = await query<CredentialRow>(
       `UPDATE device_credentials
@@ -281,11 +319,31 @@ credentials.put("/devices/:id/credentials/:credentialId", async (c) => {
        WHERE id = $1 RETURNING ${CREDENTIAL_COLUMNS}`,
       [existing.id, input.ref, input.location, JSON.stringify(input.values), CURRENT_USER],
     );
-    return c.json(toCredential(row));
+    return c.json(toCredential(row, device.credentialFields));
   } catch (err) {
     if (isUniqueViolation(err)) throw duplicateRef(input.scopeLabel, input.ref);
     throw err;
   }
+});
+
+/** Reveal one masked value. Lists never include masked values; the UI calls this on an explicit View. */
+credentials.get("/devices/:id/credentials/:credentialId/values/:fieldKey", async (c) => {
+  const device = await getDevice(c.req.param("id"));
+  const credential = await getCredential(device.id, c.req.param("credentialId"));
+  const fieldKey = c.req.param("fieldKey");
+  const field = device.credentialFields.find((f) => f.key === fieldKey);
+  if (!field) throw notFound("Credential field");
+  const stored = credential.values[fieldKey];
+  if (stored === undefined) throw notFound(`${field.name} value`);
+  c.header("Cache-Control", "no-store");
+  let value: string;
+  try {
+    value = decryptValue(stored, credential.id, fieldKey);
+  } catch {
+    // Wrong CREDENTIALS_ENCRYPTION_KEY, or the stored value was altered
+    throw httpError(500, `${field.name} could not be decrypted`);
+  }
+  return c.json({ value });
 });
 
 credentials.delete("/devices/:id/credentials/:credentialId", async (c) => {

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,12 +16,11 @@ import {
   credentialScopes,
   describeCredentialFields,
   isNumericValue,
-  isSecretField,
 } from "@/data/credentialsManagerData";
-import { useCredentialRefOptions } from "@/hooks/api/credentials";
+import { revealCredentialValue, useCredentialRefOptions } from "@/hooks/api/credentials";
 import { common } from "@/i18n/common";
 
-export type CredentialDraft = Omit<ScopedCredential, "id" | "updatedBy" | "updatedAt"> & { id?: string };
+export type CredentialDraft = Omit<ScopedCredential, "id" | "updatedBy" | "updatedAt" | "maskedKeys"> & { id?: string };
 
 interface Props {
   open: boolean;
@@ -43,12 +44,17 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   const [ref, setRef] = useState("");
   const [location, setLocation] = useState("");
   const [values, setValues] = useState<CredentialValues>({});
+  /** Masked fields currently shown as plain text. */
+  const [shown, setShown] = useState<Record<string, boolean>>({});
+  const [revealing, setRevealing] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
     setRef(credential?.ref ?? "");
     setLocation(credential?.location ?? "");
+    // Masked values aren't loaded; leaving one blank keeps the stored value
     setValues(credential?.values ?? {});
+    setShown({});
   }, [open, credential]);
 
   const scopeInfo = credentialScopes.find((s) => s.id === scope)!;
@@ -65,6 +71,23 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   const optionsLoading = needsRefOptions && !loadedOptions;
   const trimmedRef = ref.trim();
   const duplicate = trimmedRef !== "" && trimmedRef !== credential?.ref && takenRefs.includes(trimmedRef);
+  /** A masked field of an existing credential that already has a stored value. */
+  const hasStored = (f: (typeof fields)[number]) => f.masked && !!credential?.maskedKeys.includes(f.key);
+  const toggleShown = (f: (typeof fields)[number]) => {
+    if (shown[f.key]) return setShown((s) => ({ ...s, [f.key]: false }));
+    // Showing a blank field that has a stored value loads it for editing
+    if (!(values[f.key] ?? "") && hasStored(f) && credential) {
+      setRevealing(f.key);
+      revealCredentialValue(device.id, credential.id, f.key)
+        .then((v) => {
+          setValues((vals) => ({ ...vals, [f.key]: v }));
+          setShown((s) => ({ ...s, [f.key]: true }));
+        }, (err: Error) => toast.error(`Could not show ${f.name.toLowerCase()}: ${err.message}`))
+        .finally(() => setRevealing(null));
+      return;
+    }
+    setShown((s) => ({ ...s, [f.key]: true }));
+  };
   const valueError = (f: (typeof fields)[number]) => {
     const v = (values[f.key] ?? "").trim();
     if (!v) return null; // blank: Save stays disabled, no message needed
@@ -72,7 +95,7 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   };
   const canSave =
     trimmedRef !== "" && !duplicate && !saving && fields.length > 0 &&
-    fields.every((f) => (values[f.key] ?? "").trim() !== "" && !valueError(f));
+    fields.every((f) => ((values[f.key] ?? "").trim() !== "" || hasStored(f)) && !valueError(f));
 
   const handleSave = () => {
     onSave({
@@ -81,7 +104,10 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
       scope,
       ref: trimmedRef,
       location: scope === "device" ? location.trim() || undefined : undefined,
-      values: Object.fromEntries(fields.map((f) => [f.key, values[f.key]!.trim()])),
+      // A blank masked field is left out, so the server keeps its stored value
+      values: Object.fromEntries(
+        fields.map((f) => [f.key, (values[f.key] ?? "").trim()] as const).filter(([, v]) => v !== ""),
+      ),
     }).then(() => onOpenChange(false), () => {});
   };
 
@@ -136,15 +162,33 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
                 {f.name}
                 {f.valueType === "numeric" && <span className="font-normal text-muted-foreground"> (numeric)</span>}
               </Label>
-              <Input
-                id={`cred-${f.key}`}
-                type={isSecretField(f) ? "password" : "text"}
-                inputMode={f.valueType === "numeric" ? "decimal" : undefined}
-                autoComplete={isSecretField(f) ? "new-password" : "off"}
-                value={values[f.key] ?? ""}
-                onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
-                aria-invalid={!!valueError(f)}
-              />
+              <div className="relative">
+                <Input
+                  id={`cred-${f.key}`}
+                  type={f.masked && !shown[f.key] ? "password" : "text"}
+                  inputMode={f.valueType === "numeric" ? "decimal" : undefined}
+                  autoComplete={f.masked ? "new-password" : "off"}
+                  placeholder={hasStored(f) ? "•••••••• (unchanged; type to replace)" : undefined}
+                  className={f.masked ? "pr-9" : undefined}
+                  value={values[f.key] ?? ""}
+                  onChange={(e) => setValues((v) => ({ ...v, [f.key]: e.target.value }))}
+                  aria-invalid={!!valueError(f)}
+                />
+                {f.masked && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-0.5 top-1/2 h-7 w-7 -translate-y-1/2"
+                    onClick={() => toggleShown(f)}
+                    disabled={revealing === f.key}
+                    aria-label={shown[f.key] ? `Hide ${f.name}` : `Show ${f.name}`}
+                    title={shown[f.key] ? `Hide ${f.name}` : `Show ${f.name}`}
+                  >
+                    {revealing === f.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : shown[f.key] ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                  </Button>
+                )}
+              </div>
               {valueError(f) && <p className="text-xs text-red-500">{valueError(f)}</p>}
             </div>
           ))}

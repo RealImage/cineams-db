@@ -147,9 +147,9 @@ const rows: SeedRow[] = [
   ["Vista", "Vista", [], "Ticketing System", "NA", [], "", "2014-09-06T18:30:00+05:30"],
 ];
 
-const SITE_ID: CredentialFieldDef = { key: "siteId", name: "Site ID", valueType: "string" };
-const USERNAME: CredentialFieldDef = { key: "username", name: "Username", valueType: "string" };
-const PASSWORD: CredentialFieldDef = { key: "password", name: "Password", valueType: "string" };
+const SITE_ID: CredentialFieldDef = { key: "siteId", name: "Site ID", valueType: "string", masked: false };
+const USERNAME: CredentialFieldDef = { key: "username", name: "Username", valueType: "string", masked: false };
+const PASSWORD: CredentialFieldDef = { key: "password", name: "Password", valueType: "string", masked: true };
 
 const fieldsForType = (type: DeviceType, i: number): CredentialFieldDef[] => {
   switch (type) {
@@ -193,9 +193,12 @@ const valuesFor = (device: CredentialDevice, seed: number): ScopedCredential["va
 const hasSampleCredentials = (d: CredentialDevice, i: number) =>
   d.type === "Playback Server" || d.type === "TMS" || (d.type === "Projector" && i % 3 !== 0);
 
-export const initialScopedCredentials: ScopedCredential[] = credentialDevices.flatMap((device, i) => {
+/** Seed rows with every value in plain text; the seeder encrypts the masked ones. */
+export type SeedCredential = Omit<ScopedCredential, "maskedKeys">;
+
+export const initialScopedCredentials: SeedCredential[] = credentialDevices.flatMap((device, i) => {
   if (!hasSampleCredentials(device, i)) return [];
-  const make = (scope: CredentialScope, ref: string, n: number, location?: string): ScopedCredential => ({
+  const make = (scope: CredentialScope, ref: string, n: number, location?: string): SeedCredential => ({
     id: `${device.id}-${scope}-${n}`,
     deviceId: device.id,
     scope,

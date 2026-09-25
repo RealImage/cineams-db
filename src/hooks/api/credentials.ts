@@ -88,3 +88,14 @@ export const useDeleteDeviceCredential = () => {
     },
   });
 };
+
+/**
+ * Fetch one masked value for an explicit View or Copy. Deliberately not a
+ * query: the plain value isn't kept in the shared cache.
+ */
+export const revealCredentialValue = (deviceId: string, credentialId: string, fieldKey: string) =>
+  api
+    .get<{ value: string }>(
+      `/credentials/devices/${encodeURIComponent(deviceId)}/credentials/${encodeURIComponent(credentialId)}/values/${encodeURIComponent(fieldKey)}`,
+    )
+    .then((r) => r.value);
