@@ -38,7 +38,16 @@ export function assertEncryptionKey() {
 
 const aad = (credentialId: string, fieldKey: string) => Buffer.from(`${credentialId}\0${fieldKey}`);
 
-export const isEncrypted = (v: unknown): v is string => typeof v === "string" && v.startsWith(PREFIX);
+/** The full envelope: 12-byte IV, 16-byte tag, then ciphertext, base64url-encoded. */
+const ENVELOPE = /^enc:v1:[A-Za-z0-9_-]{16}:[A-Za-z0-9_-]{22}:[A-Za-z0-9_-]*$/;
+
+export const isEncrypted = (v: unknown): v is string => typeof v === "string" && ENVELOPE.test(v);
+
+/**
+ * Plain values that start like the envelope are refused, so a stored value
+ * is never ambiguous between plain text and ciphertext.
+ */
+export const looksLikeEnvelope = (v: string) => v.startsWith(PREFIX);
 
 export function encryptValue(plain: string, credentialId: string, fieldKey: string) {
   const iv = randomBytes(12);

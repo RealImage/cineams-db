@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -49,8 +49,12 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
   const [revealing, setRevealing] = useState<string | null>(null);
   /** Stored values loaded by the eye icon, so hiding one again can discard it. */
   const [revealed, setRevealed] = useState<Record<string, string>>({});
+  /** Bumped whenever the dialog opens, closes or switches credential; a reveal from an older session is dropped. */
+  const session = useRef(0);
 
   useEffect(() => {
+    session.current++;
+    setRevealing(null);
     if (!open) return;
     setRef(credential?.ref ?? "");
     setLocation(credential?.location ?? "");
@@ -89,13 +93,17 @@ export const EditScopedCredentialDialog = ({ open, onOpenChange, device, scope, 
     // Showing a blank field that has a stored value loads it for editing
     if (!(values[f.key] ?? "") && hasStored(f) && credential) {
       setRevealing(f.key);
+      const started = session.current;
       revealCredentialValue(device.id, credential.id, f.key)
         .then((v) => {
+          if (session.current !== started) return;
           setValues((vals) => ({ ...vals, [f.key]: v }));
           setRevealed((r) => ({ ...r, [f.key]: v }));
           setShown((s) => ({ ...s, [f.key]: true }));
-        }, (err: Error) => toast.error(`Could not show ${f.name.toLowerCase()}: ${err.message}`))
-        .finally(() => setRevealing(null));
+        }, (err: Error) => {
+          if (session.current === started) toast.error(`Could not show ${f.name.toLowerCase()}: ${err.message}`);
+        })
+        .finally(() => { if (session.current === started) setRevealing(null); });
       return;
     }
     setShown((s) => ({ ...s, [f.key]: true }));

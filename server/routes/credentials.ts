@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type pg from "pg";
 import { randomUUID } from "node:crypto";
 import { query, transaction } from "../db";
-import { decryptValue, encryptValue, isEncrypted, syncCredentialEncryption } from "../../db/secrets";
+import { decryptValue, encryptValue, isEncrypted, looksLikeEnvelope, syncCredentialEncryption } from "../../db/secrets";
 import { CURRENT_USER, httpError, notFound } from "../http";
 import {
   CredentialDeviceInput,
@@ -281,6 +281,7 @@ function parseCredential(
       throw httpError(400, `${field.name} is required`);
     }
     if (field.valueType === "numeric" && !isNumericValue(str)) throw httpError(400, `${field.name} must be a number`);
+    if (looksLikeEnvelope(str)) throw httpError(400, `${field.name} can't start with "enc:v1:"`);
     values[field.key] = field.masked ? encryptValue(str, credentialId, field.key) : str;
   }
   return { scope: scopeInfo.id, scopeLabel: scopeInfo.label, ref, location, values };
