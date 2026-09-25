@@ -10,6 +10,7 @@ import { ViewTheatreDialog } from "@/components/ViewTheatreDialog";
 import { TheatreLogsDialog } from "@/components/TheatreLogsDialog";
 import { DeleteTheatreDialog } from "@/components/DeleteTheatreDialog";
 import { TheatreTable } from "@/components/theatres/TheatreTable";
+import { WtfSheet } from "@/components/theatres/WtfSheet";
 import { useTheatreHandlers } from "@/components/theatres/useTheatres";
 import { useTheatres } from "@/hooks/api/theatres";
 import { QueryState } from "@/components/ui/query-state";
@@ -40,6 +41,8 @@ const Theatres = () => {
     setViewDialogOpen(true);
   };
   
+  const [wtfTheatre, setWtfTheatre] = useState<Theatre | null>(null);
+
   const handleViewLogs = (theatre: Theatre) => {
     setSelectedTheatre(theatre);
     setLogsDialogOpen(true);
@@ -82,12 +85,15 @@ const Theatres = () => {
             theatres={theatres}
             onViewTheatre={handleViewTheatre}
             onViewLogs={handleViewLogs}
+            onViewWtf={setWtfTheatre}
             onToggleStatus={handleToggleTheatreStatus}
             onDelete={handleDeleteTheatreClick}
           />
         )}
       </QueryState>
       
+      <WtfSheet theatreId={wtfTheatre?.id ?? null} theatreName={wtfTheatre?.name} onOpenChange={(open) => { if (!open) setWtfTheatre(null); }} />
+
       {/* Dialogs */}
       <AddTheatreDialog
         open={addDialogOpen}

@@ -33,12 +33,12 @@ const DEVICE_SELECT = `
                  WHERE c.device_id = d.id AND c.scope = 'global' AND c.ref = '${GLOBAL_REF}') AS "hasDefaultCredentials"
   FROM credential_devices d`;
 
-const CREDENTIAL_COLUMNS = `
+export const CREDENTIAL_COLUMNS = `
   id, device_id AS "deviceId", scope, ref, location, "values",
   updated_by AS "updatedBy", updated_at AS "updatedAt"`;
 
 /** A row as stored: masked values are encrypted strings in `values`. */
-type CredentialRow = Omit<ScopedCredential, "location" | "maskedKeys"> & { location: string | null };
+export type CredentialRow = Omit<ScopedCredential, "location" | "maskedKeys"> & { location: string | null };
 
 /**
  * API shape of a stored row: only fields in the current format are included;
@@ -49,7 +49,7 @@ type CredentialRow = Omit<ScopedCredential, "location" | "maskedKeys"> & { locat
  * masked even if `fields` says otherwise (e.g. a format read just before a
  * concurrent change), so a list can never leak a masked value.
  */
-function toCredential({ location, values, ...rest }: CredentialRow, fields: readonly CredentialFieldDef[]): ScopedCredential {
+export function toCredential({ location, values, ...rest }: CredentialRow, fields: readonly CredentialFieldDef[]): ScopedCredential {
   const plain: CredentialValues = {};
   const maskedKeys: string[] = [];
   for (const f of fields) {

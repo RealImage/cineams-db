@@ -17,7 +17,7 @@ const DELIVERY_KEYS = [
   "deliveryAddress", "deliveryInstructions", "deliveryTimeSlots", "dcpPhysicalDeliveryMethods",
   "dcpNetworkDeliveryMethods", "dcpModemDeliveryMethods", "dcpDeliveryContacts", "sendEmailsForDCPDelivery",
   "dcpContentTypesForEmail", "keyDeliveryContacts", "kdmDeliveryEmailsInFLMX", "autoIngestOfContentEnabled",
-  "autoIngestContentTypes", "qcnTheatreIPAddressRange", "downloadRestrictionsEnabled", "downloadRestrictions",
+  "autoIngestContentTypes", "autoIngestTimeSlots", "kdmAutoIngestTimeSlots", "qcnTheatreIPAddressRange", "downloadRestrictionsEnabled", "downloadRestrictions",
   "liveWireEnabled", "liveWireConfig",
 ] as const;
 

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Company, DashboardStats, Theatre } from "@/types";
 import type { WireTAPDevice } from "@/types/wireTAP";
+import type { WtfData } from "@/data/wtfData";
 
 export const theatreKeys = {
   all: ["theatres"] as const,
@@ -135,3 +136,11 @@ export const usePullOutWireTAP = (theatreId: string) => {
     onSuccess: invalidate,
   });
 };
+
+/** "What's This Facility": the read-only summary behind the View WTF panel. */
+export const useTheatreWtf = (theatreId: string | undefined) =>
+  useQuery({
+    queryKey: ["theatres", "wtf", theatreId ?? ""],
+    queryFn: () => api.get<WtfData>(`/wtf/${encodeURIComponent(theatreId!)}`),
+    enabled: !!theatreId,
+  });

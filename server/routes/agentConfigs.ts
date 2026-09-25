@@ -32,10 +32,10 @@ const AGENT_SELECT = `
          COALESCE(i.config_updated_at, i.updated_at) AS "updatedAt"
   FROM fleet_images i`;
 
-const CONFIG_COLUMNS = `id, image_id AS "imageId", scope, ref, "values", updated_by AS "updatedBy", updated_at AS "updatedAt"`;
+export const CONFIG_COLUMNS = `id, image_id AS "imageId", scope, ref, "values", updated_by AS "updatedBy", updated_at AS "updatedAt"`;
 
 /** A row as stored: masked values are encrypted strings in `values`. */
-type ConfigRow = Omit<AgentConfiguration, "maskedKeys">;
+export type ConfigRow = Omit<AgentConfiguration, "maskedKeys">;
 
 type Db = Pick<pg.PoolClient, "query">;
 
@@ -60,7 +60,7 @@ async function readJson(c: { req: { json: () => Promise<unknown> } }) {
  * withheld. Nothing is decrypted, and a still-encrypted value is always
  * reported as masked, so a list can never leak one.
  */
-function toConfiguration({ values, ...rest }: ConfigRow, fields: readonly ConfigFieldDef[]): AgentConfiguration {
+export function toConfiguration({ values, ...rest }: ConfigRow, fields: readonly ConfigFieldDef[]): AgentConfiguration {
   const plain: Record<string, string> = {};
   const maskedKeys: string[] = [];
   for (const f of fields) {

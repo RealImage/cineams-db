@@ -1,5 +1,5 @@
 
-import { Edit, Trash2, Eye, Activity, ToggleLeft, ToggleRight } from "lucide-react";
+import { Edit, Trash2, Eye, Activity, ToggleLeft, ToggleRight, ClipboardList } from "lucide-react";
 import { Theatre } from "@/types";
 import { toast } from "sonner";
 
@@ -7,6 +7,7 @@ type TheatreActionsProps = {
   theatre: Theatre;
   onViewDetails: (theatre: Theatre) => void;
   onViewLogs: (theatre: Theatre) => void;
+  onViewWtf: (theatre: Theatre) => void;
   onEdit: (theatre: Theatre) => void;
   onDelete: (theatre: Theatre) => void;
   onToggleStatus: (theatre: Theatre) => void;
@@ -16,6 +17,7 @@ export const getTheatreActions = ({
   theatre,
   onViewDetails,
   onViewLogs,
+  onViewWtf,
   onEdit,
   onDelete,
   onToggleStatus
@@ -25,6 +27,11 @@ export const getTheatreActions = ({
       label: "View Details",
       icon: <Eye className="h-4 w-4" />,
       onClick: () => onViewDetails(theatre)
+    },
+    {
+      label: "View WTF",
+      icon: <ClipboardList className="h-4 w-4" />,
+      onClick: () => onViewWtf(theatre)
     },
     {
       label: "View Logs",
