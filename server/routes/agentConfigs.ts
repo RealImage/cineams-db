@@ -258,9 +258,11 @@ agentConfigs.get("/:id/configurations/:configId/values/:fieldKey", async (c) => 
 });
 
 agentConfigs.delete("/:id/configurations/:configId", async (c) => {
+  // Same 404 as the other endpoints for unknown images and Appliance OS images
+  const agent = await getAgent(c.req.param("id"));
   const rows = await query(
     "DELETE FROM agent_configurations WHERE image_id = $1 AND id = $2 RETURNING id",
-    [c.req.param("id"), c.req.param("configId")],
+    [agent.id, c.req.param("configId")],
   );
   if (rows.length === 0) throw notFound("Configuration");
   return c.body(null, 204);
