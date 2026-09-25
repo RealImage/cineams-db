@@ -4,7 +4,7 @@ CinemaDB is Qube Cinema's master data app for theatres, chains, screens and the 
 
 - **Theatres:** theatre list, FLM feeds and mapping, dashboard
 - **Chains**
-- **Fleet management:** fleet status, tasks, images
+- **Fleet management:** fleet status, tasks, images, agent configurations
 - **Qube appliances:** WireTAP, Qube ACS, Pulse, Edge, iCount cameras
 - **Devices master:** screen devices, TDL devices, credentials manager
 - **Screen Pulse:** dashboard, environment, projection and screen managers, reports
@@ -29,7 +29,7 @@ npm run dev               # web on http://localhost:8080, API on :3001
 
 In development, Vite proxies `/api` to the API server on `API_PORT`.
 
-Masked credential values are encrypted with `CREDENTIALS_ENCRYPTION_KEY` (see `.env.example`). Development falls back to a built-in key; production must set its own (`openssl rand -base64 32`), and changing it later makes stored masked values unreadable.
+Masked credential and agent configuration values are encrypted with `CREDENTIALS_ENCRYPTION_KEY` (see `.env.example`). Development falls back to a built-in key; production must set its own (`openssl rand -base64 32`), and changing it later makes stored masked values unreadable.
 
 ## Scripts
 
@@ -74,5 +74,5 @@ db/
 - **Filters** open in the right-hand filter drawer (`ui/filter-drawer.tsx`) and apply only when you press *Apply filters*.
 - **Search, filters and pagination** run over the full result set. Tables default to 100 rows per page, with 200, 500 and 1000 as options.
 - **List pickers** use the searchable `Combobox` (`ui/combobox.tsx`) rather than a plain select.
-- **Masked credential fields** are stored encrypted (AES-256-GCM, `db/secrets.ts`). The API never includes them in lists; the UI fetches one value at a time when someone clicks its eye icon.
+- **Masked fields** (credentials and agent configurations) are stored encrypted (AES-256-GCM, `db/secrets.ts`). The API never includes them in lists; the UI fetches one value at a time when someone clicks its eye icon.
 - **Dialog buttons** take generic labels such as *Save* and *Cancel* from `src/i18n/common.ts`, so each string is translated once.

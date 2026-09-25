@@ -5,7 +5,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createClient, describeDatabase } from "./client";
-import { assertEncryptionKey, syncCredentialEncryption } from "./secrets";
+import { AGENT_CONFIG_SECRETS, CREDENTIAL_SECRETS, assertEncryptionKey, syncEncryption } from "./secrets";
 
 const migrationsDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "migrations");
 
@@ -44,10 +44,11 @@ async function main() {
     }
     console.log(count ? `Applied ${count} migration(s) to ${describeDatabase()}` : "Schema is up to date.");
 
-    // Masked credential values are encrypted with the app's key, which SQL
+    // Masked credential and configuration values are encrypted with the app's key, which SQL
     // migrations don't have; bring stored values in line with the format.
-    const encrypted = await syncCredentialEncryption(client);
-    if (encrypted) console.log(`Updated encryption of ${encrypted} credential set(s)`);
+    const encrypted =
+      (await syncEncryption(client, CREDENTIAL_SECRETS)) + (await syncEncryption(client, AGENT_CONFIG_SECRETS));
+    if (encrypted) console.log(`Updated encryption of ${encrypted} credential/configuration set(s)`);
   } finally {
     await client.end();
   }

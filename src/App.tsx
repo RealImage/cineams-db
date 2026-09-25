@@ -32,6 +32,7 @@ import IcountCameras from "./pages/IcountCameras";
 import AddIcountTheatre from "./pages/AddIcountTheatre";
 import EditIcountTheatre from "./pages/EditIcountTheatre";
 import TaskManagement from "./pages/TaskManagement";
+import AgentConfigurations from "./pages/AgentConfigurations";
 import ImageManagement from "./pages/ImageManagement";
 import FleetTaskEdit from "./pages/FleetTaskEdit";
 import FleetTaskView from "./pages/FleetTaskView";
@@ -101,6 +102,7 @@ const App = () => (
             <Route path="/fleet-management/tasks" element={<TaskManagement />} />
             <Route path="/fleet-management/images" element={<ImageManagement />} />
             <Route path="/fleet-management/images/:imageId/versions" element={<ManageVersions />} />
+            <Route path="/fleet-management/images/:id/configurations" element={<AgentConfigurations />} />
             <Route path="/fleet-management/task/new" element={<FleetTaskEdit />} />
             <Route path="/fleet-management/task/:id/edit" element={<FleetTaskEdit />} />
             <Route path="/fleet-management/task/:id/view" element={<FleetTaskView />} />
