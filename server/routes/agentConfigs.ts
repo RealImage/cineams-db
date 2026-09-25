@@ -82,8 +82,9 @@ function parseConfigFields(raw: unknown): ConfigFieldDef[] {
   const fields: ConfigFieldDef[] = [];
   const names = new Set<string>();
   for (const item of raw) {
+    if (!item || typeof item !== "object" || Array.isArray(item)) throw httpError(400, "Every configuration must be an object");
     const f = item as Partial<ConfigFieldDef>;
-    const name = typeof f?.name === "string" ? f.name.trim() : "";
+    const name = typeof f.name === "string" ? f.name.trim() : "";
     if (!name) throw httpError(400, "Every configuration needs a name");
     if (names.has(name.toLowerCase())) throw httpError(400, `Configuration "${name}" is listed twice`);
     names.add(name.toLowerCase());
@@ -105,9 +106,8 @@ function parseConfigFields(raw: unknown): ConfigFieldDef[] {
 agentConfigs.patch("/:id", async (c) => {
   const id = c.req.param("id");
   const body = await readJson(c);
-  const current = await getAgent(id);
-
-  let entitlements = current.entitlements;
+  // Validate the body first; nothing here depends on the stored row
+  let entitlements: string[] | undefined;
   if (body.entitlements !== undefined) {
     const raw = body.entitlements;
     if (!Array.isArray(raw) || !raw.every((e) => typeof e === "string")) throw httpError(400, "entitlements must be a list of ids");
@@ -115,14 +115,19 @@ agentConfigs.patch("/:id", async (c) => {
     if (unknown.length) throw httpError(400, `Unknown entitlement: ${unknown.join(", ")}`);
     entitlements = raw as string[];
   }
-  const configFields = body.configFields !== undefined ? parseConfigFields(body.configFields) : current.configFields;
+  const newFields = body.configFields !== undefined ? parseConfigFields(body.configFields) : undefined;
 
   await transaction(async (db) => {
+    // Merge against the row as locked here, so concurrent partial updates
+    // (one changing entitlements, one the format) apply one after the other
+    const [current] = (await db.query<AgentDetails>(`${AGENT_SELECT} WHERE i.id = $1 FOR UPDATE OF i`, [id])).rows;
+    if (!current || !isAgentImage(current)) throw notFound("Agent");
+    const configFields = newFields ?? current.configFields;
     await db.query(
       `UPDATE fleet_images
        SET entitlements = $2, config_fields = $3, config_updated_by = $4, config_updated_at = now()
        WHERE id = $1`,
-      [id, normalizeEntitlements(entitlements), JSON.stringify(configFields), CURRENT_USER],
+      [id, normalizeEntitlements(entitlements ?? current.entitlements), JSON.stringify(configFields), CURRENT_USER],
     );
     await syncEncryption(db, AGENT_CONFIG_SECRETS, id);
   });

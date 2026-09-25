@@ -74,10 +74,15 @@ export const agentConfigsSeeder: ExtraSeeder = {
       );
       if (fields.length === 0) continue;
 
-      const rows: [string, string][] = [["global", GLOBAL_REF]];
+      // One Global row, two chains and three theatres, all distinct (fewer if the lists are shorter)
       const seed = Number(image.id) || image.agent_os_name.length;
-      for (let i = 0; i < 2 && chainNames.length; i++) rows.push(["chain", chainNames[(seed * 3 + i * 5) % chainNames.length]]);
-      for (let i = 0; i < 3 && theatreNames.length; i++) rows.push(["theatre", theatreNames[(seed * 7 + i * 11) % theatreNames.length]]);
+      const pickDistinct = (names: string[], start: number, n: number) =>
+        Array.from({ length: Math.min(n, names.length) }, (_, i) => names[(start + i) % names.length]);
+      const rows: [string, string][] = [
+        ["global", GLOBAL_REF],
+        ...pickDistinct(chainNames, seed * 3, 2).map((ref): [string, string] => ["chain", ref]),
+        ...pickDistinct(theatreNames, seed * 7, 3).map((ref): [string, string] => ["theatre", ref]),
+      ];
       for (const [n, [scope, ref]] of rows.entries()) {
         await client.query(
           `INSERT INTO agent_configurations (id, image_id, scope, ref, "values", updated_by, updated_at)

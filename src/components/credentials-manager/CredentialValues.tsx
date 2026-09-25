@@ -16,7 +16,7 @@ const hasValue = (credential: ScopedCredential, field: CredentialFieldDef) =>
 /** Table cell: masked values stay hidden until their eye icon is clicked. */
 export const CredentialCell = ({ field, credential }: { field: CredentialFieldDef; credential: ScopedCredential }) => {
   if (!hasValue(credential, field)) return <span className="text-muted-foreground">—</span>;
-  if (isMasked(credential, field)) return <MaskedValue key={credential.updatedAt} label={field.name} reveal={revealer(credential, field)} />;
+  if (isMasked(credential, field)) return <MaskedValue key={`${credential.id}:${credential.updatedAt}`} label={field.name} reveal={revealer(credential, field)} />;
   return <code className="text-sm">{credential.values[field.key]}</code>;
 };
 
@@ -29,8 +29,8 @@ const ValueRow = ({ field, credential }: { field: CredentialFieldDef; credential
       {!hasValue(credential, field) ? (
         <p className="text-sm text-muted-foreground">—</p>
       ) : isMasked(credential, field) ? (
-        // Keyed by updatedAt so a revealed value is dropped once the stored one changes
-        <MaskedValue key={credential.updatedAt} label={field.name} reveal={revealer(credential, field)} copyable />
+        // Keyed by row and version so a revealed value is dropped on a row change or save
+        <MaskedValue key={`${credential.id}:${credential.updatedAt}`} label={field.name} reveal={revealer(credential, field)} copyable />
       ) : (
         <div className="flex items-center gap-1">
           <code className="text-sm">{value}</code>

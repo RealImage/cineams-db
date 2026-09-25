@@ -18,8 +18,8 @@ const hasValue = (row: AgentConfiguration, field: ConfigFieldDef) =>
 
 const masked = (row: AgentConfiguration, field: ConfigFieldDef, copyable = false) => (
   <MaskedValue
-    // Reset to masked whenever the row is saved again
-    key={row.updatedAt}
+    // Per row and version: switching rows or saving again always drops a revealed value
+    key={`${row.id}:${row.updatedAt}`}
     label={field.name}
     reveal={() => revealAgentConfigValue(row.imageId, row.id, field.key)}
     format={(v) => formatConfigValue(field, v)}

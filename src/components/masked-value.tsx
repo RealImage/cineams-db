@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 
 export const MASK = "••••••••";
 
-export const copyText = (value: string, what: string) =>
-  navigator.clipboard?.writeText(value).then(
-    () => toast.success(`${what} copied`),
-    () => toast.error(`Could not copy ${what.toLowerCase()}`),
-  );
+export const copyText = (value: string, what: string) => {
+  const failed = () => toast.error(`Could not copy ${what.toLowerCase()}`);
+  // No Clipboard API outside secure contexts (e.g. plain http on a LAN address)
+  if (!navigator.clipboard?.writeText) return Promise.resolve(failed());
+  return navigator.clipboard.writeText(value).then(() => { toast.success(`${what} copied`); }, failed);
+};
 
 /**
  * A masked value: shown as •••• until the eye is clicked, which fetches it
