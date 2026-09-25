@@ -23,7 +23,7 @@ interface Props {
 }
 
 const SECTIONS = [
-  "theatre", "isp", "content", "kdm", "screens", "devices", "magicbox", "agents",
+  "theatre", "isp", "content", "kdm", "screens", "devices", "agents",
 ] as const;
 
 const Empty = ({ children }: { children: React.ReactNode }) => <p className="text-sm text-muted-foreground">{children}</p>;
@@ -245,11 +245,6 @@ const WtfSections = ({ data }: { data: WtfData }) => {
               </div>
             )}
           </AccordionContent>
-        </AccordionItem>
-
-        <AccordionItem value="magicbox">
-          <AccordionTrigger>MagicBox Components</AccordionTrigger>
-          <AccordionContent><Empty>Coming soon.</Empty></AccordionContent>
         </AccordionItem>
 
         <AccordionItem value="agents" className="border-b-0">
