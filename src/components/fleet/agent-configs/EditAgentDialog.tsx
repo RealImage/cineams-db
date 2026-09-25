@@ -12,7 +12,7 @@ import {
   ConfigValueType,
   configValueTypeLabels,
   configValueTypes,
-  entitlementGroups,
+  allEntitlements,
   normalizeEntitlements,
 } from "@/data/agentConfigData";
 import { looksSecret } from "@/data/credentialsManagerData";
@@ -84,24 +84,19 @@ export const EditAgentDialog = ({ open, onOpenChange, agent, onSave, saving = fa
         <div className="max-h-[70vh] space-y-5 overflow-y-auto px-5 py-4">
           <fieldset className="space-y-3">
             <legend className="mb-1 text-xs font-medium">Agent entitlements</legend>
-            <div className="grid gap-4 sm:grid-cols-3">
-              {entitlementGroups.map((g) => (
-                <div key={g.level} className="space-y-2">
-                  <p className="text-xs text-muted-foreground">{g.label}</p>
-                  {g.entitlements.map((e) => (
-                    <label key={e.id} className="flex items-center gap-2 text-sm">
-                      <Checkbox
-                        checked={entitlements.includes(e.id)}
-                        disabled={e.locked}
-                        onCheckedChange={(c) => toggleEntitlement(e.id, c === true)}
-                      />
-                      <span>
-                        {e.label}
-                        {e.locked && <span className="block text-xs text-muted-foreground">Always on</span>}
-                      </span>
-                    </label>
-                  ))}
-                </div>
+            <div className="grid gap-x-4 gap-y-2 sm:grid-cols-2">
+              {allEntitlements.map((e) => (
+                <label key={e.id} className="flex items-center gap-2 text-sm">
+                  <Checkbox
+                    checked={entitlements.includes(e.id)}
+                    disabled={e.locked}
+                    onCheckedChange={(c) => toggleEntitlement(e.id, c === true)}
+                  />
+                  <span>
+                    {e.label}
+                    {e.locked && <span className="ml-1 text-xs text-muted-foreground">(always on)</span>}
+                  </span>
+                </label>
               ))}
             </div>
           </fieldset>

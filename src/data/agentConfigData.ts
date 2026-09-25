@@ -21,20 +21,16 @@ export interface Entitlement {
   locked?: boolean;
 }
 
-export const entitlementGroups: { level: string; label: string; entitlements: Entitlement[] }[] = [
-  { level: "theatre", label: "Theatre level", entitlements: [{ id: "theatre_metadata", label: "Theatre Meta Data", locked: true }] },
-  { level: "screen", label: "Screen level", entitlements: [{ id: "screen_metadata", label: "Screen Meta Data" }] },
-  {
-    level: "device",
-    label: "Device level",
-    entitlements: [
-      { id: "device_log", label: "Device Log" },
-      { id: "device_ingest", label: "Device Ingest" },
-    ],
-  },
+/** The master list: the facility data an agent may access (the same areas as the theatre's WTF panel). */
+export const allEntitlements: Entitlement[] = [
+  { id: "theatre_metadata", label: "Theatre Meta Data", locked: true },
+  { id: "theatre_isp", label: "Theatre ISP" },
+  { id: "content_ingestion", label: "Content Ingestion" },
+  { id: "kdm_ingestion", label: "KDM Ingestion" },
+  { id: "screen_metadata", label: "Screen Meta Data" },
+  { id: "screen_devices", label: "Screen Devices" },
+  { id: "agents_config", label: "Agents & Agent Config" },
 ];
-
-export const allEntitlements = entitlementGroups.flatMap((g) => g.entitlements);
 export const entitlementIds = allEntitlements.map((e) => e.id);
 export const lockedEntitlementIds = allEntitlements.filter((e) => e.locked).map((e) => e.id);
 export const entitlementLabel = (id: string) => allEntitlements.find((e) => e.id === id)?.label ?? id;

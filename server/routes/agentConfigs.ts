@@ -45,7 +45,8 @@ async function getAgent(id: string, db?: Db, lock = false) {
   const sql = `${AGENT_SELECT} WHERE i.id = $1${lock ? " FOR SHARE OF i" : ""}`;
   const [row] = db ? (await db.query<AgentDetails>(sql, [id])).rows : await query<AgentDetails>(sql, [id]);
   if (!row || !isAgentImage(row)) throw notFound("Agent");
-  return row;
+  // Drop ids no longer in the master list
+  return { ...row, entitlements: normalizeEntitlements(row.entitlements) };
 }
 
 async function readJson(c: { req: { json: () => Promise<unknown> } }) {
