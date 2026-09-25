@@ -6,7 +6,7 @@ import {
   AgentConfiguration,
   ConfigFieldDef,
   configValueTypeLabels,
-  entitlementGroups,
+  allEntitlements,
   formatConfigValue,
 } from "@/data/agentConfigData";
 import { revealAgentConfigValue } from "@/hooks/api/agentConfigs";
@@ -72,18 +72,11 @@ export const ConfigFieldsList = ({ fields }: { fields: readonly ConfigFieldDef[]
     </div>
   );
 
-/** Entitlements grouped by level, e.g. "Theatre: Theatre Meta Data". */
+/** The agent's entitlements as tags, in master-list order. */
 export const EntitlementsList = ({ ids }: { ids: readonly string[] }) => (
-  <div className="space-y-1">
-    {entitlementGroups.map((g) => {
-      const held = g.entitlements.filter((e) => ids.includes(e.id));
-      if (held.length === 0) return null;
-      return (
-        <div key={g.level} className="flex flex-wrap items-center gap-1">
-          <span className="text-xs font-normal text-muted-foreground">{g.label}:</span>
-          {held.map((e) => <Badge key={e.id} variant="secondary" className="font-normal">{e.label}</Badge>)}
-        </div>
-      );
-    })}
+  <div className="flex flex-wrap gap-1">
+    {allEntitlements.filter((e) => ids.includes(e.id)).map((e) => (
+      <Badge key={e.id} variant="secondary" className="font-normal">{e.label}</Badge>
+    ))}
   </div>
 );

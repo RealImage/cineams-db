@@ -26,17 +26,19 @@ const formats: Record<string, ConfigFieldDef[]> = {
  */
 const entitlements: Record<string, string[]> = {
   iCount: ["screen_metadata"],
-  "Live Wire": ["screen_metadata"],
-  "Qlog Agent": ["device_log"],
-  "Agent Redux": ["device_log"],
-  "Manifest Agent": ["screen_metadata", "device_ingest"],
-  "Content Ingest Agent": ["device_ingest"],
-  "KDM Agent": ["screen_metadata", "device_ingest"],
-  "Inventory Agent": ["screen_metadata"],
-  "TDL Agent": ["screen_metadata"],
+  "Live Wire": ["screen_metadata", "screen_devices"],
+  "Qlog Agent": ["screen_devices"],
+  "Agent Redux": ["screen_devices"],
+  "Manifest Agent": ["content_ingestion", "screen_metadata"],
+  "Content Ingest Agent": ["content_ingestion", "theatre_isp"],
+  "KDM Agent": ["kdm_ingestion", "screen_devices"],
+  "Inventory Agent": ["screen_metadata", "screen_devices"],
+  "TDL Agent": ["screen_devices"],
+  "Configuration Agent": ["agents_config"],
+  "Kadet (Agent Zero)": ["agents_config"],
   "Scheduler Agent": ["screen_metadata"],
   AgentQS: ["screen_metadata"],
-  "Content Agent": ["device_ingest"],
+  "Content Agent": ["content_ingestion"],
   AgentQ: ["screen_metadata"],
 };
 
