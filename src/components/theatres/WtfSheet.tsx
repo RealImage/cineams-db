@@ -95,7 +95,7 @@ const AgentConfiguration = ({ agent }: { agent: WtfAgent }) => {
         <div key={c.field.key} className="flex flex-wrap items-center gap-1 text-sm">
           <span className="text-muted-foreground">{c.field.name}:</span>
           {c.masked && c.configId ? (
-            <MaskedValue key={c.configId} label={c.field.name} reveal={() => revealAgentConfigValue(agent.imageId, c.configId!, c.field.key)} format={(v) => formatConfigValue(c.field, v)} />
+            <MaskedValue key={`${c.configId}:${c.updatedAt}`} label={c.field.name} reveal={() => revealAgentConfigValue(agent.imageId, c.configId!, c.field.key)} format={(v) => formatConfigValue(c.field, v)} />
           ) : c.value !== null ? (
             <code>{formatConfigValue(c.field, c.value)}</code>
           ) : (

@@ -51,6 +51,8 @@ export interface WtfConfigValue {
   configId: string | null;
   source: ConfigScope | null;
   sourceRef: string | null;
+  /** When the source row was last saved; with configId, identifies the value's version. */
+  updatedAt: string | null;
 }
 
 export interface WtfAgent {

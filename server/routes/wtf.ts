@@ -183,6 +183,7 @@ async function theatreAgents(theatreId: string, theatreName: string, chainName: 
           configId: src?.id ?? null,
           source: src?.scope ?? null,
           sourceRef: src?.ref ?? null,
+          updatedAt: src?.updatedAt ?? null,
         };
       }),
     };
