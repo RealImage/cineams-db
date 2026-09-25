@@ -4,7 +4,7 @@ import { notFound } from "../http";
 import { CREDENTIAL_COLUMNS, type CredentialRow, toCredential } from "./credentials";
 import { CONFIG_COLUMNS, type ConfigRow, toConfiguration } from "./agentConfigs";
 import { GLOBAL_REF, type CredentialFieldDef } from "../../src/data/credentialsManagerData";
-import type { ConfigFieldDef } from "../../src/data/agentConfigData";
+import { normalizeEntitlements, type ConfigFieldDef } from "../../src/data/agentConfigData";
 import type { WtfAgent, WtfData, WtfScreenDevice } from "../../src/data/wtfData";
 import type { DeliveryTimeSlot, DownloadRestrictions, Projection, Sound } from "../../src/types";
 
@@ -172,7 +172,7 @@ async function theatreAgents(theatreId: string, theatreName: string, chainName: 
       name: a.name,
       provider: a.provider,
       versions: a.versions ?? [],
-      entitlements: a.entitlements,
+      entitlements: normalizeEntitlements(a.entitlements),
       configuration: a.fields.map((field) => {
         const src = ordered.find((r) => r.maskedKeys.includes(field.key) || r.values[field.key] !== undefined);
         const masked = !!src?.maskedKeys.includes(field.key);
