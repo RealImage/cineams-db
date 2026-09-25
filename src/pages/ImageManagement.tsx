@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DataTable } from "@/components/ui/data-table/data-table";
 import { Column, SortConfig, Filter, Action } from "@/components/ui/data-table/types";
-import { Plus, Settings, FileText, Star, StarOff } from "lucide-react";
+import { Plus, Settings, FileText, SlidersHorizontal, Star, StarOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { AddVersionDialog } from "@/components/fleet/AddVersionDialog";
@@ -12,6 +12,7 @@ import { DEFAULT_PAGE_SIZE } from "@/lib/pagination";
 import { QueryState } from "@/components/ui/query-state";
 import { useAddImageVersion, useFleetImages, useSetDefaultInstall, type AddVersionInput } from "@/hooks/api/fleet";
 import type { ImageItem } from "@/data/fleetData";
+import { agentConfigurationsPath, isAgentImage } from "@/data/agentConfigData";
 export type { ImageItem } from "@/data/fleetData";
 
 const ImageManagement = () => {
@@ -117,6 +118,14 @@ const ImageManagement = () => {
           navigate(`/fleet-management/images/${row.id}/versions`);
         },
       },
+      // Appliance OS images are operating systems, not agents
+      ...(isAgentImage(image)
+        ? [{
+            label: "Manage Agent Configurations",
+            icon: <SlidersHorizontal className="h-4 w-4" />,
+            onClick: (row: ImageItem) => navigate(agentConfigurationsPath(row.id)),
+          }]
+        : []),
       {
         label: "View Logs",
         icon: <FileText className="h-4 w-4" />,

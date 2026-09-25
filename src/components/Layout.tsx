@@ -41,7 +41,8 @@ export const Layout = () => {
       />
       
       <div className={cn(
-        "flex-1 transition-all duration-300",
+        // min-w-0: wide tables scroll inside their box instead of widening the page
+        "flex-1 min-w-0 transition-all duration-300",
         !isMobile && (sidebarCollapsed ? "ml-16" : "ml-64")
       )}>
         <Header sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />

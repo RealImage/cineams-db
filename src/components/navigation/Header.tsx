@@ -56,6 +56,7 @@ export const Header = ({ sidebarOpen, setSidebarOpen }: HeaderProps) => {
     if (path === "/fleet-management/tasks") return "Task Management";
     if (path === "/fleet-management/images") return "Image Management";
     if (path.startsWith("/fleet-management/images/") && path.includes("/versions")) return "Manage Versions";
+    if (path.startsWith("/fleet-management/images/") && path.endsWith("/configurations")) return "Manage Agent Configurations";
     if (path === "/fleet-management/task/new") return "Create Task";
     if (path.startsWith("/fleet-management/task/") && path.endsWith("/edit")) return "Edit Task";
     if (path.startsWith("/fleet-management/task/") && path.endsWith("/view")) return "Task Details";
